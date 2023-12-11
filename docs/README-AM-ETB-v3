@@ -1,0 +1,111 @@
+
+	AM-ETB prototype v0.3 - November 2017 
+
+------------------------------------------------------------------------
+
+1) AM-ETB Organization 
+
+          models / <version> / policy.pl, platform.pl, configuration.pl, ...
+ 
+      models-api / common.pl, policy.pl, platform.pl, configuration.pl
+		 / model.pl
+
+        patterns / patterns.pl
+
+        workflow / instantiate.pl, export.pl
+		   
+   	  agents / agent.pl
+	         / <category> / <category>_agent.pl, ...
+
+       assurance / assurance.pl
+                 / <case> / repository.pl (* generated *)
+
+        evidence / evidence.pl
+	         / repository.pl (* generated *)
+                 / <category> / <xref> / status, aargs, ... (* generated *)
+
+           am_etb.pl
+
+------------------------------------------------------------------------
+
+2) Quick start
+
+- Requires SWI-Prolog 7.*.* or higher
+
+In the AM-ETB directory, run at the swipl prompt:
+
+   ? [am_etb].
+   ? setup.
+   ? instantiate:instantiate_pattern('person', ['Marius', 'Programming'], 'ac1').
+   ? export:ac_export('ac1.txt', 'txt').
+   ? halt.  
+
+Then, 
+
+   ? [am_etb].
+   ? setup.
+   ? evidence:update_ongoing.
+   ? assurance:attach_assurance_repository('ac1').
+   ? export:ac_export('ac1-html', 'html').
+   ? halt.
+
+For a complete assurance case,
+
+? [am_etb].
+   ? setup.
+   ? [demo].
+   ? demo:run('1.0', 'ac2').
+   ? ...
+
+-----------------------------------------------------------------------
+
+3) Key Changes
+
+- complete am-etb re-structuring 
+- use persistent AC and evidence repositories
+- contain evidence validation mechanisms
+
+
+-----------------------------------------------------------------------
+
+4) Evidence validation: the big picture
+
+- every new evidence artefact
+  -- is registered in the evidence database as 'pending'
+  -- gets assigned a working repository (category/xref) 
+  -- gets assigned a status file in the working repository (status)
+  -- the status file is initialized to contain 'pending'
+  -- an agent is launched for it 
+
+- every launched agents works 'synchronously' as follows:
+  -- call external tools and/or update the content of the repository 
+  -- returns the validation status amongst 'ongoing', 'valid', 'invalid'
+  -- ongoing denotes that no answer can be provided right now
+     (e.g, may need user interaction, etc)
+  
+- on agent return for an evidence artefact 
+  -- its status in the evidence repository is updated
+  -- the status file in the working directory is updated 
+     [ both will contain the returned validation status ]
+
+- for evidence checking marked as 'ongoing'
+  -- the validation continue 'asynchronously' (wrt the AM-ETB)
+  -- the working directory can be updated, etc
+  -- once a definite verdict 'valid' / 'invalid' is reached
+     it shall be written in the status file
+
+- AM-ETB has a re-synchronization action that updates the status of all
+  ongoing activities depending on the content of the status file
+  (evidence:update_ongoing)
+
+------------------------------------------------------------------------
+
+3) Known limitations
+
+- error handling during instantiation is minimal - some error log 
+  constructed, need to be more elaborated and tested
+
+- agents for evidence validation are still limited
+
+- command-line UI not very friendly so far
+

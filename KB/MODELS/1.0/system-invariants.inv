@@ -1,0 +1,14 @@
+# atom control
+-at Train -a atom-control -ip *
+-at Gate  -a atom-control
+
+# compound interaction time
+-ct main -a interaction-time
+
+# compound traps
+-ct main -a trap
+
+# compound linear 
+-ct main -a linear
+
+# others to come 

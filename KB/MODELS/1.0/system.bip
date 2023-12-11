@@ -1,0 +1,94 @@
+package system 
+port type Port() 
+connector type Link(Port p1, Port p2) 
+define  p1 p2  
+end 
+atom type Train(int id) 
+clock x unit second  
+export port Port approach()
+export port  Port exit()
+port Port enter() 
+place FAR, NEAR, IN 
+initial to FAR 
+on approach 
+from FAR to NEAR 
+ do {x=0;} 
+ on enter 
+from NEAR to IN 
+ provided  ( x>=3 ) 
+  do {} 
+  
+ on exit 
+from IN to FAR 
+do {} 
+invariant inv1 at NEAR  provided (x<= 5 ) 
+   invariant inv2 at IN  provided (x<= 5 ) 
+ end
+
+atom type Gate() 
+ clock y unit second
+export port  Port raise() 
+export port  Port lower()
+port Port up_() 
+port Port down_() 
+ place IS_UP, COMING_DOWN, IS_DOWN, GOING_UP 
+ initial to IS_UP 
+ on lower 
+ from IS_UP to COMING_DOWN 
+  do {y=0;} 
+ on down_ 
+   from COMING_DOWN to IS_DOWN 
+   lazy
+ do {} 
+  on raise 
+   from IS_DOWN to GOING_UP 
+    do {y=0;}
+ on up_ 
+   from GOING_UP to IS_UP 
+    provided (y>=1  ) 
+  do {} 
+ invariant inv5 at COMING_DOWN  provided (y <= 1 ) 
+  invariant inv6 at GOING_UP  provided (y <= 2 ) 
+end 
+ atom type Controller() 
+ clock z unit second
+export port  Port approach() 
+ export port  Port exit() 
+ export port  Port raise() 
+ export port  Port lower() 
+ place C0, C1, C2, C3 
+ initial to C0 
+ on approach 
+   from C0 to C1 
+   do {z=0;} 
+  on lower 
+    from C1 to C2 
+    provided (z == 1 ) 
+    eager 
+    do {} 
+ on exit 
+    from C2 to C3 
+   do {z=0;} 
+  on raise 
+   from C3 to C0 
+   lazy
+  do {} 
+ invariant inv3 at C1, C3  provided (z <= 1 )  
+end 
+compound type main() 
+component Gate gate() 
+component Controller controller() 
+ component Train  train1(1) 
+ component Train  train2(2) 
+ component Train  train3(3) 
+connector Link raiseLink(gate.raise, controller.raise) 
+connector Link lowerLink(gate.lower, controller.lower) 
+ connector Link approachLink1(train1.approach, controller.approach) 
+ connector Link exitLink1(train1.exit, controller.exit) 
+ connector Link approachLink2(train2.approach, controller.approach) 
+ connector Link exitLink2(train2.exit, controller.exit) 
+ connector Link approachLink3(train3.approach, controller.approach) 
+ connector Link exitLink3(train3.exit, controller.exit) 
+end  
+end  
+
