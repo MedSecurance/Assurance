@@ -3,6 +3,10 @@
 *#
 RUNTIME/LOG/*
 BUILD/*
+CAP/*.txt
+CAP/*/*.html
+CAP/*/*.dot
+CAP/*/*.svg
 REPOSITORY/ASSURANCE/*/repository.pl
 REPOSITORY/EVIDENCE/axiom/*/status
 REPOSITORY/EVIDENCE/certificate/*/status
