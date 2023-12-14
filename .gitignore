@@ -1,0 +1,12 @@
+.DS_Store
+*~
+*#
+RUNTIME/LOG/*
+BUILD/*
+REPOSITORY/ASSURANCE/*/repository.pl
+REPOSITORY/EVIDENCE/axiom/*/status
+REPOSITORY/EVIDENCE/certificate/*/status
+REPOSITORY/EVIDENCE/ichecker/*/status
+REPOSITORY/EVIDENCE/ocra/*/status
+REPOSITORY/EVIDENCE/unknown/*/status
+
