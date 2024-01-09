@@ -2,7 +2,7 @@
 			 instantiate_pattern_list/2 ] ).
 
 :- use_module(models_api/model).
-:- use_module('../KB/patterns').
+:- use_module('../KB/PATTERNS/patterns').
 :- use_module(assurance).
 :- use_module(evidence).
 :- use_module(agent).

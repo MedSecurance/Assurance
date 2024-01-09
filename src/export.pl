@@ -10,15 +10,17 @@
 				% ac_export(Filename, Format)
 				%
 
-ac_export(Filename, 'txt') :-
-	atomic_list_concat(['../CAP/',Filename],FullFilename),
+ac_export(FileBasename, 'txt') :- atom(FileBasename),
+	param:cap_directory_name(CapDir),
+	atomic_list_concat(['../',CapDir,FileBasename,'.txt'],FullFilename),
 	open(FullFilename, write, Output),
 	forall(ac_instance(PatternId, AArgs, Goal, Log),
 	       ac_format(Output, 'txt', ac_instance(PatternId, AArgs, Goal, Log))),
 	close(Output), !.
 
 ac_export(Dirname, 'html') :-
-	atomic_list_concat(['../CAP/',Dirname],FullDirname),
+	param:cap_directory_name(CapDir),
+	atomic_list_concat(['../',CapDir,Dirname,'/'],FullDirname),
 	make_directory_path(FullDirname),
 	atomic_list_concat([FullDirname, '/index.html'], Index_Html),
 	open(Index_Html, write, Index_Output),
@@ -40,15 +42,15 @@ ac_export(Dirname, 'html') :-
 ac_export_html_instance( ac_instance(PatternId, AArgs, Goal, Log), Dirname, Basename ) :-
 	ac_instance_basename(ac_instance(PatternId, AArgs, Goal, Log), Basename),
 				% create dot file
-	atomic_list_concat([ Dirname, '/', Basename, '.dot'], Filename_Dot),
+	atomic_list_concat([ Dirname, Basename, '.dot'], Filename_Dot),
 	open(Filename_Dot, write, Output_Dot),
 	ac_format(Output_Dot, 'dot', ac_instance(PatternId, AArgs, Goal, Log)),
 	close(Output_Dot),
 				% convert dot into svg
-	atomic_list_concat(['-o', Dirname, '/', Basename, '.svg'], OFilename_Svg),
+	atomic_list_concat(['-o', Dirname, Basename, '.svg'], OFilename_Svg),
 	fork_exec( dot( '-Tsvg', OFilename_Svg, Filename_Dot) ),
 				% create html file
-	atomic_list_concat([Dirname, '/', Basename, '.html'], Filename_Html),
+	atomic_list_concat([Dirname, Basename, '.html'], Filename_Html),
 	open(Filename_Html, write, Output_Html),
 	ac_format(Output_Html, 'html', ac_instance(PatternId, AArgs, Goal, Log)),
 	close(Output_Html).

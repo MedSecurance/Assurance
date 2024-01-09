@@ -1,5 +1,6 @@
 :-module(assurance,
-	 [ init_assurance_repository/1,	  % +CaseId
+	 [ reset_assurance_repository/0,
+	   init_assurance_repository/1,	  % +CaseId
 	   attach_assurance_repository/1, % +CaseId
 	   insert_ac_instance/4,	 % +PatternId, +AArgs, +GoalI, +Log
 	   insert_ac_instance_id_args/4, % +PatternId, +Id, +AArgs, -Index
@@ -21,12 +22,19 @@
 
 :- persistent ac_instance_id_counter(value:nonneg).
 
+				% reset repository db
+
+reset_assurance_repository :-
+	true.
+
 				% init repository db
 
 init_assurance_repository(CaseId) :-
-	atomic_list_concat( ['../REPOSITORY/ASSURANCE/', CaseId], Directory),
+	param:ac_repo_directory(RepoDir),
+	atomic_list_concat( ['../', RepoDir, CaseId, '/'], Directory),
 	make_directory_path( Directory ),
-	atomic_list_concat( ['../REPOSITORY/ASSURANCE/', CaseId, '/repository.pl'], Filename),
+	param:ac_repo_file(RepoFile),
+	atomic_list_concat( [Directory, RepoFile], Filename),
 	db_attach(Filename, []),
 	retractall_ac_instance(_,_,_,_),
 	retractall_ac_instance_id_args(_,_,_,_),
@@ -36,7 +44,8 @@ init_assurance_repository(CaseId) :-
 				% attach repository db
 
 attach_assurance_repository(CaseId) :-
-	atomic_list_concat( ['../REPOSITORY/ASSURANCE/', CaseId, '/repository.pl'], Filename),
+	param:ac_repo_directory(RepoDir), param:ac_repo_file(RepoFile),
+	atomic_list_concat( ['../', RepoDir, CaseId, '/', RepoFile], Filename),
 	db_attach(Filename, []).
 
 				% insert_ac_instance(+PatternId, +AArgs, +GoalI, +Log)
