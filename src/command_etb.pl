@@ -8,6 +8,7 @@
 %
 syntax(ac_export(basename, format),                              etb).
 syntax(attach_case(case_id),                                     etb).
+syntax(detach_case,                                              etb).
 
 syntax(etb,                            basic).
 syntax(etb_server,                                               etb).
@@ -59,9 +60,12 @@ semantics(load_model_v(Mid,Pol,Plat,Config)) :- !, atom(Mid), var(Pol), var(Plat
 %
 help(ac_export,	'Export the current assurance case to the CAP.').
 help(ac_export,	'Arg1 is a name in the CAP directory for the export.').
-help(ac_export, 'Arg2 is the format (currently either txt or html)').
+help(ac_export, 'Arg2 is the format (currently either txt or html).').
 
-help(attach_case, 'Arg is an assurance case identifier').
+help(attach_case, 'Attach the named assurance case in the repository.').
+help(attach_case, 'Arg is an assurance case identifier.').
+
+help(detach_case, 'Detach the currently attached assurance case.').
 
 help(etb,       'Switch to etb user mode.').
 help(etb_reset,	'Reset ETB repositories.').
@@ -95,6 +99,8 @@ help(update,	'Update assurance cases and evidence.').
 do(ac_export(Name,Format)) :- !, export:ac_export(Name,Format).
 
 do(attach_case(Case)) :- !, assurance:attach_assurance_repository(Case).
+
+do(detach_case) :- !, assurance:detach_assurance_repository.
 
 do(etb) :- user_mode(etb), !, writeln('Already in etb mode').
 do(etb) :- !, user_mode(M), retractall(user_mode(_)), assert(user_mode(etb)),

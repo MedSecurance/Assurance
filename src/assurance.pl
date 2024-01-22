@@ -46,7 +46,14 @@ init_assurance_repository(CaseId) :-
 attach_assurance_repository(CaseId) :-
 	param:ac_repo_directory(RepoDir), param:ac_repo_file(RepoFile),
 	atomic_list_concat( ['../', RepoDir, CaseId, '/', RepoFile], Filename),
-	db_attach(Filename, []).
+	(	db_attached(Filename)
+	->	true
+	;	db_attach(Filename, [])
+	).
+
+				% detach current repository db
+
+detach_assurance_repository :- db_detach.
 
 				% insert_ac_instance(+PatternId, +AArgs, +GoalI, +Log)
 

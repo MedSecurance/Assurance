@@ -3,13 +3,15 @@
 
 proc(demo1, [
         instantiate_pattern('person', ['Marius', 'Programming'], 'ac1'),
-        ac_export(ac1,txt)
+        ac_export(ac1,txt),
+	detach_case
     ]).
 
 proc(demo2, [
         update,
         attach_case(ac1),
-        ac_export(ac1,html)
+        ac_export(ac1,html),
+	detach_case
     ]).
 
 proc(demo3, [
@@ -27,5 +29,6 @@ proc(demo3, [
 	          */
 	     	]),
 	instantiate_pattern_list(AC,CaseId),
-	ac_export(CaseId,html)
+	ac_export(CaseId,html),
+	detach_case
     ]).
