@@ -8,10 +8,10 @@ etb:	agents/axiom_agent.pl agents/certificate_agent.pl agents/ichecker_agent.pl 
 clean: clean_cap clean_repo
 
 clean_cap:
-	find -d ../CAP -not \( -name "README.md" -or -name ".DS_Store" -or -name "CAP" \) -a -exec rm -d {} ";"
+	find -d ../CAP -not \( -name "README.md" -or -name "CAP" \) -delete
 
 clean_repo:
-	find -d ../REPOSITORY/CASES -not \( -name "README.md" -or -name "CASES" \) -a -exec rm -d {} ";"
-	find -d ../REPOSITORY/EVIDENCE -not \( -name "README.md" -or -name "EVIDENCE" -or -name "axiom" -or -name "certificate" -or -name "ichecker" -or -name "ocra" -or -name "unknown" \) -a -exec rm -d {} ";"
+	find -d ../REPOSITORY/CASES -not \( -name "README.md" -or -name "CASES" \) -delete
+	find -d ../REPOSITORY/EVIDENCE -not \( -name "README.md" -or -name "EVIDENCE" -or -name "axiom" -or -name "certificate" -or -name "ichecker" -or -name "ocra" -or -name "unknown" \) -delete
 	echo "assert(ac_evidence_counter(10000))." > ../REPOSITORY/EVIDENCE/repository.pl
 

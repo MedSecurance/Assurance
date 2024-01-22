@@ -19,6 +19,8 @@
 :- persistent ac_evidence_counter(value:positive_integer).
 
 reset_evidence_repository :-
+	db_detach,
+	shell('find -d ../REPOSITORY/EVIDENCE -not "(" -name "README.md" -or -name "EVIDENCE" -or -name "axiom" -or -name "certificate" -or -name "ichecker" -or -name "ocra" -or -name "unknown" ")" -delete'),
 	param:ev_repo_directory(RepoDir), param:ev_repo_file(RepoFile),
 	param:initial_evidence_counter_base(EC),
 	atomic_list_concat( ['../', RepoDir], Directory),
@@ -33,7 +35,11 @@ reset_evidence_repository :-
 attach_evidence_repository :-
 	param:ev_repo_directory(RepoDir), param:ev_repo_file(RepoFile),
 	atomic_list_concat(['../', RepoDir, RepoFile], FullRepoFile),
-    db_attach(FullRepoFile, []).
+    	db_attach(FullRepoFile, []).
+
+				% detach repository db
+
+detach_evidence_repository :- db_detach.
 
 				% insert ac_evidence claims, must be pending
 

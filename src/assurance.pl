@@ -25,6 +25,8 @@
 				% reset repository db
 
 reset_assurance_repository :-
+	detach_assurance_repository,
+	shell('find -d ../REPOSITORY/CASES -not "(" -name "README.md" -or -name "CASES" ")" -delete'),
 	true.
 
 				% init repository db

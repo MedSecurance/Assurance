@@ -107,8 +107,20 @@ initialize_all :-
 	param:setparam(initialized,true).
 
 etb_reset :-
+	etb_reset(repos),
+	reset_CAP,
+	true.
+
+etb_reset(repos) :- !,
 	reset_assurance_repository,
 	reset_evidence_repository,
+	true.
+
+etb_reset(all) :- !,
+	etb_reset,
+	% everything etb_reset does, plus the following:
+	% reset_CAP,
+	% reset_parameters,
 	true.
 
 % Test

@@ -1,9 +1,13 @@
-:- module(export, [ ac_export/2, ac_format/3 ]).
+:- module(export, [ reset_CAP/0, ac_export/2, ac_format/3 ]).
 
 :- use_module(assurance).
 :- use_module(evidence).
 
 :- use_module(stringutil).
+
+
+reset_CAP :-
+	shell('find -d ../CAP -not "(" -name "README.md" -or -name "CAP" ")" -delete').
 
 				%
 				%
