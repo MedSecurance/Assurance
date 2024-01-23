@@ -20,7 +20,11 @@
 
 reset_evidence_repository :-
 	db_detach,
-	shell('find -d ../REPOSITORY/EVIDENCE -not "(" -name "README.md" -or -name "EVIDENCE" -or -name "axiom" -or -name "certificate" -or -name "ichecker" -or -name "ocra" -or -name "unknown" ")" -delete'),
+	param:ev_repo_directory(EvRepoDir),
+	sub_atom(EvRepoDir,0,_,1,EvRepoRoot),
+	atomic_list_concat(['find -d ../',EvRepoRoot,' -not "(" -name "README.md" -or -name "EVIDENCE" -or -name "axiom" -or -name "certificate" -or -name "ichecker" -or -name "ocra" -or -name "unknown" ")" -delete'],Cmd),
+	shell(Cmd),
+	% e.g. shell('find -d ../REPOSITORY/EVIDENCE -not "(" -name "README.md" -or -name "EVIDENCE" -or -name "axiom" -or -name "certificate" -or -name "ichecker" -or -name "ocra" -or -name "unknown" ")" -delete'),
 	param:ev_repo_directory(RepoDir), param:ev_repo_file(RepoFile),
 	param:initial_evidence_counter_base(EC),
 	atomic_list_concat( ['../', RepoDir], Directory),

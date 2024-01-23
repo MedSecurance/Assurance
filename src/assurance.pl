@@ -26,8 +26,11 @@
 
 reset_assurance_repository :-
 	detach_assurance_repository,
-	shell('find -d ../REPOSITORY/CASES -not "(" -name "README.md" -or -name "CASES" ")" -delete'),
-	true.
+	% param:repo_directory_name(RepoDir),
+	param:ac_repo_directory(ACRepoDir),
+	sub_atom(ACRepoDir,0,_,1,ACRepoRoot),
+	atomic_list_concat(['find -d ../',ACRepoRoot,' -not "(" -name "README.md" -or -name "CASES" ")" -delete'],Cmd),
+	shell(Cmd).
 
 				% init repository db
 

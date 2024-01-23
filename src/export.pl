@@ -7,7 +7,11 @@
 
 
 reset_CAP :-
-	shell('find -d ../CAP -not "(" -name "README.md" -or -name "CAP" ")" -delete').
+	param:cap_directory_name(CapDir),
+	sub_atom(CapDir,0,_,1,CapRoot),
+	atomic_list_concat(['find -d ../',CapRoot,' -not "(" -name "README.md" -or -name "',CapRoot,'" ")" -delete'],Command),
+	shell(Command).
+	% e.g. shell('find -d ../CAP -not "(" -name "README.md" -or -name "CAP" ")" -delete').
 
 				%
 				%

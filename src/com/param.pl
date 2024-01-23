@@ -66,7 +66,7 @@ name_string('').
 name_string(etb,'TOG Evidential Tool Bus').
 name_string(kb,'TOG-ETB Knowledge Base').
 name_string(arepo,'TOG-ETB Assurance Case Repository').
-name_string(erepo,'TOG-ETV Evidence Repository').
+name_string(erepo,'TOG-ETB Evidence Repository').
 
 % SETTABLE PARAMETERS
 %
