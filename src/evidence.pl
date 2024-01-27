@@ -20,25 +20,22 @@
 
 reset_evidence_repository :-
 	db_detach,
-	param:ev_repo_directory(EvRepoDir),
-	sub_atom(EvRepoDir,0,_,1,EvRepoRoot),
-	atomic_list_concat(['find -d ../',EvRepoRoot,' -not "(" -name "README.md" -or -name "EVIDENCE" -or -name "axiom" -or -name "certificate" -or -name "ichecker" -or -name "ocra" -or -name "unknown" ")" -delete'],Cmd),
+	param:evidence_repo_dir(EvRepoDir), param:ev_repo_file(RepoFile), param:evidence(Evidence),
+	atomic_list_concat(['find -d ',EvRepoDir,' -not "(" -name README.md -or -name ',Evidence,' -or -name axiom -or -name certificate -or -name ichecker -or -name ocra -or -name unknown ")" -delete'],Cmd),
 	shell(Cmd),
-	% e.g. shell('find -d ../REPOSITORY/EVIDENCE -not "(" -name "README.md" -or -name "EVIDENCE" -or -name "axiom" -or -name "certificate" -or -name "ichecker" -or -name "ocra" -or -name "unknown" ")" -delete'),
-	param:ev_repo_directory(RepoDir), param:ev_repo_file(RepoFile),
+
 	param:initial_evidence_counter_base(EC),
-	atomic_list_concat( ['../', RepoDir], Directory),
-	make_directory_path( Directory ),
-	atomic_list_concat( [Directory, RepoFile], Filename),
-	open(Filename, write, Output),
+	make_directory_path( EvRepoDir ),
+	atomic_list_concat( [EvRepoDir, '/', RepoFile], RepoFilename),
+	open(RepoFilename, write, Output),
 	format(Output, 'assert(ac_evidence_counter(~d)).~n', [EC]),
 	close(Output).
 
 				% attach the evidence repository
 
 attach_evidence_repository :-
-	param:ev_repo_directory(RepoDir), param:ev_repo_file(RepoFile),
-	atomic_list_concat(['../', RepoDir, RepoFile], FullRepoFile),
+	param:evidence_repo_dir(EvRepoDir), param:ev_repo_file(RepoFile),
+	atomic_list_concat([EvRepoDir, '/', RepoFile], FullRepoFile),
     	db_attach(FullRepoFile, []).
 
 				% detach repository db
@@ -57,8 +54,8 @@ insert_ac_evidence(Category, Claim, Context, AArgs, XRef, 'pending') :-
 		      XRef is LastXRef + 1,
 		      assert_ac_evidence_counter(XRef),
 		      assert_ac_evidence(Category, Claim, Context, AArgs, XRef, 'pending') ) ),
-	param:ev_repo_directory(RepoDir), param:ev_status_file(StatusName),
-	atomic_list_concat(['../', RepoDir, Category, '/', XRef], Dirname),
+	param:evidence_repo_dir(EvRepoDir), param:ev_status_file(StatusName),
+	atomic_list_concat([EvRepoDir, '/', Category, '/', XRef], Dirname),
 	make_directory_path(Dirname),
 	atomic_list_concat([Dirname,'/',StatusName], FullFilename),
 	open(FullFilename, write, Output),
@@ -79,10 +76,10 @@ update_ac_evidence(Category, Claim, Context, AArgs, XRef, Status) :-
 				% update_ongoing
 
 update_ongoing :-
-	format('*** updating ongoing ...'),
-	param:ev_repo_directory(RepoDir), param:ev_status_file(StatusName),
+	format('*** updating evidence repository ...'),
+	param:evidence_repo_dir(EvRepoDir), param:ev_status_file(StatusName),
 	forall( ac_evidence(Category, Claim, Context, AArgs, XRef, ongoing),
-		( atomic_list_concat(['../', RepoDir, Category, '/', XRef , '/', StatusName], Filename),
+		( atomic_list_concat([EvRepoDir, '/', Category, '/', XRef , '/', StatusName], Filename),
 		  open(Filename, read, Input), read_term(Input, Status, []), close(Input),
 		  ( member( Status, [valid, invalid] )
 		  -> ( update_ac_evidence(Category, Claim, Context, AArgs, XRef, Status),

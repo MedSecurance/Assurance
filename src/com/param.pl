@@ -14,9 +14,8 @@
 		  msg_unimplemented_command/1,
 		  msg_script_read/1, msg_running_script/1, msg_script_aborted/1,
 		  pattern_prefix/1, pattern_language_version/1, server_version/1,
-		  pattern_directory_name/1, log_directory_name/1, cap_directory_name/1,
-		  test_directory_name/1, repo_directory_name/1,
-                  ac_repo_directory/1, ev_repo_directory/1,
+		  test_directory/1, patterns_directory/1, models_directory/1, log_directory/1,
+		  cases_repo_dir/1, evidence_repo_dir/1, cap_dir/1,
 		  prettyprint_tab/1,
 		  host_os/1, local_pdf_viewer/2,
                   server_port/1, etb_api_port/1, erepo_api_port/1, arepo_api_port/1,
@@ -171,20 +170,42 @@ server_version('0.1').
 
 
 % Files and directories
-% all directory names should include the final '/'
-repo_directory_name('REPOSITORY/').
-ac_repo_directory('REPOSITORY/CASES/').
-ac_repo_file('repository.pl').
+%
 
-ev_repo_directory('REPOSITORY/EVIDENCE/').
+ac_repo_file('repository.pl').
 ev_repo_file('repository.pl').
 ev_status_file('status').
 
-test_directory_name('TEST/').
-pattern_directory_name('KB/PATTERNS/').
-models_directory_name('KB/MODELS/').
-log_directory_name('RUNTIME/LOG/').
-cap_directory_name('CAP/').
+% Key pathname components
+%
+path_prefix('..').		% relative to expected execution location
+cap('CAP').			% Certification Assurance Package(s)
+kb('KB').			% Base of the Knowledge Base
+patterns('PATTERNS').		% Assurance Case Patterns
+models('MODELS').		% System Models
+repository('REPOSITORY').	% Base of the Repositories
+cases('CASES').			% Assurance Case Repository
+evidence('EVIDENCE').		% Evidence Repository
+
+test_directory('TEST').
+patterns_directory('KB/PATTERNS').
+models_directory('KB/MODELS').
+log_directory('RUNTIME/LOG').
+
+% Constructors for the primary runtime and persistent storage area names
+%
+cases_repo_dir(CasesDir) :- % used in assurance module
+	path_prefix(Pre), repository(Repository), cases(Cases),
+	atomic_list_concat([Pre,Repository,Cases],'/',CasesDir).
+
+evidence_repo_dir(EvidenceDir) :- % used in evidence module
+	path_prefix(Pre), repository(Repository), evidence(Evidence),
+	atomic_list_concat([Pre,Repository,Evidence],'/',EvidenceDir).
+
+cap_dir(CAPdir) :- % used in export module
+	path_prefix(Pre), cap(Cap),
+	atomic_list_concat([Pre,Cap],'/',CAPdir).
+
 
 % Misc values
 %

@@ -26,21 +26,18 @@
 
 reset_assurance_repository :-
 	detach_assurance_repository,
-	% param:repo_directory_name(RepoDir),
-	param:ac_repo_directory(ACRepoDir),
-	sub_atom(ACRepoDir,0,_,1,ACRepoRoot),
-	atomic_list_concat(['find -d ../',ACRepoRoot,' -not "(" -name "README.md" -or -name "CASES" ")" -delete'],Cmd),
+	param:cases_repo_dir(ACRepoDir), param:cases(Cases),
+	atomic_list_concat(['find -d ',ACRepoDir,' -not "(" -name README.md -or -name ',Cases,' ")" -delete'],Cmd),
 	shell(Cmd).
 
 				% init repository db
 
 init_assurance_repository(CaseId) :-
-	param:ac_repo_directory(RepoDir),
-	atomic_list_concat( ['../', RepoDir, CaseId, '/'], Directory),
-	make_directory_path( Directory ),
-	param:ac_repo_file(RepoFile),
-	atomic_list_concat( [Directory, RepoFile], Filename),
-	db_attach(Filename, []),
+	param:cases_repo_dir(ACRepoDir), param:ac_repo_file(RepoFile),
+	atomic_list_concat( [ACRepoDir, '/', CaseId], CaseDirectory),
+	make_directory_path( CaseDirectory ),
+	atomic_list_concat( [CaseDirectory, '/', RepoFile], ACRepoFilename),
+	db_attach(ACRepoFilename, []),
 	retractall_ac_instance(_,_,_,_),
 	retractall_ac_instance_id_args(_,_,_,_),
 	retractall_ac_instance_id_counter(_),
@@ -49,8 +46,8 @@ init_assurance_repository(CaseId) :-
 				% attach repository db
 
 attach_assurance_repository(CaseId) :-
-	param:ac_repo_directory(RepoDir), param:ac_repo_file(RepoFile),
-	atomic_list_concat( ['../', RepoDir, CaseId, '/', RepoFile], Filename),
+	param:cases_repo_dir(ACRepoDir), param:ac_repo_file(RepoFile),
+	atomic_list_concat( [ACRepoDir, '/', CaseId, '/', RepoFile], Filename),
 	(	db_attached(Filename)
 	->	true
 	;	db_attach(Filename, [])

@@ -7,11 +7,10 @@
 
 
 reset_CAP :-
-	param:cap_directory_name(CapDir),
-	sub_atom(CapDir,0,_,1,CapRoot),
-	atomic_list_concat(['find -d ../',CapRoot,' -not "(" -name "README.md" -or -name "',CapRoot,'" ")" -delete'],Command),
-	shell(Command).
-	% e.g. shell('find -d ../CAP -not "(" -name "README.md" -or -name "CAP" ")" -delete').
+	param:cap(CapRoot), param:cap_dir(CapDir),
+	atomic_list_concat(['find -d ',CapDir,' -not "(" -name README.md -or -name ',CapRoot,' ")" -delete'],Cmd),
+	shell(Cmd).
+	% e.g. 'find -d ../CAP -not "(" -name README.md -or -name CAP ")" -delete'
 
 				%
 				%
@@ -19,25 +18,25 @@ reset_CAP :-
 				%
 
 ac_export(FileBasename, 'txt') :- atom(FileBasename),
-	param:cap_directory_name(CapDir),
-	atomic_list_concat(['../',CapDir,FileBasename,'.txt'],FullFilename),
+	param:cap_dir(CapDir),
+	atomic_list_concat([CapDir,'/',FileBasename,'.txt'],FullFilename),
 	open(FullFilename, write, Output),
 	forall(ac_instance(PatternId, AArgs, Goal, Log),
 	       ac_format(Output, 'txt', ac_instance(PatternId, AArgs, Goal, Log))),
 	close(Output), !.
 
 ac_export(Dirname, 'html') :-
-	param:cap_directory_name(CapDir),
-	atomic_list_concat(['../',CapDir,Dirname,'/'],FullDirname),
+	param:cap_dir(CapDir),
+	atomic_list_concat([CapDir,'/',Dirname],FullDirname),
 	make_directory_path(FullDirname),
-	atomic_list_concat([FullDirname, '/index.html'], Index_Html),
+	atom_concat(FullDirname, '/index.html', Index_Html),
 	open(Index_Html, write, Index_Output),
 	format(Index_Output, '<frameset cols=200,* border=1>~n', []),
 	format(Index_Output, '  <frame src="list.html" name=list>~n', []),
 	format(Index_Output, '  <frame name=layout>~n', []),
 	format(Index_Output, '</frameset>~n', []),
 	close(Index_Output),
-	atomic_list_concat([FullDirname, '/list.html'], List_Html),
+	atom_concat(FullDirname, '/list.html', List_Html),
 	open(List_Html, write, List_Output),
 	format(List_Output, '<h2>~a</h2>~n', [Dirname]),
 	forall( ac_instance(PatternId, AArgs, Goal, Log),
@@ -50,15 +49,15 @@ ac_export(Dirname, 'html') :-
 ac_export_html_instance( ac_instance(PatternId, AArgs, Goal, Log), Dirname, Basename ) :-
 	ac_instance_basename(ac_instance(PatternId, AArgs, Goal, Log), Basename),
 				% create dot file
-	atomic_list_concat([ Dirname, Basename, '.dot'], Filename_Dot),
+	atomic_list_concat([ Dirname, '/', Basename, '.dot'], Filename_Dot),
 	open(Filename_Dot, write, Output_Dot),
 	ac_format(Output_Dot, 'dot', ac_instance(PatternId, AArgs, Goal, Log)),
 	close(Output_Dot),
 				% convert dot into svg
-	atomic_list_concat(['-o', Dirname, Basename, '.svg'], OFilename_Svg),
+	atomic_list_concat(['-o', Dirname, '/', Basename, '.svg'], OFilename_Svg),
 	fork_exec( dot( '-Tsvg', OFilename_Svg, Filename_Dot) ),
 				% create html file
-	atomic_list_concat([Dirname, Basename, '.html'], Filename_Html),
+	atomic_list_concat([Dirname, '/', Basename, '.html'], Filename_Html),
 	open(Filename_Html, write, Output_Html),
 	ac_format(Output_Html, 'html', ac_instance(PatternId, AArgs, Goal, Log)),
 	close(Output_Html).
