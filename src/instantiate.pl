@@ -13,7 +13,7 @@
 
 
 				%
-				% instatiate_pattern(, +CaseId)
+				% instatiate_pattern(+PatternId, +TopArgs, +CaseId)
 				%
 
 instantiate_pattern(PatternId, TopArgs, CaseId) :-
@@ -32,7 +32,7 @@ instantiate_pattern_list_aux([PatternId-TopArgs | List]) :-
 
 
 				%
-				% instantiate_pattern(+PatternId, +TopArgs)
+				% instantiate_pattern_main(+PatternId, +TopArgs)
 				%
 
 instantiate_pattern_main(PatternId, TopArgs) :-
