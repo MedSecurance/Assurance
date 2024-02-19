@@ -11,6 +11,8 @@
 				%
 				%
 
+:- multifile ac_pattern/3.
+
 ac_pattern('foundational_plane',
 	   [arg('S', foundational_plane:platform)],
 	   goal(g0, 'The foundational plane guarantees the local policy is met',
