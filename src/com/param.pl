@@ -175,6 +175,10 @@ server_version('0.1').
 ac_repo_file('repository.pl').
 ev_repo_file('repository.pl').
 ev_status_file('status').
+mod_policy_file('policy.pl').
+mod_platform_file('platform.pl').
+mod_configuration_file('configuration.pl').
+mod_properties_dir('properties').
 
 % Key pathname components
 %
@@ -192,6 +196,8 @@ patterns_directory('KB/PATTERNS').
 models_directory('KB/MODELS').
 log_directory('RUNTIME/LOG').
 
+pattern_files( [ 'MILS', 'ISO_81001' ] ).
+
 % Constructors for the primary runtime and persistent storage area names
 %
 cases_repo_dir(CasesDir) :- % used in assurance module
@@ -206,6 +212,13 @@ cap_dir(CAPdir) :- % used in export module
 	path_prefix(Pre), cap(Cap),
 	atomic_list_concat([Pre,Cap],'/',CAPdir).
 
+kb_patterns_dir(KBPdir) :- 
+	path_prefix(Pre), kb(KB), patterns(Patterns),
+	atomic_list_concat([Pre,KB,Patterns],'/',KBPdir).
+
+kb_models_dir(KBMdir) :- 
+	path_prefix(Pre), kb(KB), models(Models),
+	atomic_list_concat([Pre,KB,Models],'/',KBMdir).
 
 % Misc values
 %

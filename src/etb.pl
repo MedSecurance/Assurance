@@ -10,7 +10,7 @@
 :- use_module(models_api/configuration).
 :- use_module(models_api/model).
 
-:- use_module('../KB/PATTERNS/patterns').
+:- use_module(patterns).
 :- use_module(assurance).
 :- use_module(evidence).
 
@@ -99,14 +99,16 @@ initialize_once :-
 initialize_all :-
 	% initialize all subsystems and modules requiring startup initialization
 	% ui:notify(initialize,all),
-   initialize_once,
+        initialize_once,
+        
+	% individual module initializations, e.g.: kb:init(full), % basic or full
+        patterns:init,
 
-	% e.g.: kb:init(full), % basic or full
 	attach_evidence_repository,
 
 	param:setparam(initialized,true).
 
-etb_reset :-
+etb_reset :- % TODO currently not resulting in a complete reset, use make clean
 	etb_reset(repos),
 	reset_CAP,
 	true.

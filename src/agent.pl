@@ -32,8 +32,8 @@ evidence_validate(_Category, _Claim, _Context, _AArgs, _XRef) :-
 
 update_evidence_status(Category, Claim, Context, AArgs, XRef, Status) :-
 	update_ac_evidence(Category, Claim, Context, AArgs, XRef, Status),
-	param:ev_repo_directory(RepoDir),
-	atomic_list_concat(['../', RepoDir, Category, '/', XRef , '/status'], Filename),
+	param:evidence_repo_dir(RepoDir),
+	atomic_list_concat([RepoDir, Category, XRef , 'status'], '/', Filename),
 	open(Filename, write, Output),
 	write_term(Output, Status, [fullstop(true)]),
 	close(Output).

@@ -1,17 +1,13 @@
 
 				%
-				% the patterns collection (examples)
+				% the MILS patterns collection (examples)
 				%
-
-:-module(patterns, [ ac_pattern/3 ]).
 
 				%
 				%
 				% foundational plane pattern
 				%
 				%
-
-:- multifile ac_pattern/3.
 
 ac_pattern('foundational_plane',
 	   [arg('S', foundational_plane:platform)],
