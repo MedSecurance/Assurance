@@ -20,8 +20,6 @@ syntax(etbt(test_id,eval_mode),                                  etb).
 
 syntax(etbtests,                                                 etb).
 
-syntax(import_sspec(serv_spec_file,serv_spec_id),                etb).
-
 syntax(instantiate_pattern(pattern_name,arg_list,ac_id),	 etb).
 
 syntax(instantiate_pattern_list(pattern_list,ac_id),		 etb).
@@ -62,7 +60,7 @@ help(ac_export,	'Export the current assurance case to the CAP.').
 help(ac_export,	'Arg1 is a name in the CAP directory for the export.').
 help(ac_export, 'Arg2 is the format (currently either txt or html).').
 
-help(attach_case, 'Attach the named assurance case in the repository.').
+help(attach_case, 'Attach the identified assurance case in the repository.').
 help(attach_case, 'Arg is an assurance case identifier.').
 
 help(detach_case, 'Detach the currently attached assurance case.').
