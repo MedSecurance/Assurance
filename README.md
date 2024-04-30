@@ -1,4 +1,4 @@
-# tog-etb
+# o-etb
 Evidential Tool Bus technologies
 
 Initlal commit includes content from CITADEL Adaptive MILS Evidential Tool Bus (AM-ETB),
