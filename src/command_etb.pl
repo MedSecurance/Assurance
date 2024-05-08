@@ -16,9 +16,11 @@ syntax(etb_reset,						 etb).
 syntax(etb_server(arg),                                          etb).
 syntax(etbt,                                                     etb).
 syntax(etbt(test_id),                                            etb).
-syntax(etbt(test_id,eval_mode),                                  etb).
+syntax(etbt(test_id,mode),                                       etb).
 
 syntax(etbtests,                                                 etb).
+
+syntax(import(spec_type,file,s_id),                              etb).
 
 syntax(instantiate_pattern(pattern_name,arg_list,ac_id),	 etb).
 
@@ -42,7 +44,7 @@ semantics(etb_server(A)) :- !, atomic(A), (number(A) ; A==nurvsim).
 semantics(etbt(T)) :- !, atom(T).
 semantics(etbt(T,E)) :- !, atom(T), atom(E).
 
-semantics(import_sspec(F,V)) :- !, atom(F), var(V).
+semantics(import(T,F,Id)) :- !, atom(T), atom(F), atom(Id).
 
 semantics(instantiate_pattern(PName,Args,CaseId)) :- !, atom(PName), is_list(Args), atom(CaseId).
 semantics(instantiate_pattern_list(PatList,CaseId)) :- !, is_list(PatList), atom(CaseId).
@@ -69,9 +71,14 @@ help(etb,       'Switch to etb user mode.').
 help(etb_reset,	'Reset ETB repositories.').
 help(etb_server,'Start the ETB server.').
 
-help(etbt,      'run an etb built-in test. Default is \'e2e\'.').
+help(etbt,      'Run an etb built-in test. Default is \'e2e\'.').
 help(etbt,      'Arg1 (opt) is a test identifier.').
-help(etbt,      'Arg2 (opt) is evaluation mode (ms_eval, mep_eval, no_eval).').
+help(etbt,      'Arg2 (opt) is etb mode.').
+
+help(import,    'Import a specification of type (model, property, ...).').
+help(import,    'Arg1 is a specification type.').
+help(import,    'Arg2 is a file name.').
+help(import,    'Arg3 (opt) is the identifier to associate with the spec.').
 
 help(instantiate_pattern,	'Instantiate a pattern from the KB into the REPO.').
 help(instantiate_pattern, 	'Arg1 is the name of a defined pattern.').
@@ -112,11 +119,11 @@ do(etb_server(A)) :- !, etb_server:etb_server_cmd(A).
 
 do(etbt) :- !, etbt(e2e). % abbrev-change to suit current need
 do(etbt(e2e)) :- !, etbt(e2e).
-do(etbt(T,Emode)) :- !, etbt(T,Emode).
+do(etbt(T,Mode)) :- !, etbt(T,Mode).
 do(etbtests) :- !, load_test_files([]), run_tests. % .plt tests
 
-do(import_sspec(F,Sid)) :- !,
-    load_service_specification_from_file(F,Sid).
+do(import(T,F,Sid)) :- !,
+    kb:load_specification_from_file(T,F,Sid).
 
 do(instantiate_pattern(Name,Args,ACid)) :- !, instantiate:instantiate_pattern(Name,Args,ACid).
 do(instantiate_pattern_list(PatList,ACid)) :- !,

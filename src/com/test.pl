@@ -35,7 +35,7 @@ report_test(G) :- % argument is a test goal
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 regression_test(M) :-
-	param:test_directory_name(D),
+	param:test_directory(D),
 	atom_concat([M,'.pl'], '.', Mfilename),
 	atomic_list_concat([D, '/', M, '_test.pl'], Tfilename),
 	exists_file(Mfilename), exists_file(Tfilename),

@@ -1,4 +1,4 @@
-% GLOBAL PARAMETERS OF THE TOG Evidential Tool Bus
+% GLOBAL PARAMETERS OF THE Open Evidential Tool Bus (O-ETB)
 %
 % all parameters should be defined here
 %
@@ -18,13 +18,14 @@
 		  cases_repo_dir/1, evidence_repo_dir/1, cap_dir/1,
 		  prettyprint_tab/1,
 		  host_os/1, local_pdf_viewer/2,
-                  server_port/1, etb_api_port/1, erepo_api_port/1, arepo_api_port/1,
+                  server_port/1, etb_port/1, etb_api_port/1, erepo_api_port/1, arepo_api_port/1,
                   server_sleeptime/1, kb_token/1, repo_token/1, audit_token/1,
                   audit_logging/1, audit_stream/1, audit_record/1,
 		  audit_selection/1,
 		  null_stream/1, sleep_after_server_start/1,
                   jsonresp_server/1, jsonresp/1,
-                  localhost_ip/1, serverhost_ip/1
+                  localhost_ip/1, serverhost_ip/1,
+		  etb_run_with_http_server/1, etb_server_is_running/1
 		 ]).
 
 % Versioning of various things
@@ -43,9 +44,11 @@ build_version(etb,'1.0.0','initial structure setup').
 
 build_version(etb,'1.0.1','added directory structure and new files').
 
-build_version(etb,'1.0.2' /* ongoing development */ ).
+build_version(etb,'1.0.2','added parameterization').
 
-build_current_version_description(etb,'added parameterization').
+build_version(etb,'1.0.3' /* ongoing development */ ).
+
+build_current_version_description(etb,'Prototype #1').
 %
 
 % Used by the command interpreter
@@ -56,16 +59,16 @@ prompt_string(kb,'kb').
 prompt_string(arepo,'arepo').
 prompt_string(erepo,'erepo').
 
-build_name(etb,'TOG-ETB','TOG-etb').
-build_name(kb,'TOG-KB','TOG-kb').
-build_name(arepo,'TOG-AREPO','TOG-arepo').
-build_name(erepo,'TOG-EREPO','TOG-erepo').
+build_name(etb,'O-ETB','o-etb').
+build_name(kb,'O-KB','o-kb').
+build_name(arepo,'O-AREPO','o-arepo').
+build_name(erepo,'O-EREPO','o-erepo').
 
 name_string('').
-name_string(etb,'TOG Evidential Tool Bus').
-name_string(kb,'TOG-ETB Knowledge Base').
-name_string(arepo,'TOG-ETB Assurance Case Repository').
-name_string(erepo,'TOG-ETB Evidence Repository').
+name_string(etb,'Open Evidential Tool Bus').
+name_string(kb,'O-ETB Knowledge Base').
+name_string(arepo,'O-ETB Assurance Case Repository').
+name_string(erepo,'O-ETB Evidence Repository').
 
 % SETTABLE PARAMETERS
 %
@@ -74,12 +77,14 @@ name_string(erepo,'TOG-ETB Evidence Repository').
 :- dynamic prompt_string/1, debug/1, statusprt/1, guitracer/1, guiserver/1,
         self_test/1, regression_test/1, verbose/1,
         initialize/1, initialized/1, etb_initialized/1, user_level/1,
-        etb_mode/1, etb_logging/1, null_stream/1, sleep_after_server_start/1.
+        etb_mode/1, etb_logging/1, null_stream/1, sleep_after_server_start/1,
+        etb_run_with_http_server/1, etb_server_is_running/1.
 
 settable_params([prompt_string,debug,statusprt,guitracer,guiserver,
 		 self_test,regression_test,verbose,
 		 initialize,initialized,etb_initialized,user_level,
-		 etb_mode, etb_logging, null_stream, sleep_after_server_start
+		 etb_mode, etb_logging, null_stream, sleep_after_server_start,
+		 etb_run_with_http_server, etb_server_is_running
                 ]).
 
 setparam(Param,Value) :- atom(Param), ground(Value),
@@ -107,13 +112,13 @@ null_stream(x).
 initialize(on). % off/on
 initialized(false).
 verbose(on). % off/on
-sleep_after_server_start(on). % normally: on
 
 jsonresp_server(off).
 jsonresp(off). % off / on / separate / same
 
 % API ports
 server_port(9001). % default server port
+etb_port(9001).
 etb_api_port(9001).
 arepo_api_port(9001). % default arepor server port, currently same as server_port
 erepo_api_port(9002). % default evidence repo port
@@ -148,6 +153,9 @@ etb_logging(file). % 'file', or 'on' (to std out), or 'off'
 etb_stream(user_error). % default stream for EPP log (standard error)
 etb_initialized(false).
 etb_status(inactive). % inactive, wf_server, standalone, ac_server, ev_server
+sleep_after_server_start(on). % normally: on
+etb_run_with_http_server(true). % 'false' is used for testing (set to false by test harness)
+etb_server_is_running(false).
 
 initial_evidence_counter_base(10000).
 

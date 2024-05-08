@@ -10,8 +10,11 @@
 :- use_module(models_api/configuration).
 :- use_module(models_api/model).
 
-:- use_module(patterns).
+:- use_module(kb).
+% :- use_module(patterns).
+
 :- use_module(assurance).
+
 :- use_module(evidence).
 
 :- use_module(agents/axiom_agent).
@@ -22,6 +25,7 @@
 
 :- use_module(instantiate).
 :- use_module(export).
+:- use_module(etb_server).
 
 :- style_check(-singleton).
 
@@ -79,7 +83,7 @@ etb(Selftest,Regression,Init,Verbose) :-
 etb_server :-
 	get_command_args(Argv),
 	initialize_all,
-	server:server_with_args(Argv).
+	etb_server:etb_server_with_args(Argv).
 
 get_command_args(Argv) :-
 	current_prolog_flag(argv, Argv),
