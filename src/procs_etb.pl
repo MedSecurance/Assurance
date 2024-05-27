@@ -1,20 +1,20 @@
 % ETB-specific command procedures
 :- use_module('etb').
 
-proc(demo1, [
+proc(ex1, [
         instantiate_pattern('person', ['Marius', 'Programming'], 'ac1'),
         ac_export(ac1,txt),
 	detach_case
     ]).
 
-proc(demo2, [
+proc(ex2, [
         update,
         attach_case(ac1),
         ac_export(ac1,html),
 	detach_case
     ]).
 
-proc(demo3, [
+proc(ex3, [
 	set_v(ModelId, '1.0'),
 	set_v(CaseId, ac2),
 	load_model_v(ModelId, Policy, Platform, _Configuration),

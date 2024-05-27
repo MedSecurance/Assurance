@@ -1,17 +1,18 @@
 % Evidential Tool Bus
 
-:- module(etb, [etb/0,etb/1,etb/4,etb_server/0,etb_reset/0]).
+:- module(etb, [etb/0,etb/1,etb/4,etb_server/0,etb_reset/0,etb_reset/1]).
 :- use_module([
-       'com/param','com/command','com/test','com/procs'
+       'com/command','com/param','com/procs','com/test','com/ui'
   ]).
 :- use_module(models_api/common).
-:- use_module(models_api/platform).
-:- use_module(models_api/policy).
 :- use_module(models_api/configuration).
 :- use_module(models_api/model).
+:- use_module(models_api/platform).
+:- use_module(models_api/policy).
 
 :- use_module(kb).
-% :- use_module(patterns).
+:- use_module(patterns).
+:- use_module(stringutil).
 
 :- use_module(assurance).
 
@@ -114,8 +115,11 @@ initialize_all :-
 
 etb_reset :- % TODO currently not resulting in a complete reset, use make clean
 	etb_reset(repos),
-	reset_CAP,
+	etb_reset(cap),
 	true.
+
+etb_reset(cap) :- !,
+	reset_CAP.
 
 etb_reset(repos) :- !,
 	reset_assurance_repository,

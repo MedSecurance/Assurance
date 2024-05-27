@@ -1,0 +1,139 @@
+
+	Open Evidential Tool Bus (O-ETB) prototype v1.1.0 - June 2024 
+	Implemented for the MedSecurance Project by Rance DeLong, The Open Group
+	adapted from AM-ETB v0.3 CITADEL Project by Marius Bozga, Université Grenoble Alpes
+
+------------------------------------------------------------------------
+
+1) O-ETB Organization 
+
+The following tools comprise the MedSecurance O-ETB assurance toolbox:
+Assurance Tool - allows interactive use by users, certifiers, and developers
+Assurance Server - enables programmatic invocation of background assurance services
+CAP Renderer - renders assurance artifacts to satisfy specific certification requirements
+Tool Agents - provide a framework and capability to incorporate external tools in the process
+
+The tools create and use the following data collections:
+Knowledge Base - organized by System Models, Argument Patterns, Workflows and General Knowledge
+Assurance Case Repository - organized by assurance case identifiers
+Evidence Repository - organized by class of evidence and shared among assurance cases
+Certification Assurance Package (CAP) - organized by certification application
+
+The O-ETB directory contains several subdirectories, listed below, containing source code,
+repository, knowledge base, build and test facilities, and generated Certification
+Assurance Packages (CAPs). Among these are directories and files associated with the
+above listed tools (as indicated within parentheses).
+
+BUILD - build/deploy the executable tools
+CAP - Certification Assurance Package (CAP Renderer)
+docs - design, developer, and user documentation
+KB - knowledge base (Assurance Tool, Assurance Server, CAP Renderer)
+	system models 
+	assurance case patterns 
+	workflow programs (to be used with future workflow processing extensions)
+	/ MODELS / <version> / policy.pl, platform.pl, configuration.pl, ...
+                             / properties / p1.pro ...
+	/ PATTERNS / patterns_ISO_81001.pl, patterns_MILS.pl
+	/ WORKFLOWS /
+REPOSITORY - generated files for assurance CASES and EVIDENCE
+	assurance case repository - (O-ETB Assurance Tool and O-ETB Assurance Server)
+	evidence repository - (O-ETB Assurance Tool, O-ETB Evidence Repository and Tool Agents)
+	/ CASES / <case> / repository.pl (* generated *)
+	/ EVIDENCE / repository.pl (* generated *)
+                   / <category> / <xref> / status, aargs, ... (* generated *)
+RUNTIME - temporary and persistent auxiliary runtime files
+src - source code, including subdirectories
+	agent.pl
+	agents (dir) - (Tool Agents)
+	assurance.pl
+	com (dir) - common and configuration files
+		command.pl, param.pl, procs.pl, test.pl, ui.pl
+	command_etb.pl, demo.pl. etb_server.pl, etb.pl, evidence.pl, export.pl, instantiate.pl,
+	kb.pl, makefile, patterns.pl, procs_etb.pl, stringutil.pl
+	models_api - internal APIs to access models in the KB
+	/ models_api / common.pl, configuration.pl, model.pl, platform.pl, policy.pl
+	...
+TEST - test scripts and test cases
+
+
+------------------------------------------------------------------------
+
+2) Quick start
+
+- Requires SWI-Prolog 8.*.* or higher
+- See the O-ETB User Manual for details concerning prerequisites, installation and use.
+
+In the O-ETB/src directory, run make. This will create the 'etb' executable in BUILD.
+It can then be executed as '../BUILD/etb'.
+Alternatively etb can be compiled and run directly from within Prolog (start swipl from shell).
+To do this and run a simple pattern instantiation and view the result:
+   % swipl
+     ... Prolog Banner ...
+   ? [etb].
+   ? etb.
+   etb> instantiate_pattern('person', ['Marius', 'Programming'], 'ac1').
+   etb> ac_export('ac1.txt', 'txt').
+   etb> halt.
+   %
+This example can also be found as the predefined proc 'ex1' in procs_etb.pl.
+
+Then, export the result of the previous instantiation to the CAP as HTML:
+   % swipl
+     ... Prolog Banner ...
+   ? [etb].
+   ? etb.
+   etb> update_ongoing.
+   etb> attach_assurance_repository('ac1').
+   etb> ac_export('ac1-html', 'html').
+   etb> halt.
+   %
+This example can be found as the predefined proc 'ex2' in procs_etb.pl.
+
+To generate a small complete assurance case:
+   % swipl
+     ... Prolog Banner ...
+   ? [etb].
+   ? etb.
+   etb> proc(ex3,verbose).
+        ...
+   etb> halt.
+   % 
+A web browser can them be used to view the assurance case by opening the .index file
+in the created REPOSITORY/CASES/ac2 directory and navigating from there.
+(This example runs the predefined proc 'ex3' in procs_etb.pl.
+
+-----------------------------------------------------------------------
+
+3) Key Changes from AM-ETB v0.3
+
+- re-structuring of code and runtime data
+- parameterized the implementation and added central parameter definition file param.pl
+- added to Assurance Tool an extensible command line interface with checking and help
+- added optional command line arguments to Assurance Tool invocation from shell
+- examples included as predefined command procedures
+- groundwork for background server
+- update of READMEs and additional documentation provided as a User Manual (in progress)
+
+-----------------------------------------------------------------------
+
+4) Principles of operation and other details
+
+- Please consult the User Manual for descriptions of the command language,
+  the format of assurance case patterns, and principles of operation.
+
+------------------------------------------------------------------------
+
+3) Known limitations
+
+- Error handling is rudimentary at present - some error log 
+  constructed, and command failures are reported, but error handling
+  needs to be more thorough and tested.
+
+- Agents for evidence creation/validation are limited to simple examples.
+  These need to be extended for evidence categories and evidence-generating
+  tools to be applied.
+
+- Model example is limited.
+
+- Assurance case patterns need to be added for new assurance methodologies.
+

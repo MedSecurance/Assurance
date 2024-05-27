@@ -40,6 +40,8 @@ syntax(update,                                                   etb).
 semantics(ac_export(Name,Format)) :- !, atom(Name), atom(Format), (Format==txt;Format==html).
 semantics(attach_case(Case)) :- !, atom(Case).
 
+semantics(etb_reset(D)) :- !, (D == cap ; D == repos ; D == all).
+
 semantics(etb_server(A)) :- !, atomic(A), (number(A) ; A==nurvsim).
 semantics(etbt(T)) :- !, atom(T).
 semantics(etbt(T,E)) :- !, atom(T), atom(E).
@@ -69,6 +71,7 @@ help(detach_case, 'Detach the currently attached assurance case.').
 
 help(etb,       'Switch to etb user mode.').
 help(etb_reset,	'Reset ETB repositories.').
+help(etb_reset, 'Arg (opt) domain to reset (cap or repos).').
 help(etb_server,'Start the ETB server.').
 
 help(etbt,      'Run an etb built-in test. Default is \'e2e\'.').
@@ -113,6 +116,8 @@ do(etb) :- !, user_mode(M), retractall(user_mode(_)), assert(user_mode(etb)),
 	rem_commands(M), add_commands(etb), banner(etb).
 
 do(etb_reset) :- !, etb_reset.
+
+do(etb_reset(D)) :- !, etb_reset(D).
 
 do(etb_server) :- !, etb_server:etb_server_cmd.
 do(etb_server(A)) :- !, etb_server:etb_server_cmd(A).
