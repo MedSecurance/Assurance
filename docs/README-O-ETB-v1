@@ -65,8 +65,11 @@ TEST - test scripts and test cases
 
 In the O-ETB/src directory, run make. This will create the 'etb' executable in BUILD.
 It can then be executed as '../BUILD/etb'.
+
 Alternatively etb can be compiled and run directly from within Prolog (start swipl from shell).
-To do this and run a simple pattern instantiation and view the result:
+This approach is particularly useful for O-ETB development work as it permits
+incremental recompilation from within the running tool or tool-initiated server.
+To do this and then run a simple pattern instantiation and view the result:
    % swipl
      ... Prolog Banner ...
    ? [etb].
@@ -74,10 +77,11 @@ To do this and run a simple pattern instantiation and view the result:
    etb> instantiate_pattern('person', ['Marius', 'Programming'], 'ac1').
    etb> ac_export('ac1.txt', 'txt').
    etb> halt.
-   %
+   % cat ../CAP/ac1.txt
+
 This example can also be found as the predefined proc 'ex1' in procs_etb.pl.
 
-Then, export the result of the previous instantiation to the CAP as HTML:
+Then, to export the result of the previous instantiation to the CAP as HTML:
    % swipl
      ... Prolog Banner ...
    ? [etb].
@@ -87,7 +91,9 @@ Then, export the result of the previous instantiation to the CAP as HTML:
    etb> ac_export('ac1-html', 'html').
    etb> halt.
    %
-This example can be found as the predefined proc 'ex2' in procs_etb.pl.
+Then use a browser to open the index.html file in the ../CAP/ac1-html directory.
+
+This example can also be found as the predefined proc 'ex2' in procs_etb.pl.
 
 To generate a small complete assurance case:
    % swipl
@@ -111,15 +117,16 @@ in the created REPOSITORY/CASES/ac2 directory and navigating from there.
 - added to Assurance Tool an extensible command line interface with checking and help
 - added optional command line arguments to Assurance Tool invocation from shell
 - examples included as predefined command procedures
-- groundwork for background server
-- update of READMEs and additional documentation provided as a User Manual (in progress)
+- groundwork for background server operation
+- update of READMEs and added documentation in the form of a (living) User Manual
 
 -----------------------------------------------------------------------
 
 4) Principles of operation and other details
 
 - Please consult the User Manual for descriptions of the command language,
-  the format of assurance case patterns, and principles of operation.
+  the assurance case pattern language, tool agent interaction protocols,
+  and details of the principles of operation.
 
 ------------------------------------------------------------------------
 
@@ -133,7 +140,8 @@ in the created REPOSITORY/CASES/ac2 directory and navigating from there.
   These need to be extended for evidence categories and evidence-generating
   tools to be applied.
 
-- Model example is limited.
+- The provided model example is limited.
 
-- Assurance case patterns need to be added for new assurance methodologies.
+- Assurance case patterns need to be added for new assurance methodologies
+  (e.g. MedSecurance TVRA).
 
