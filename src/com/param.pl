@@ -6,7 +6,7 @@
                   debug/1, statusprt/1, guitracer/1, guiserver/1,
 		  self_test/1, regression_test/1, initialize/1, verbose/1,
 		  initialized/1, etb_initialized/1, user_level/1, settable_params/1,
-		  self_test_modules/1, regression_test_modules/1,
+		  self_test_modules/1, regression_test_modules/1, test_modules/2,
 		  local_pdf_viewer/2, local_dot_render/2,local_open_file/2,
                   build_version/2, build_version/3,
                   build_current_version_description/2, build_name/3,
@@ -163,6 +163,18 @@ initial_evidence_counter_base(10000).
 %
 self_test_modules([]).       % modules that provide self tests
 regression_test_modules([]). % modules that provide regression tests
+test_modules(Set,Modules) :-
+    ( atom(Set)
+      ->
+      (atomic_concat(Set,'_test_modules',ModuleSet),
+       GetMods =.. [ModuleSet,Modules],
+       (   clause(GetMods,_)
+	   -> call(GetMods)
+	   ;  Modules = []
+       )
+      )
+      ; Modules = []
+    ).
 
 % Misc strings
 %
