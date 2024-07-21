@@ -13,4 +13,7 @@ REPOSITORY/EVIDENCE/certificate/*/status
 REPOSITORY/EVIDENCE/ichecker/*/status
 REPOSITORY/EVIDENCE/ocra/*/status
 REPOSITORY/EVIDENCE/unknown/*/status
-
+src/*~
+src/agents/*~
+src/com/*~
+src/models_api/*~

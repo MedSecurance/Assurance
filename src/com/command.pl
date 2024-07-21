@@ -5,6 +5,7 @@
 
 :- use_module(param).
 :- use_module(ui).
+:- use_module('../assurance').
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % ETB, AC and EV tool modes of operation and available commands
@@ -129,7 +130,8 @@ syntax(proc(proc_id,step_or_verbose),	basic).
 syntax(quit,                            basic).
 syntax(regtest,								developer).
 syntax(reset,					                      advanced).
-syntax(reset(domain,name),				              advanced).
+syntax(reset(domain),					              advanced).
+%syntax(reset(domain,name),				              advanced).
 syntax(reinit,                                                          developer).
 syntax(script(file),                    basic).
 syntax(script(file,step_or_verbose),	basic).
@@ -138,6 +140,8 @@ syntax(set,						                      advanced).
 syntax(set(name),				                      advanced).
 syntax(set(name,value),				                  advanced).
 syntax(set_v(var,expr),					     basic).
+syntax(show_proc(proc_id),              basic).
+syntax(show_procs,                      basic).
 syntax(status,				basic).
 syntax(step,								                            developer).
 syntax(step(number_of_steps),				                         	developer).
@@ -161,13 +165,17 @@ semantics(help(C)) :- !, ground(C).
 semantics(import_model(M)) :- atom(M).
 semantics(inspect(I)) :- nonvar(I).
 semantics(proc(P)) :- !, atom(P).
-semantics(proc(P,Opt)) :- !, atom(P), (Opt==step;Opt==s;Opt==verbose;Opt==v). % other opts can be added
-semantics(reset(Dom,Name)) :- !, atom(Dom), atom(Name).
+semantics(proc(P,Opt)) :- !, atom(P), atom(Opt),
+	member(Opt,[step,s,verbose,v]). % other opts can be added
+semantics(reset(Dom)) :- !, atom(Dom).
+%semantics(reset(Dom,Name)) :- !, atom(Dom), atom(Name).
 semantics(script(F)) :- !, atom(F).
-semantics(script(F,Opt)) :- !, atom(F), (Opt==step;Opt==s;Opt==verbose;Opt==v). % other opts can be added
+semantics(script(F,Opt)) :- !, atom(F), atom(Opt),
+	member(Opt,[step,s,verbose,v]). % other opts can be added
 semantics(set(N)) :- !, atom(N).
 semantics(set(N,V)) :- !, atom(N), ground(V).
 semantics(set_v(V,E)) :- !, ground(E), var(V).
+semantics(show_proc(P)) :- !, atom(P).
 semantics(step(N)) :- !, (integer(N) ; N == break), !.
 semantics(time(C)) :- !, ground(C).
 semantics(time(C,N)) :- !, ground(C), integer(N).
@@ -211,9 +219,9 @@ help(regtest, 'Run regression tests.').
 
 help(reinit,	'Re-initialize.').
 
-help(reset,  'Reset databases.').
+help(reset,  	'Reset databases.').
 help(reset,	'Arg 1 is the domain to be reset.').
-help(reset,  'Arg 2 is the name of the group to be reset.').
+%help(reset,  	'Arg 2 is the name of the group to be reset.').
 
 help(script,	'Run a command script from a named file.').
 help(script,	'Arg 1 is the file name.').
@@ -229,6 +237,9 @@ help(set, 'Settable: cache, debug, initialize, statusprt, self_test, regression_
 help(set_v, 'Set variable to expression.').
 help(set_v, 'Arg 1 is a logical variable.').
 help(set_v, 'Arg 2 is a ground expression.').
+
+help(show_proc, 'Show the predefined command procedure identified by the argument.').
+help(show_procs, 'Show all of the predefined command procedures.').
 
 help(status,	'Display system status.').
 
@@ -261,7 +272,8 @@ do(basic) :- !, do(level(basic)).
 
 do(demo(C)) :- !, perform_demo(C).
 do(developer) :- !, do(level(developer)).
-do(echo(S)) :- !, writeq(S), nl.
+do(echo(S)) :- !, 
+	( ground(S) -> writeq(S), nl ; writeln('non-ground arg')).
 do(guitracer) :- !,
 	(   param:guitracer(off)
 	->  setparam(guitracer,on),
@@ -303,8 +315,8 @@ do(quit) :- !.
 do(halt) :- !, halt.
 do(regtest) :- !, user_mode(M), M:regression_test_all.
 do(reinit) :- !, writeln('No top-level reinit currently').
-do(reset) :- !.
-do(reset(_D,_N)) :- !.
+do(reset) :- !, etb_reset.
+do(reset(D)) :- !, etb_reset(D).
 do(script(F)) :- !, user_mode(M), run_command_script(M,F,none).
 do(script(F,Opt)) :- !, param:prompt_string(P), run_command_script(P,F,Opt).
 do(selftest) :- !, user_mode(M), M:self_test_all, /* others ... */ true.
@@ -327,11 +339,15 @@ do(set(verbose,V)) :- (V == on ; V == off), !, param:setparam(verbose,V).
 do(set(P,V)) :- atom(P), ground(V), param:setparam(P,V), !.
 do(set(_,_)) :- !,
 	writeln('Unknown parameter name or illegal parameter value').
+do(show_proc(P)) :- !, listing(procs:proc(P,_)).
+do(show_procs) :- !, listing(procs:proc/2).
 do(status) :- user_mode(M), param:name_string(M,N), user_lev(L),
 	write(' '), writeln(N),
-	write('   Mode: '), writeln(M),
-	write('   Level: '), writeln(L),
-	available_commands(Cmds), write('   Command sets: '), writeln(Cmds).
+	write('   Command Mode: '), writeln(M),
+	write('   Command Level: '), writeln(L),
+	available_commands(Cmds), write('   Command sets: '), writeln(Cmds),
+	assurance:ar_write_status,
+	evidence:er_write_status.
 do(time(Command)) :- !, time(do(Command)).
 do(time(Command,N)) :- !,
 	current_output(S), param:null_stream(Null), set_output(Null),
@@ -485,13 +501,14 @@ syntax_chk(C,CSets) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % command scripts
 %
-
+/* previous version doesn't work with scripts with variables
 run_command_script(Mode,F,Opt) :-
 	(   access_file(F,read)
 	->  (
 	        read_file_to_terms(F,Commands,[]),
 	        (   Opt == verbose
-	        ->  param:msg_script_read(Mread), writeln(Mread),
+	        ->  param:verbose(SaveVerboseParam), param:setparam(verbose, on),
+		    param:msg_script_read(Mread), writeln(Mread),
 		    ui:display_list(Commands,1),
 	            param:msg_running_script(Mrun), writeln(Mrun)
 	        ;   true
@@ -501,6 +518,33 @@ run_command_script(Mode,F,Opt) :-
 	;
 	    format('can''t find file "~a"~n', F)
 	), !.
+*/
+
+run_command_script(Mode,F,Opt) :-
+	(   access_file(F,read)
+	->  (
+	        read_file_to_terms(F,Terms,[]),
+		run_script(Mode,Terms,Opt)
+	    )
+	;
+	    format('can''t find file "~a"~n', F)
+	), !.
+
+run_script(Mode,[script(Commands)],Opt) :- !, run_script2(Mode,Commands,Opt).
+run_script(Mode,[Commands],Opt) :- is_list(Commands), !, run_script2(Mode,Commands,Opt).
+run_script(_,_,_) :- writeln('bad script file format').
+
+run_script2(Mode,Commands,Opt) :-
+	param:verbose(SaveVerboseParam),
+	(	Opt == verbose
+	->	param:setparam(verbose, on),
+		param:msg_script_read(Mread), writeln(Mread),
+		ui:display_list(Commands,1),
+	        param:msg_running_script(Mrun), writeln(Mrun)
+	;	param:setparam(verbose, off)
+	),
+	run_commands(Mode,Commands,Opt),
+	param:setparam(verbose,SaveVerboseParam).
 
 run_commands(_,[],_) :- !.
 run_commands(Mode,[C|Cs],Opt) :-

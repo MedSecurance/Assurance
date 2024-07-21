@@ -39,8 +39,8 @@ instantiate_pattern_main(PatternId, TopArgs) :-
 	ac_pattern(PatternId, FArgs, _GoalP)
 	-> ( bind_top_arguments(FArgs, TopArgs, AArgs)
 	   -> ( instantiate_pattern_loop(PatternId, AArgs) )
-	   ;  ( format('*** top pattern arguments mismatch.~n'), fail ) )
-	;  ( format('*** top pattern ~a not found.~n', PatternId), fail ).
+	   ;  ( ui:vformat('*** top pattern arguments mismatch.~n'), fail ) )
+	;  ( ui:vformat('*** top pattern ~a not found.~n', PatternId), fail ).
 
 				% instantiate_pattern_loop(+PatternId, +AArgs)
 
@@ -49,16 +49,16 @@ instantiate_pattern_loop(PatternId0, AArgs0) :-
 	assertz( ac_pattern_pending(PatternId0, AArgs0) ),
 	repeat,
 	( ac_pattern_pending(PatternId, AArgs)
-	-> ( format('*** instantiating pattern ~a ... ', PatternId),
+	-> ( ui:vformat('*** instantiating pattern ~a ... ', PatternId),
 				% pattern lookup, instantiate, store
 	     ac_pattern(PatternId, _FArgs, GoalP),
 	     assertz( ac_pattern_running(PatternId, AArgs) ),
 	     ( instantiate_goal(GoalP, AArgs, GoalI, Log)
 	     -> ( insert_ac_instance(PatternId, AArgs, GoalI, Log),
-		  format('done.~n'))
+		  ui:vformat('done.~n'))
 	     ;  ( instantiate_null_goal(GoalP, AArgs, NullGoalI),
 		  insert_ac_instance(PatternId, AArgs, NullGoalI, []),
-		  format('failed.~n'))),
+		  ui:vformat('failed.~n'))),
 	     retractall( ac_pattern_running(_,_) ),
 	     retractall( ac_pattern_pending(PatternId, AArgs) ),
 	     fail )

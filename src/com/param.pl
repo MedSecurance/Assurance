@@ -30,13 +30,13 @@
 
 % Versioning of various things
 %
-% Past versions etb_version/2 and current version etb_version/1:
-% When starting a new version create a new etb_version/1 and
-% add a description as a second argument to the preceding version.
+% Past versions build_version/3 and current version build_version/2:
+% When starting a new version create a new build_version/2 and
+% add a description as a third argument to the preceding version.
 %
 % When development is actively going on, the current version, given by
-% etb_version/1, is the version against which changes are currently being
-% actively made and checked-in to the git repository. It is not fixed.
+% build_version/2, is the version against which changes are currently being
+% actively made and checked-in to the git repository. It is a living version.
 
 :- discontiguous build_version/3, build_version/2, build_current_version_description/2.
 
@@ -46,9 +46,13 @@ build_version(etb,'1.0.1','added directory structure and new files').
 
 build_version(etb,'1.0.2','added parameterization').
 
-build_version(etb,'1.0.3' /* ongoing development */ ).
+build_version(etb,'1.0.3','various changes toward Prototype #1').
 
-build_current_version_description(etb,'Prototype #1').
+build_version(etb,'1.1.0','Prototype #1').
+
+build_version(etb,'1.1.1' /* ongoing development */ ).
+
+build_current_version_description(etb,'minor revisions to Prototype #1').
 %
 
 % Used by the command interpreter
@@ -199,24 +203,32 @@ mod_policy_file('policy.pl').
 mod_platform_file('platform.pl').
 mod_configuration_file('configuration.pl').
 mod_properties_dir('properties').
+kb_evidence_category_file('categories.pl').
 
 % Key pathname components
 %
 path_prefix('..').		% relative to expected execution location
+
 cap('CAP').			% Certification Assurance Package(s)
+
 kb('KB').			% Base of the Knowledge Base
-patterns('PATTERNS').		% Assurance Case Patterns
-models('MODELS').		% System Models
+patterns('PATTERNS').		% Assurance Case Patterns dir name
+models('MODELS').		% System Models dir name
+workflows('WORKFLOWS').	% Workflow definitions dir name
+categories('CATEGORIES').	% Evidence Categories dir name
+
 repository('REPOSITORY').	% Base of the Repositories
-cases('CASES').			% Assurance Case Repository
-evidence('EVIDENCE').		% Evidence Repository
+cases('CASES').			% Assurance Case Repository name
+evidence('EVIDENCE').		% Evidence Repository name
 
 test_directory('TEST').
 patterns_directory('KB/PATTERNS').
 models_directory('KB/MODELS').
+workflows_directory('KB/WORKFLOWS').
+categories_directory('KB/CATEGORIES').
 log_directory('RUNTIME/LOG').
 
-pattern_files( [ 'MILS', 'ISO_81001' ] ).
+pattern_files( [ 'MILS', 'ISO_81001', 'MedSecurance' ] ).
 
 % Constructors for the primary runtime and persistent storage area names
 %

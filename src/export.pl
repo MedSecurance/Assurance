@@ -1,4 +1,4 @@
-:- module(export, [ reset_CAP/0, ac_export/2, ac_format/3 ]).
+:- module(export, [ reset_CAP/0, ac_export/2, ac_format/3, ac_string/1 ]).
 
 :- use_module(assurance).
 :- use_module(evidence).
@@ -61,6 +61,21 @@ ac_export_html_instance( ac_instance(PatternId, AArgs, Goal, Log), Dirname, Base
 	open(Filename_Html, write, Output_Html),
 	ac_format(Output_Html, 'html', ac_instance(PatternId, AArgs, Goal, Log)),
 	close(Output_Html).
+
+				% ac_text(-String)
+				%	used internally to generate text of current AC as a string
+				%
+
+ac_string(S) :- \+ assurance:current_assurance_repository(none), !,
+	% current_output(Output),
+	with_output_to(
+		atom(S),
+		forall(ac_instance(PatternId, AArgs, Goal, Log),
+	       ac_format(current_output, 'txt', ac_instance(PatternId, AArgs, Goal, Log)))
+		%, [ capture([current_output, user_output, user_error]) ]
+		),
+	true.
+ac_string(_).
 
 
 				%
@@ -338,3 +353,42 @@ goal_id( goal(Id, _, _, _), Id ).
 goal_id( null_goal(Id), Id).
 
 
+/*
+with_output_to(Output, Goal, []) =>
+   with_output_to(Output, Goal).
+with_output_to(Output, Goal, Options) =>
+    option(capture(Streams), Options, []),
+    must_be(list(oneof([user_output,user_error])), Streams),
+    with_output_to(
+	Output,
+	setup_call_cleanup(
+	    output_state(State, Streams),
+	    capture(Goal, Streams, Options),
+	    restore_output(State, Streams))).
+
+capture(Goal, Streams, Options) :-
+    current_output(S),
+    (   option(color(true), Options)
+    ->  set_stream(S, tty(true))
+    ;   true
+      ),
+      maplist(capture_output(S), Streams),
+      once(Goal),
+      maplist(flush_output, [current_output|Streams]).
+  
+  output_state(State, Streams) :-
+      maplist(stream_id, Streams, State).
+  
+  stream_id(Alias, Stream) :-
+      stream_property(Stream, alias(Alias)).
+  
+  restore_output(State, Streams) :-
+      maplist(restore_stream, Streams, State).
+  
+  restore_stream(Alias, Stream) :-
+      set_stream(Stream, alias(Alias)).
+  
+  capture_output(S, Alias) :-
+      set_stream(S, alias(Alias))
+
+*/

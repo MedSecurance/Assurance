@@ -5,7 +5,7 @@
 	      display_datetime/1, display_timestamp_datetime/1, display_timestamp_datetime/2,
 	      enter_a_number/2,
 	      gdisplay_term/1,
-	      notify/2]).
+	      notify/2, vformat/1, vformat/2]).
 
 % :- use_module(library(gvterm)).
 
@@ -133,3 +133,17 @@ notify(Kind,M) :- !,
 	).
 notify(_,_).
 
+% -------------------------------------------------
+% console output when verbose flag is on
+
+vformat(M) :-
+	(	param:verbose(on)
+	->	format(M)
+	;	true
+	).
+
+vformat(M,A) :-
+	(	param:verbose(on)
+	->	format(M,A)
+	;	true
+	).

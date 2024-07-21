@@ -1,5 +1,8 @@
 :-module(assurance,
-	 [ reset_assurance_repository/0,
+	 [ ar_write_status/0,
+	   set_current_assurance_repository/1,
+	   current_assurance_repository/1,
+	   reset_assurance_repository/0,
 	   init_assurance_repository/1,	  % +CaseId
 	   attach_assurance_repository/1, % +CaseId
 	   insert_ac_instance/4,	 % +PatternId, +AArgs, +GoalI, +Log
@@ -9,6 +12,7 @@
 	 ]).
 
 :- use_module(library(persistency)).
+:- use_module(com/param).
 
 :- persistent ac_instance(patternid:atom,
 			  aargs:list(acyclic),
@@ -21,6 +25,20 @@
 				  index:positive_integer).
 
 :- persistent ac_instance_id_counter(value:nonneg).
+
+:- dynamic current_assurance_repository/1.
+
+current_assurance_repository(none).
+
+ar_write_status :-
+	current_assurance_repository(ACid),
+	write('   Current assurance case: '), writeln(ACid),
+	writeln('   CASES Repository:').
+
+set_current_assurance_repository(CaseId) :-
+	( atom(CaseId) -> ACid = CaseId ; ACid = defaultCID ),
+	retractall(current_assurance_repository(_)),
+	assert(current_assurance_repository(ACid)).
 
 				% reset repository db
 
@@ -37,7 +55,7 @@ init_assurance_repository(CaseId) :-
 	atomic_list_concat( [ACRepoDir, '/', CaseId], CaseDirectory),
 	make_directory_path( CaseDirectory ),
 	atomic_list_concat( [CaseDirectory, '/', RepoFile], ACRepoFilename),
-	db_attach(ACRepoFilename, []),
+	db_attach(ACRepoFilename, []), set_current_assurance_repository(CaseId),
 	retractall_ac_instance(_,_,_,_),
 	retractall_ac_instance_id_args(_,_,_,_),
 	retractall_ac_instance_id_counter(_),
@@ -50,12 +68,12 @@ attach_assurance_repository(CaseId) :-
 	atomic_list_concat( [ACRepoDir, '/', CaseId, '/', RepoFile], Filename),
 	(	db_attached(Filename)
 	->	true
-	;	db_attach(Filename, [])
+	;	db_attach(Filename, []), set_current_assurance_repository(CaseId)
 	).
 
 				% detach current repository db
 
-detach_assurance_repository :- db_detach.
+detach_assurance_repository :- db_detach, set_current_assurance_repository(none).
 
 				% insert_ac_instance(+PatternId, +AArgs, +GoalI, +Log)
 

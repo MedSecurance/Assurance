@@ -6,7 +6,8 @@
 % definition of the ETB tool interactive commands syntax
 % syntax( Signature, CommandSet ).
 %
-syntax(ac_export(basename, format),                              etb).
+syntax(export_case(basename, format),                            etb).
+syntax(show_case,												 etb).
 syntax(attach_case(case_id),                                     etb).
 syntax(detach_case,                                              etb).
 
@@ -37,7 +38,7 @@ syntax(update,                                                   etb).
 % optional static semantics entry, e.g., used to check command arguments
 % distinct from syntax so syntax can be called separately
 %
-semantics(ac_export(Name,Format)) :- !, atom(Name), atom(Format), (Format==txt;Format==html).
+semantics(export_case(Name,Format)) :- !, atom(Name), atom(Format), (Format==txt;Format==html).
 semantics(attach_case(Case)) :- !, atom(Case).
 
 semantics(etb_reset(D)) :- !, (D == cap ; D == repos ; D == all).
@@ -60,9 +61,11 @@ semantics(load_model_v(Mid,Pol,Plat,Config)) :- !, atom(Mid), var(Pol), var(Plat
 %   all strings for a given key are displayed when key is given as an
 %   argument to the help command, e.g., "help(etb_server)"
 %
-help(ac_export,	'Export the current assurance case to the CAP.').
-help(ac_export,	'Arg1 is a name in the CAP directory for the export.').
-help(ac_export, 'Arg2 is the format (currently either txt or html).').
+help(export_case,	'Export the current assurance case to the CAP.').
+help(export_case,	'Arg1 is a name in the CAP directory for the export.').
+help(export_case, 'Arg2 is the format (currently either txt or html).').
+
+help(show_case, 'Show the current cached assurance case.').
 
 help(attach_case, 'Attach the identified assurance case in the repository.').
 help(attach_case, 'Arg is an assurance case identifier.').
@@ -104,7 +107,17 @@ help(update,	'Update assurance cases and evidence.').
 % do the command, should be one for every implemented valid command form
 % known broken or unimplemented commands should just "fail." straightaway
 %
-do(ac_export(Name,Format)) :- !, export:ac_export(Name,Format).
+do(export_case(Name,Format)) :- !, export:ac_export(Name,Format).
+
+do(show_case) :- !,
+	assurance:current_assurance_repository(ACid),	
+	(	ACid == none
+	->	writeln('No current assurance case.')
+	;	(
+			write(ACid), nl,
+			export:ac_string(S), writeln(S)
+		)
+	).
 
 do(attach_case(Case)) :- !, assurance:attach_assurance_repository(Case).
 
@@ -130,9 +143,13 @@ do(etbtests) :- !, load_test_files([]), run_tests. % .plt tests
 do(import(T,F,Sid)) :- !,
     kb:load_specification_from_file(T,F,Sid).
 
-do(instantiate_pattern(Name,Args,ACid)) :- !, instantiate:instantiate_pattern(Name,Args,ACid).
+do(instantiate_pattern(Name,Args,ACid)) :- !,
+	instantiate:instantiate_pattern(Name,Args,ACid),
+	(param:verbose(on) -> (export:ac_string(S), writeln(S)) ; true).
+
 do(instantiate_pattern_list(PatList,ACid)) :- !,
-	instantiate:instantiate_pattern_list(PatList,ACid).
+	instantiate:instantiate_pattern_list(PatList,ACid),
+	(param:verbose(on) -> (export:ac_string(S), writeln(S)) ; true).
 
 do(load_model_v(Mid,Pol,Plat,Conf)) :- !, model:load_model(Mid,M), M = model(Pol,Plat,Conf).
 

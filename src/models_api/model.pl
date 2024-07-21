@@ -1,9 +1,11 @@
 :- module(model, [load_model/2]).
 
+:- use_module('com/ui').
+
 				% load_model(ModelId, Model)
 
 load_model(ModelId, model(Policy, Platform, Configuration)) :-
-	format('*** loading model ~a ... ', [ModelId]),
+	vformat('*** loading model ~a ... ', [ModelId]),
 	param:kb_models_dir(ModDir), param:mod_policy_file(MpolFile),
         param:mod_platform_file(MplatFile), param:mod_configuration_file(MconfFile),
 
@@ -23,4 +25,4 @@ load_model(ModelId, model(Policy, Platform, Configuration)) :-
 	read_term(ConfigurationInput, Configuration, []),
 	close(ConfigurationInput),
 				%
-	format('done.~n').
+	vformat('done.~n').

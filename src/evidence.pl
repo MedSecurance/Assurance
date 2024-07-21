@@ -1,13 +1,15 @@
 :- module(evidence,
-          [ reset_evidence_repository/0,
-	    attach_evidence_repository/0,
-	    ac_evidence/6, % -Category, -Claim, -Context, -AArgs, -XRef, -Status
+          [ er_write_status/0,
+		  	reset_evidence_repository/0,
+	    	attach_evidence_repository/0,
+	    	ac_evidence/6, % -Category, -Claim, -Context, -AArgs, -XRef, -Status
             insert_ac_evidence/6, % +Category, +Claim, +Context, +AArgs, -XRef, 'pending'
             update_ac_evidence/6, % +Category, +Claim, +Context, +AArgs, +XRef, +Status
-	    update_ongoing/0
+	    	update_ongoing/0
           ]).
 
 :- use_module(library(persistency)).
+:- use_module('com/param').
 
 :- persistent ac_evidence(category:oneof([axiom,certificate,ichecker,ocra,unknown]),
 			  claim:text,
@@ -18,8 +20,11 @@
 
 :- persistent ac_evidence_counter(value:positive_integer).
 
+er_write_status :-
+	writeln('   EVIDENCE Repository:').
+
 reset_evidence_repository :-
-	db_detach,
+	detach_evidence_repository,
 	param:evidence_repo_dir(EvRepoDir), param:ev_repo_file(RepoFile), param:evidence(Evidence),
 	atomic_list_concat(['find -d ',EvRepoDir,' -not "(" -name README.md -or -name ',Evidence,' -or -name axiom -or -name certificate -or -name ichecker -or -name ocra -or -name unknown ")" -delete'],Cmd),
 	shell(Cmd),
