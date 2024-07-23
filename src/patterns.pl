@@ -7,6 +7,10 @@
 
 :- multifile ac_pattern/3.
 
+				% ac_pattern(+Name, +Args, +Goal)
+				%
+				%	[ arg( +Name, +Type ), ... ]
+				%	goal(Id, Claim, Context, Body)
 
 init :-
     param:kb_patterns_dir(KBPdir), param:pattern_files(Pfiles),

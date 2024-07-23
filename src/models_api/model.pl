@@ -1,6 +1,6 @@
 :- module(model, [load_model/2]).
 
-:- use_module('com/ui').
+:- use_module(['com/ui']).
 
 				% load_model(ModelId, Model)
 

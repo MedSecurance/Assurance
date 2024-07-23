@@ -228,7 +228,7 @@ workflows_directory('KB/WORKFLOWS').
 categories_directory('KB/CATEGORIES').
 log_directory('RUNTIME/LOG').
 
-pattern_files( [ 'MILS', 'ISO_81001', 'MedSecurance' ] ).
+pattern_files( [ 'IoMT', 'ISO_81001', 'MILS' ] ).
 
 % Constructors for the primary runtime and persistent storage area names
 %

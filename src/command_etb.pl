@@ -1,6 +1,7 @@
 % ETB-specific command set
 
 :- use_module('etb').
+:- use_module('patterns').
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % definition of the ETB tool interactive commands syntax
@@ -8,6 +9,12 @@
 %
 syntax(export_case(basename, format),                            etb).
 syntax(show_case,												 etb).
+syntax(show_cases,												 etb).
+syntax(show_pattern(pattern_id),                                 etb).
+syntax(show_pattern(pattern_id,mode),                            etb).
+syntax(show_patterns,			                                 etb).
+syntax(show_patterns(mode),			                             etb).
+syntax(show_pats,				                                 etb).
 syntax(attach_case(case_id),                                     etb).
 syntax(detach_case,                                              etb).
 
@@ -41,6 +48,9 @@ syntax(update,                                                   etb).
 semantics(export_case(Name,Format)) :- !, atom(Name), atom(Format), (Format==txt;Format==html).
 semantics(attach_case(Case)) :- !, atom(Case).
 
+semantics(show_pattern(PatId)) :- !, atom(PatId).
+semantics(show_pattern(PatId,Mode)) :- !, atom(PatId), atom(Mode), member(Mode,[all,header,pp]).
+semantics(show_patterns(M)) :- !, atom(M), member(M,[all,header,pp]).
 semantics(etb_reset(D)) :- !, (D == cap ; D == repos ; D == all).
 
 semantics(etb_server(A)) :- !, atomic(A), (number(A) ; A==nurvsim).
@@ -66,6 +76,14 @@ help(export_case,	'Arg1 is a name in the CAP directory for the export.').
 help(export_case, 'Arg2 is the format (currently either txt or html).').
 
 help(show_case, 'Show the current cached assurance case.').
+help(show_case, 'Show all assurance cases in the CASES Repo.').
+
+help(show_pattern, 'Show the assurance case pattern.').
+help(show_pattern, 'Arg1 is the identifier for the pattern.').
+help(show_pattern, 'Arg2 (opt) is the mode {all,header,pp}.').
+
+help(show_patterns, 'Show all defined assurance case patterns.').
+help(show_patterns, 'Arg1 (opt) is the mode {all,header,pp}.').
 
 help(attach_case, 'Attach the identified assurance case in the repository.').
 help(attach_case, 'Arg is an assurance case identifier.').
@@ -118,6 +136,44 @@ do(show_case) :- !,
 			export:ac_string(S), writeln(S)
 		)
 	).
+do(show_cases) :- !,
+	true.
+
+do(show_pattern(PatId)) :- !, do(show_pattern(PatId,all)).
+do(show_pattern(PatId,M)) :- !,
+	(	M == pp
+	->	listing(ac_pattern(PatId,_,_)), !
+	;	ac_pattern(PatId,PatArgs,Goal),
+		format('PATTERN: ~s  Args: ~w~n', [PatId,PatArgs]),
+		(	M == header 
+		->	true
+		;	write_term(Goal,[quoted(true),spacing(next_argument)]), nl
+		)
+	).
+do(show_pats) :- do(show_patterns(header)).
+do(show_patterns) :- do(show_patterns(all)).
+/*
+do(show_patterns(M)) :- 
+	ac_pattern(PatId,PatArgs,Goal),
+	format('PATTERN: ~s  Args: ~w~n', [PatId,PatArgs]),
+	(	M == header
+		->	true
+		;	M == pp
+		->	listing(ac_pattern)
+		;	write_term(Goal,[quoted(true),spacing(next_argument)]), nl,	nl, fail
+	).
+*/
+do(show_patterns(M)) :- 
+	(	M == pp
+		->	listing(ac_pattern)
+		;	ac_pattern(PatId,PatArgs,Goal),
+			format('PATTERN: ~s  Args: ~w~n', [PatId,PatArgs]),
+			(	M == header
+			->	true
+			;	write_term(Goal,[quoted(true),spacing(next_argument)]), nl,	nl
+			), fail
+	), !.
+do(show_patterns(_)).
 
 do(attach_case(Case)) :- !, assurance:attach_assurance_repository(Case).
 

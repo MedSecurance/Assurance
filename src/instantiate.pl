@@ -51,7 +51,7 @@ instantiate_pattern_loop(PatternId0, AArgs0) :-
 	( ac_pattern_pending(PatternId, AArgs)
 	-> ( ui:vformat('*** instantiating pattern ~a ... ', PatternId),
 				% pattern lookup, instantiate, store
-	     ac_pattern(PatternId, _FArgs, GoalP),
+	     once( ac_pattern(PatternId, _FArgs, GoalP) ), % in case PatternId multiply defined
 	     assertz( ac_pattern_running(PatternId, AArgs) ),
 	     ( instantiate_goal(GoalP, AArgs, GoalI, Log)
 	     -> ( insert_ac_instance(PatternId, AArgs, GoalI, Log),
