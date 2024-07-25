@@ -38,8 +38,11 @@ proc(demo_day, [
 		help(show_pattern),
 		help(instantiate_pattern),
 		status,
+
 		show_procs,
+		show_proc(demo_day),
 		show_proc(person_inst),
+		
 		show_pattern(qualified_person),
 		instantiate_pattern('qualified_person', ['Marius', 'Programming'], 'person_examp'),
 		export_case(cap_person,txt),
@@ -65,8 +68,13 @@ proc(demo_day, [
 		export_case(CaseId,html),
 		detach_case,
 
+		show_pattern(generic_risk_based),
+		show_pattern(residual_risk),
+		show_pattern(acceptable_risk),
+		show_pattern(accepted_risk),
+		
 		show_pattern(foundational_plane),
-		show_pattern(operational_plane),4
+		show_pattern(operational_plane),
 
 		echo('DONE!')
 	]).

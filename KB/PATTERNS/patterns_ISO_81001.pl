@@ -20,9 +20,7 @@ ac_pattern('generic_risk_based',
 			  iterate('N', hit_platform:node, nodes('HIT')),
 			  [justification('J1: Effective Process - Risk management \c
 				standard mandated and approved by the HDO')],
-			  [ac_pattern_ref('residual_risk', ['HIT', 'N'])]),
-		 ac_pattern_ref('foundational_plane_nsm', ['S']),
-		 ac_pattern_ref('foundational_plane_tsn', ['S'])
+			  [ac_pattern_ref('residual_risk', ['HIT', 'N'])])
 		])).
 
 ac_pattern('residual_risk',
