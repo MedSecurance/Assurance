@@ -46,18 +46,49 @@ ac_pattern('programming_teamN',
 	).
 
 
-ac_pattern('programming_team2',
-	[arg('Qualifications', team:qualifications),
-	 arg('Members', team:members)],
-	goal(g0, 'The members of the programming team possess the necessary qualifications',
+ac_pattern('qualified_person',
+	[arg('Qualification', person:activity),
+	 arg('Person', person:participant)
+	],
+	goal(g0, 'The programming team possesses the necessary qualifications',
 		[context('IoMT system')],
-		[goal(g1, 'all members meet specified qualifications', [],
-			[strategy('no. of members',
-				iterate( 'Member', team:member, list('{Members}') ),
+		[goal(g1, 'all members meet specified qualification {Qualification}', [],
+			[strategy('establish qualification for the person to do activity',
 				[],
-				[ ac_pattern_ref('person', ['Member','{Qualifications}'])])
+				[ ac_pattern_ref('person', ['Person','Qualification'])])
 			]
 		 )]
 		)
 	).
-	
+
+
+ac_pattern('teamOf2',
+	[arg('Qualification', person:activity)
+ 	],
+	goal(g0, 'The programming team possesses the necessary qualifications',
+		[context('IoMT system')],
+		[goal(g1, 'all team members meet specified qualification: {Qualification}', [],
+			[strategy('establish qualification for both members',
+				iterate( 'TeamMember', person:participant, list(['Marius','Rance']) ),
+				[],
+				[ ac_pattern_ref('person', ['TeamMember','Qualification'])])
+			]
+		)]
+	)
+).
+
+
+ac_pattern('teamOfN',
+	[arg('Qualification', person:activity), arg('TeamMembers', list(person:participant))
+ 	],
+	goal(g0, 'The programming team possesses the necessary qualifications',
+		[context('IoMT system')],
+		[goal(g1, 'both members meet specified qualification: {Qualification}', [],
+			[strategy('establish qualification for all members',
+				iterate( 'Member', person:participant, 'TeamMembers'),
+				[],
+				[ ac_pattern_ref('person', ['Member','Qualification'])])
+			]
+		)]
+	)
+).

@@ -6,6 +6,7 @@
 :- use_module(param).
 :- use_module(ui).
 :- use_module('../assurance').
+:- use_module(procs).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % ETB, AC and EV tool modes of operation and available commands
@@ -141,7 +142,9 @@ syntax(set(name),				                      advanced).
 syntax(set(name,value),				                  advanced).
 syntax(set_v(var,expr),					     basic).
 syntax(show_proc(proc_id),              basic).
+%syntax(show_proc(proc_id,mode),              basic).
 syntax(show_procs,                      basic).
+%syntax(show_procs(mode),                      basic).
 syntax(status,				basic).
 syntax(step,								                            developer).
 syntax(step(number_of_steps),				                         	developer).
@@ -176,6 +179,8 @@ semantics(set(N)) :- !, atom(N).
 semantics(set(N,V)) :- !, atom(N), ground(V).
 semantics(set_v(V,E)) :- !, ground(E), var(V).
 semantics(show_proc(P)) :- !, atom(P).
+%semantics(show_proc(P,M)) :- !, atom(P), atom(M), member(M,[pp]).
+%semantics(show_procs(M)) :- !, atom(M), member(M,[pp]).
 semantics(step(N)) :- !, (integer(N) ; N == break), !.
 semantics(time(C)) :- !, ground(C).
 semantics(time(C,N)) :- !, ground(C), integer(N).
@@ -238,8 +243,11 @@ help(set_v, 'Set variable to expression.').
 help(set_v, 'Arg 1 is a logical variable.').
 help(set_v, 'Arg 2 is a ground expression.').
 
-help(show_proc, 'Show the predefined command procedure identified by the argument.').
+help(show_proc, 'Show a predefined command procedure.').
+help(show_proc, 'Arg1 is the id of the procedure.').
+%help(show_proc, 'Arg2 (opt) is the mode (pp).').
 help(show_procs, 'Show all of the predefined command procedures.').
+%help(show_procs, 'Arg1 (opt) is the mode (pp).').
 
 help(status,	'Display system status.').
 
@@ -339,7 +347,7 @@ do(set(verbose,V)) :- (V == on ; V == off), !, param:setparam(verbose,V).
 do(set(P,V)) :- atom(P), ground(V), param:setparam(P,V), !.
 do(set(_,_)) :- !,
 	writeln('Unknown parameter name or illegal parameter value').
-do(show_proc(P)) :- !, listing(procs:proc(P,_)).
+do(show_proc(P)) :- !, listing(proc(P,_)).
 do(show_procs) :- !, listing(procs:proc/2).
 do(status) :- user_mode(M), param:name_string(M,N), user_lev(L),
 	write(' '), writeln(N),

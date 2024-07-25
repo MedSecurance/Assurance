@@ -1,6 +1,6 @@
 [
 	set_v(ModelId, '1.0'),
-	set_v(CaseId, ac2),
+	set_v(CaseId, simple_system),
 	load_model_v(ModelId, Policy, Platform, _Configuration),
 	set_v(AC,
 		[ 'foundational_plane'-[Platform],

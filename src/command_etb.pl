@@ -139,7 +139,7 @@ do(show_case) :- !,
 do(show_cases) :- !,
 	true.
 
-do(show_pattern(PatId)) :- !, do(show_pattern(PatId,all)).
+do(show_pattern(PatId)) :- !, do(show_pattern(PatId,pp)).
 do(show_pattern(PatId,M)) :- !,
 	(	M == pp
 	->	listing(ac_pattern(PatId,_,_)), !
@@ -184,9 +184,9 @@ do(etb) :- !, user_mode(M), retractall(user_mode(_)), assert(user_mode(etb)),
 	param:prompt_string(etb,Prompt), param:setparam(prompt_string,Prompt),
 	rem_commands(M), add_commands(etb), banner(etb).
 
-do(etb_reset) :- !, etb_reset.
+do(etb_reset) :- !, do(detach_case), etb_reset.
 
-do(etb_reset(D)) :- !, etb_reset(D).
+do(etb_reset(D)) :- !, do(detach_case), etb_reset(D).
 
 do(etb_server) :- !, etb_server:etb_server_cmd.
 do(etb_server(A)) :- !, etb_server:etb_server_cmd(A).
@@ -200,10 +200,12 @@ do(import(T,F,Sid)) :- !,
     kb:load_specification_from_file(T,F,Sid).
 
 do(instantiate_pattern(Name,Args,ACid)) :- !,
+	assurance:detach_assurance_repository,
 	instantiate:instantiate_pattern(Name,Args,ACid),
 	(param:verbose(on) -> (export:ac_string(S), writeln(S)) ; true).
 
 do(instantiate_pattern_list(PatList,ACid)) :- !,
+	assurance:detach_assurance_repository,
 	instantiate:instantiate_pattern_list(PatList,ACid),
 	(param:verbose(on) -> (export:ac_string(S), writeln(S)) ; true).
 
