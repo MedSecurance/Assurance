@@ -62,7 +62,7 @@ ac_export_html_instance( ac_instance(PatternId, AArgs, Goal, Log), Dirname, Base
 	ac_format(Output_Html, 'html', ac_instance(PatternId, AArgs, Goal, Log)),
 	close(Output_Html).
 
-				% ac_text(-String)
+				% ac_string(-String)
 				%	used internally to generate text of current AC as a string
 				%
 

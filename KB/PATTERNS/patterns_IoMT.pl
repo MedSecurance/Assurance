@@ -39,7 +39,7 @@ ac_pattern('programming_teamN',
 			[strategy('no. of members',
 				iterate('Member', team:member, '{Members}'),
 				[],
-				[ ac_pattern_ref('person', ['Member','{Qualifications}'])])
+				[ ac_pattern_ref('person', ['{Member}','{Qualifications}'])])
 			]
 		 )]
 	    )
@@ -83,11 +83,11 @@ ac_pattern('teamOfN',
  	],
 	goal(g0, 'The programming team possesses the necessary qualifications',
 		[context('IoMT system')],
-		[goal(g1, 'both members meet specified qualification: {Qualification}', [],
+		[goal(g1, 'all members meet specified qualification: {Qualification}', [],
 			[strategy('establish qualification for all members',
-				iterate( 'Member', person:participant, 'TeamMembers'),
+				iterate( 'TeamMember', person:participant, '{TeamMembers}'),
 				[],
-				[ ac_pattern_ref('person', ['Member','Qualification'])])
+				[ ac_pattern_ref('person', ['TeamMember','Qualification'])])
 			]
 		)]
 	)

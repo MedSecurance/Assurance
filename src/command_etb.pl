@@ -8,13 +8,14 @@
 % syntax( Signature, CommandSet ).
 %
 syntax(export_case(basename, format),                            etb).
-syntax(show_case,												 etb).
-syntax(show_cases,												 etb).
+syntax(show_case,						 etb).
+syntax(show_case(case_id),					 etb).
+syntax(show_cases,						 etb).
 syntax(show_pattern(pattern_id),                                 etb).
 syntax(show_pattern(pattern_id,mode),                            etb).
-syntax(show_patterns,			                                 etb).
-syntax(show_patterns(mode),			                             etb).
-syntax(show_pats,				                                 etb).
+syntax(show_patterns,			                         etb).
+syntax(show_patterns(mode),			                 etb).
+syntax(show_pats,				                 etb).
 syntax(attach_case(case_id),                                     etb).
 syntax(detach_case,                                              etb).
 
@@ -46,11 +47,13 @@ syntax(update,                                                   etb).
 % distinct from syntax so syntax can be called separately
 %
 semantics(export_case(Name,Format)) :- !, atom(Name), atom(Format), (Format==txt;Format==html).
+semantics(show_case(Case)) :- !, atom(Case).
+
 semantics(attach_case(Case)) :- !, atom(Case).
 
 semantics(show_pattern(PatId)) :- !, atom(PatId).
-semantics(show_pattern(PatId,Mode)) :- !, atom(PatId), atom(Mode), member(Mode,[all,header,pp]).
-semantics(show_patterns(M)) :- !, atom(M), member(M,[all,header,pp]).
+semantics(show_pattern(PatId,Mode)) :- !, atom(PatId), atom(Mode), member(Mode,[text,header,pp]).
+semantics(show_patterns(M)) :- !, atom(M), member(M,[text,header,pp]).
 semantics(etb_reset(D)) :- !, (D == cap ; D == repos ; D == all).
 
 semantics(etb_server(A)) :- !, atomic(A), (number(A) ; A==nurvsim).
@@ -75,8 +78,10 @@ help(export_case,	'Export the current assurance case to the CAP.').
 help(export_case,	'Arg1 is a name in the CAP directory for the export.').
 help(export_case, 'Arg2 is the format (currently either txt or html).').
 
-help(show_case, 'Show the current cached assurance case.').
-help(show_case, 'Show all assurance cases in the CASES Repo.').
+help(show_case, 'Show the current or identified assurance case.').
+help(show_case, 'Arg1 (opt) is the assurance case ID, otherwise current case.').
+
+help(show_cases, 'Show all assurance cases in the CASES Repo.').
 
 help(show_pattern, 'Show the assurance case pattern.').
 help(show_pattern, 'Arg1 is the identifier for the pattern.').
@@ -132,12 +137,41 @@ do(show_case) :- !,
 	(	ACid == none
 	->	writeln('No current assurance case.')
 	;	(
-			write(ACid), nl,
+			format('Case ~a:~n',ACid),
 			export:ac_string(S), writeln(S)
 		)
 	).
+
+%do(show_case(ACid)) :- !, do(detach_case), do(attach_case(ACid)), do(show_case). % show and leave as current case
+
+do(show_case(ACid)) :- !, % show and restore previous current case
+        assurance:current_assurance_repository(CurrentACid),
+	param:cases_repo_dir(ACRepoDir),
+	atomic_list_concat( [ACRepoDir, '/', ACid], CaseDirectory),
+        exists_directory(CaseDirectory),
+        do( detach_case ), do( attach_case(ACid) ),
+        do( show_case ), do( detach_case ),
+        (       CurrentACid \== none
+        ->      do( attach_case(CurrentACid) )
+	;       true
+        ).
+
 do(show_cases) :- !,
-	true.
+        assurance:current_assurance_repository(CurrentACid), do( detach_case ),
+	param:cases_repo_dir(ACRepoDir),
+	directory_files(ACRepoDir,Files),
+        subtract(Files, ['.', '..', 'README.md'], Cases),
+        forall(member(Case,Cases),
+                ( format('Case ~a:~n',Case), do( attach_case(Case) ),
+		  export:ac_string(S), writeln(S),
+                  do( detach_case )
+                )
+        ),
+        (       CurrentACid \== none
+        ->      do( attach_case(CurrentACid) )
+	;       true
+        ).
+
 
 do(show_pattern(PatId)) :- !, do(show_pattern(PatId,pp)).
 do(show_pattern(PatId,M)) :- !,
@@ -147,11 +181,14 @@ do(show_pattern(PatId,M)) :- !,
 		format('PATTERN: ~s  Args: ~w~n', [PatId,PatArgs]),
 		(	M == header 
 		->	true
-		;	write_term(Goal,[quoted(true),spacing(next_argument)]), nl
+		;	(	M == text
+			->	write_term(Goal,[quoted(true),spacing(next_argument)]), nl
+			;	true
+			)
 		)
 	).
 do(show_pats) :- do(show_patterns(header)).
-do(show_patterns) :- do(show_patterns(all)).
+do(show_patterns) :- do(show_patterns(text)).
 /*
 do(show_patterns(M)) :- 
 	ac_pattern(PatId,PatArgs,Goal),
@@ -170,7 +207,10 @@ do(show_patterns(M)) :-
 			format('PATTERN: ~s  Args: ~w~n', [PatId,PatArgs]),
 			(	M == header
 			->	true
-			;	write_term(Goal,[quoted(true),spacing(next_argument)]), nl,	nl
+			;	(	M == text
+				->	write_term(Goal,[quoted(true),spacing(next_argument)]), nl, nl
+				;	true
+				)
 			), fail
 	), !.
 do(show_patterns(_)).

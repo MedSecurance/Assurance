@@ -52,7 +52,7 @@ build_version(etb,'1.1.0','Prototype #1').
 
 build_version(etb,'1.1.1' /* ongoing development */ ).
 
-build_current_version_description(etb,'minor revisions to Prototype #1').
+build_current_version_description(etb,'minor revisions to Prototype #1, incl: commands and pattern extensions').
 %
 
 % Used by the command interpreter

@@ -117,11 +117,13 @@ instantiate_subgoal(strategy(ClaimP, Iterator, ContextP, BodyP), AArgs,
 	instantiate_text(ClaimP, AArgs, ClaimI, Log1),
 	instantiate_context(ContextP, AArgs, ContextI, Log2),
 				% expand iterator, instantiate subgoals...
-	findall( [AArgIt], strategy_iterator_match(Iterator, AArgs, AArgIt), AArgItList),
+        instantiate_iterator(Iterator,AArgs,IteratorI,Log2a),
+	findall( [AArgIt], strategy_iterator_match(IteratorI, AArgs, AArgIt), AArgItList),
 	maplist( append(AArgs), AArgItList, AArgsExtList ),
 	maplist( instantiate_subgoal_list(BodyP), AArgsExtList, BodyIs, Logs3 ),
 	flatten(BodyIs, BodyI),
-	append(Log1, Log2, Log12), flatten(Logs3, Log3), append(Log12, Log3, Log).
+	append(Log1, Log2, Log12), append(Log12, Log2a, Log12a),
+        flatten(Logs3, Log3), append(Log12a, Log3, Log).
 
 instantiate_subgoal(strategy(ClaimP, ContextP, BodyP), AArgs,
 		    strategy(ClaimI, ContextI, BodyI), Log) :-
@@ -166,9 +168,12 @@ instantiate_subgoal(conditional(Condition, GoalP), AArgs, GoalI, Log) :-
 	condition_holds(Condition, AArgs),
 	instantiate_subgoal(GoalP, AArgs, GoalI, Log).
 
-
 instantiate_subgoal(conditional(Condition, _GoalP), AArgs, no_goal, []) :-
 	\+ condition_holds(Condition, AArgs).
+
+instantiate_subgoal(alternatives(GoalPList), AArgs, GoalIList, Log) :-
+                                % to do - more
+        instantiate_subgoal_list(GoalPList, AArgs, GoalIList, Log).
 
 				% bind_call_arguments(+FArgs, +Args, +AArgs, -AArgsForCall)
 
@@ -223,6 +228,11 @@ strategy_iterator_match( iterate(Name, Category, transitions(_Subject) ), _AArgs
 				% actually, there are no transitions defined for subjects...
 	member(Transition, ['a-transition']).
 
+strategy_iterator_match( iterate(Name, Category, hazards(_PolicyArgName) ), _AArgs,
+			 arg(Name, Category, Hazard)) :-
+				% not yet implemented -
+	member(Hazard, ['a-hazard', 'b-hazard']).
+
 				% condition holds
 
 condition_holds( true, _AArgs ).
@@ -252,6 +262,42 @@ instantiate_context_clause(assumption(TextP), AArgs, assumption(TextI), Log) :-
 instantiate_context_clause(justification(TextP), AArgs, justification(TextI), Log) :-
 	instantiate_text(TextP, AArgs, TextI, Log).
 
+				%
+				%
+				% instantiate_iterator(+Iterator, +AArgs, -IteratorI, -Log)
+				%
+
+instantiate_iterator(iterate(Name,Category,ITerm), AArgs, iterate(Name,Category,ITermI), Log) :-
+        atomic(ITerm), !,
+        split_string(ITerm, [IT]),
+        instantiate_iterator_term(AArgs, IT, Category, ITermI, Log).
+
+instantiate_iterator(iterate(Name,Category,ITerm), _AArgs, iterate(Name,Category,ITerm), []) :-
+        compound(ITerm), !.
+
+instantiate_iterator(I,_,I,[]).
+
+instantiate_iterator_term(AArgs, TokenP, IteratorCategory, TokenI, Log) :-
+        ground(IteratorCategory),
+        member(AArg, AArgs),
+        aarg_name(AArg, Name),
+        string_concat('{', Name, X), string_concat(X, '}', TokenP),
+                                % found a matching AArg
+                                % to do: should also recognize variable/farg without { }
+				% to do: transform the (term) value into a string if needed
+                                % if the term is a list check category of list items
+        aarg_category(AArg, ArgCategory), aarg_value(AArg, Value),
+        (       ArgCategory = list(ArgListItemCategory) % check if list and extract category
+	->      (       ArgListItemCategory == IteratorCategory
+                ->      TokenI = Value, Log = []
+		;       Log = ['Iterator category mismatch.']
+                )
+	;       % deal with other kinds of iterators here, otherwise log incompatibility
+                TokenI = TokenP, Log = ['Argument category not compatible.']
+        ),
+	!.
+
+instantiate_iterator_term(_AArgs, TokenP, TokenP).
 
 				%
 				%
@@ -298,6 +344,8 @@ instantiate_id(PatternId, Id, AArgs, IdArgs) :-
 				%
 
 aarg_name( arg(Name, _, _), Name).
+
+aarg_category( arg(_, Category, _), Category).
 
 aarg_value( arg(_, _, Value), Value).
 
