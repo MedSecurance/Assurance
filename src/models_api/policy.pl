@@ -1,4 +1,5 @@
 :- module(policy, [ policy_id/2, policy_subjects/2, policy_objects/2,
+		    policy_processes/2, policy_ipc_flows/2, policy_po_flows/2,
 		    policy_ss_flows/2, policy_so_flows/2, policy_attributes/2,
 		    policy_constraints/2, pp_policy/1,
 		  
@@ -26,11 +27,17 @@ policy_id(policy(Id, _Subjects, _Objects, _SSFlows, _SOFlows, _Attrs, _Constrain
 
 policy_subjects(policy(_Id, Subjects, _Objects, _SSFlows, _SOFlows, _Attrs, _Constraints), Subjects).
 
+policy_processes(policy(_Id, Subjects, _Objects, _SSFlows, _SOFlows, _Attrs, _Constraints), Subjects).
+
 policy_objects(policy(_Id, _Subjects, Objects, _SSFlows, _SOFlows, _Attrs, _Constraints), Objects).
 
 policy_ss_flows(policy(_Id, _Subjects, _Objects, SSFlows, _SOFlows, _Attrs, _Constraints), SSFlows).
 
+policy_ipc_flows(policy(_Id, _Subjects, _Objects, SSFlows, _SOFlows, _Attrs, _Constraints), SSFlows).
+
 policy_so_flows(policy(_Id, _Subjects, _Objects, _SSFlows, SOFlows, _Attrs, _Constraints), SOFlows).
+
+policy_po_flows(policy(_Id, _Subjects, _Objects, _SSFlows, SOFlows, _Attrs, _Constraints), SOFlows).
 
 policy_attributes(policy(_Id, _Subjects, _Objects, _SSFlows, _SOFlows, Attrs, _Constraints), Attrs).
 

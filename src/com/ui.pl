@@ -138,12 +138,12 @@ notify(_,_).
 
 vformat(M) :-
 	(	param:verbose(on)
-	->	format(M)
+	->	format(M), flush_output
 	;	true
 	).
 
 vformat(M,A) :-
 	(	param:verbose(on)
-	->	format(M,A)
+	->	format(M,A), flush_output
 	;	true
 	).

@@ -172,7 +172,7 @@ instantiate_subgoal(conditional(Condition, _GoalP), AArgs, no_goal, []) :-
 	\+ condition_holds(Condition, AArgs).
 
 instantiate_subgoal(alternatives(GoalPList), AArgs, GoalIList, Log) :-
-                                % to do - more
+                                % to do - choose among alternatives
         instantiate_subgoal_list(GoalPList, AArgs, GoalIList, Log).
 
 				% bind_call_arguments(+FArgs, +Args, +AArgs, -AArgsForCall)
@@ -204,10 +204,22 @@ strategy_iterator_match( iterate(Name, Category, subjects(PolicyArgName) ), AArg
 	policy:policy_subjects(Policy, Subjects),
 	member(Subject, Subjects).
 
+strategy_iterator_match( iterate(Name, Category, processes(PolicyArgName) ), AArgs,
+			 arg(Name, Category, Process)) :-
+	member(arg(PolicyArgName, _, Policy), AArgs),
+	policy:policy_processes(Policy, Processes),
+	member(Process,  Processes).
+
 strategy_iterator_match( iterate(Name, Category, ss_flows(PolicyArgName) ), AArgs,
 			 arg(Name, Category, Flow)) :-
 	member(arg(PolicyArgName, _, Policy), AArgs),
 	policy:policy_ss_flows(Policy, Flows),
+	member(Flow, Flows).
+
+strategy_iterator_match( iterate(Name, Category, ipc_flows(PolicyArgName) ), AArgs,
+			 arg(Name, Category, Flow)) :-
+	member(arg(PolicyArgName, _, Policy), AArgs),
+	policy:policy_ipc_flows(Policy, Flows),
 	member(Flow, Flows).
 
 strategy_iterator_match( iterate(Name, Category, nodes(PlatformArgName) ), AArgs,
@@ -353,9 +365,15 @@ aarg_text_value( arg(_, _, policy(Value, _, _, _, _, _, _)), Value).
 
 aarg_text_value( arg(_, _, subject(Value, _, _, _)), Value).
 
+aarg_text_value( arg(_, _, process(Value, _, _, _)), Value).
+
+aarg_text_value( arg(_, _, node(Value, _, _, _, _, _)), Value).
+
 aarg_text_value( arg(_, _, object(Value, _, _)), Value).
 
 aarg_text_value( arg(_, _, ss_flow(Value, _, _, _, _)), Value).
+
+aarg_text_value( arg(_, _, ipc_flow(Value, _, _, _, _)), Value).
 
 aarg_text_value( arg(_, _, Value), Value).
 

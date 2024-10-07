@@ -14,6 +14,9 @@ etb-server:	agents/axiom_agent.pl agents/certificate_agent.pl agents/ichecker_ag
 	patterns.pl procs_etb.pl stringutil.pl
 	swipl -v -o ../BUILD/etb-server -g etb_server -c etb.pl
 
+person-examp:	../BUILD/etb
+	../BUILD/etb -c "instantiate_pattern(person, [marius, programming], 'person_examp')"
+
 clean: clean_cap clean_repo
 
 clean_cap:

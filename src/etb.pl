@@ -35,15 +35,60 @@
 
 :- set_prolog_flag(verbose, silent).
 
+%
+% etb command line options
+%
+%    --command    -c     <command string>
+%
+
+etb_opt_spec([
+        [opt(command), type(atom), shortflags([c]), longflags(['command']),
+         help( 'command to execute when ETB starts' )]
+]).
+
+:- dynamic etb_options/1.
+etb_options([]).
+
+
 % These are the main entry points to the system
 % Other special entry points may also be defined here
 %
 etb :- % most typical entry
-	get_command_args(_Argv),
-	etb(_,_,_,_), !.
+	get_command_args(Argv),
+	% etb(Argv,_,_,_,_), !.
+        etb_with_args(Argv), !.
 etb :- halt(1).
 
-% can be invoked with directives: (could ddo to allow a set of directives)
+etb_with_args(Argv) :-
+	format('Argv: ~q~n',[Argv]),
+
+	% process the arguments
+	etb_opt_spec(OptSpec),
+	catch(
+	    opt_parse(OptSpec,Argv,Opts,_Positionals),
+	    E, writeln('error in command line options')),
+	!,
+	(   nonvar(E)
+	->  halt(1)
+	;   retractall(etb_options(_)), assert(etb_options(Opts))
+	),
+	etb_with_opts(Opts).
+
+etb_with_opts(Opts) :-
+	format('Options=~q~n',[Opts]),
+	(   memberchk(command(CommandStr),Opts); true ), % currently only option
+	(   var(CommandStr)
+	->  etb(_,_,_,_) % go to interactive command interpreter
+	;   % otherwise execute the command given in command line option
+            initialize_all,
+            read_term_from_atom(CommandStr, Command, []),
+            format('executing command: ~w~n',Command),
+            % guitracer, trace,
+            command:add_commands(advanced), command:add_commands(developer), command:add_commands(etb),
+            command:do( Command ) % full set of commands available
+	).
+
+% can be invoked with directives: (could do to allow a set of directives)
 etb(self_test) :- !, etb(on,off,on,_).
 etb(regression_test) :- !, etb(off,on,on,_).
 etb(no_initial) :- !, etb(off,off,off,_).
@@ -88,7 +133,6 @@ etb_server :-
 
 get_command_args(Argv) :-
 	current_prolog_flag(argv, Argv),
-	% format('Argv: ~q~n',[Argv]),
 	true.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -114,8 +158,9 @@ initialize_all :-
 	param:setparam(initialized,true).
 
 etb_reset :- % TODO currently not resulting in a complete reset, use make clean
-	etb_reset(repos),
-	etb_reset(cap),
+        shell('make clean'),
+	% etb_reset(repos),
+	% etb_reset(cap),
 	true.
 
 etb_reset(cap) :- !,
