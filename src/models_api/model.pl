@@ -1,6 +1,9 @@
-:- module(model, [load_model/2]).
+:- module(model, [load_model/2, model_spec/1, model_loaded/1]).
 
 :- use_module(['com/ui']).
+
+:- dynamic model_spec/1, model_loaded/1.
+
 
 				% load_model(ModelId, Model)
 
@@ -25,4 +28,7 @@ load_model(ModelId, model(Policy, Platform, Configuration)) :-
 	read_term(ConfigurationInput, Configuration, []),
 	close(ConfigurationInput),
 				%
+        retractall(model_spec(_)), assert(model_spec( model(Policy, Platform, Configuration) ) ),
+        retractall(model_loaded(_)), assert(model_loaded(true)),
+
 	vformat('done.~n').

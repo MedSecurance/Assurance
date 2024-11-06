@@ -43,7 +43,13 @@
 
 etb_opt_spec([
         [opt(command), type(atom), shortflags([c]), longflags(['command']),
-         help( 'command to execute when ETB starts' )]
+         help( 'command to execute when ETB starts' )],
+        [opt(model), type(atom), shortflags([m]), longflags(['model']),
+         help( 'load model specification when ETB starts' )],
+        [opt(selftest), type(boolean), default(true), shortflags([s]), longflags(['selftest']),
+         help( 'run self tests when ETB starts' )],
+        [opt(verbose), type(boolean), default(true), shortflags([v]), longflags(['verbose']),
+         help( 'verbose reporting' )]
 ]).
 
 :- dynamic etb_options/1.
@@ -76,7 +82,14 @@ etb_with_args(Argv) :-
 
 etb_with_opts(Opts) :-
 	format('Options=~q~n',[Opts]),
-	(   memberchk(command(CommandStr),Opts); true ), % currently only option
+	(   memberchk(command(CommandStr),Opts); true ),
+	(   memberchk(model(ModelName),Opts); true ),
+	(   memberchk(selftest(S),Opts); true ),
+	(   memberchk(verbose(V),Opts); true ),
+	(   nonvar(ModelName)
+	->  model:load_model(ModelName,_M)
+        ;   true
+        ),
 	(   var(CommandStr)
 	->  etb(_,_,_,_) % go to interactive command interpreter
 	;   % otherwise execute the command given in command line option
