@@ -14,13 +14,18 @@
 
 				%
 				% instatiate_pattern(+PatternId, +TopArgs, +CaseId)
+				% instatiate_pattern(+PatternList, +CaseId)
+				% instatiate_pattern_list(+PatternList, +CaseId)
 				%
 
 instantiate_pattern(PatternId, TopArgs, CaseId) :-
 	init_assurance_repository(CaseId),
 	instantiate_pattern_main(PatternId, TopArgs).
 
-instantiate_pattern_list(List, CaseId) :-
+instantiate_pattern(List, CaseId) :- % is_list(List), !,
+        instantiate_pattern_list(List, CaseId).
+
+instantiate_pattern_list(List, CaseId) :- % is_list(List), !,
 	init_assurance_repository(CaseId),
 	instantiate_pattern_list_aux(List).
 
