@@ -28,6 +28,8 @@
 :- use_module(export).
 :- use_module(etb_server).
 
+:- include(etb_test).
+
 :- style_check(-singleton).
 
 % :- initialization(etb).

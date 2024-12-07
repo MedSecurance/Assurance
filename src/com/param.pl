@@ -165,8 +165,8 @@ initial_evidence_counter_base(10000).
 
 % Modules providing functional tests
 %
-self_test_modules([]).       % modules that provide self tests
-regression_test_modules([]). % modules that provide regression tests
+self_test_modules([etb]).       % modules that provide self tests
+regression_test_modules([etb]). % modules that provide regression tests
 test_modules(Set,Modules) :-
     ( atom(Set)
       ->
