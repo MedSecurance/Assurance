@@ -2,7 +2,7 @@
 
 :- module(etb, [etb/0,etb/1,etb/4,etb_server/0,etb_reset/0,etb_reset/1]).
 :- use_module([
-       'com/command','com/param','com/procs','com/test','com/ui'
+       'com/command','com/param','com/procs','com/ui'
   ]).
 :- use_module(models_api/common).
 :- use_module(models_api/configuration).
@@ -27,6 +27,8 @@
 :- use_module(instantiate).
 :- use_module(export).
 :- use_module(etb_server).
+
+:- use_module('com/test').
 
 :- include(etb_test).
 

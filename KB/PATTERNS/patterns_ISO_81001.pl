@@ -15,16 +15,31 @@ ac_pattern('MS_generic_risk_based',
 	    arg('App_Spec',application_plane:specification),
 	    arg('Platform',platform_plane:platform)],
 	   goal(g1, 'G1: {HIT} Safety - Health IT is safe to use in defined care setting',
-		[context('Con1: Case Setting - Case setting definition and description'),
+		[context('Con1: Care Setting - Care setting definition and description'),
 		 context('Con2: {HIT} - HIT specification')
 		],
 		[strategy('S1: Risk Management - Argument based on adherence to \c
-			 national risk management process standard',
-			  iterate('N', hit_platform:node, nodes('HIT')),
-			  [justification('J1: Effective Process - Risk management \c
-				standard mandated and approved by the HDO')],
-			  [ac_pattern_ref('MS_residual_risk', ['HIT', 'N'])])
+			 ISO 80001-1 risk management process standard',
+			  iterate('N', platform:node, nodes('Platform')),
+			  [justification('J1: Effective Process - ISO 80001-1 \c
+				is an internationally published standard')],
+			  [ac_pattern_ref('MS_residual_risk1', ['HIT', 'N'])])
 		])).
+
+ac_pattern('MS_residual_risk1',
+		[arg('HIT',hit_system:specification), arg('Node',platform:node)],
+		goal(g1_1, 'G1.1: Residual risk - risk to node {Node} of {HIT} is tolerated',
+			[context('Con3: Risk Criteria - Criteria used to classify, evaluate and accept risk'),
+			 context('Con4: Tolerable Risk - Risk meeting criteria (acceptable) or \c
+				outweighed by clinical benefit (accepted)')
+			],
+			[strategy('for every identified hazard',
+				iterate('H', system:hazard, hazards('HIT')), [],
+				[goal(g1_1_1, 'Risk of hazard {H} is acceptable/accepted in node {Node}', [],
+					[evidence(hazard_log,'{Node} Hazard log identifies {H} risk assessment',[])
+					])
+				]) 
+			])).
 
 ac_pattern('MS_residual_risk',
 		[arg('HIT',system:arch)],

@@ -248,6 +248,8 @@ strategy_iterator_match( iterate(Name, Category, transitions(_Subject) ), _AArgs
 strategy_iterator_match( iterate(Name, Category, hazards(_PolicyArgName) ), _AArgs,
 			 arg(Name, Category, Hazard)) :-
 				% not yet implemented -
+	%member(arg(PolicyArgName, _, Policy), AArgs),
+	%policy:policy_hazards(Policy, Hazards),
 	member(Hazard, ['a-hazard', 'b-hazard']).
 
 				% condition holds

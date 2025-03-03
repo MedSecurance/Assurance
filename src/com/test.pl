@@ -1,5 +1,5 @@
 % TEST - FRAMEWORK FOR SELF-TEST AND REGRESSION TESTS
-:- module(test, [regression_test/0, self_test/0, module_test/2]).
+:- module(test, [module_test/2]).
 
 regression_test :- % external functionality tests
 	param:regression_test_modules(R),

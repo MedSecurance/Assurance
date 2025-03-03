@@ -64,8 +64,8 @@ proc('IoMT_system_inst', [
 proc('ISO_case_inst', [
 		set_v(ModelId, '2.0'),
 		set_v(CaseId, iomt_system_example),
-		load_model_v(ModelId, _App_Specification, _Platform, _Configuration),
-                instantiate_pattern_list('MS_generic_risk_based',[]),
+		load_model_v(ModelId, App_Specification, Platform, _Configuration),
+                instantiate_pattern('MS_generic_risk_based',['hit-spec',App_Specification,Platform],CaseId),
 	        export_case(CaseId,txt),
 		export_case(CaseId,html),
 		detach_case
