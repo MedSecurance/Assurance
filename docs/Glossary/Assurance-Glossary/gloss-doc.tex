@@ -1,0 +1,209 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% This document can be formatted only with pdflatex.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass[12pt,twoside,a4paper]{article}
+\usepackage[hyphens]{url}
+%\usepackage{bookmark}
+%\usepackage{hyperref}
+% 1
+\usepackage[bookmarks=true,hyperindex=true,colorlinks=true,linkcolor=blue,citecolor=blue,backref=page,pagebackref=true,plainpages=false,pdfpagelabels]{hyperref}
+%\usepackage{hypernat}
+
+% 2
+\usepackage[toc,acronym,style=altlist]{glossaries}
+%\usepackage[acronym,toc,nonumberlist,style=altlist]{glossaries}
+
+%\makeglossaries
+\glossarystyle{list}
+\renewcommand{\glspostdescription}{}
+\renewcommand{\glsnamefont}[1]{\textbf{#1}}
+%\defglsentryfmt  %%%% incomplete
+
+% GLOSSARY FILE(S)
+\input{../glossary-Assurance}
+
+\usepackage[T1]{fontenc}
+\usepackage{ae}
+\usepackage[pdftex]{graphicx}
+\graphicspath{{figures/}} 
+
+\usepackage{../Templates/LaTeX/gloss-doc}
+
+\usepackage[english]{babel}
+\usepackage{latexsym,epsf,epsfig}
+\usepackage{rotating,amsmath,amsfonts,amssymb,subfigure}
+
+\usepackage{times}
+\usepackage{listings}
+\usepackage{longtable}
+\usepackage{datetime}
+\usepackage{xcolor}
+
+\usepackage{xr}
+
+\newcommand{\mypredicate}[3]{ \framebox[\textwidth][l]{ {\bf #1}( {\it #2} ) } 
+\hspace*{1cm} \parbox{.8\textwidth}{#3.}}
+
+\sloppy
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Change title and other document information here.                 %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\dnumber}{0.1}
+\newcommand{\dtitle}{%
+  O-ETB Assurance Glossary
+}
+\newcommand{\dshorttitle}{O-ETB Glossary}
+%\fancyhead[RO,LE]{D\dnumber~\dshorttitle}
+\fancyhead[RO,LE]{\dshorttitle}
+\newcommand{\dversion}{1.0}
+\newcommand{\dauthors}{\tog}
+
+% \dstatus should be Draft or Final %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\dstatus}{Working}
+
+% \ddist should be Partners Only, EC or Public %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\ddist}{Public}
+
+\newdateformat{eudate}{\THEDAY~\monthname[\THEMONTH]~\THEYEAR}
+\newcommand{\ddate}{\eudate \today}
+%\newcommand{\ddate}{\today}
+\newcommand{\dyear}{\the\year{} }
+
+%% local changes start %%
+
+\usepackage[colorinlistoftodos]{todonotes}
+\usepackage{xr}
+\usepackage{stmaryrd}
+%\usepackage{mathpartir}
+\usepackage{theorem}
+
+\allowdisplaybreaks
+
+%
+% Page layout
+%
+\renewcommand{\topfraction}{1.0}
+\renewcommand{\bottomfraction}{1.0}
+\renewcommand{\textfraction}{0.0}
+\setcounter{topnumber}{4}
+
+%
+% Examples
+%
+{\theorembodyfont{\rmfamily}\newtheorem{example}{Example}}
+
+%% local changes end %%
+
+\usepackage{multicol}
+\usepackage{bytefield}
+%\usepackage{colortbl}
+\usepackage{textcomp}
+
+\newcommand{\XOR}{\textasciicircum\xspace}
+\newcommand{\OR}{\textbar\xspace}
+\newcommand{\AND}{\&\xspace}
+\newcommand{\NOT}{\texttildelow}
+\newcommand{\shl}{\textless$\!$\textless\xspace}
+\newcommand{\shr}{\textgreater$\!$\textgreater$\!$\textgreater\xspace}
+\newcommand{\ashr}{\textgreater$\!$\textgreater\xspace}
+
+\newlength{\hsbw}
+\newcommand{\memo}[1]{\mbox{}\par\vspace{0.25in}%
+\setlength{\hsbw}{\linewidth}%
+\addtolength{\hsbw}{-2\fboxsep}%
+\addtolength{\hsbw}{-2\fboxrule}%
+\noindent\fbox{\parbox{\hsbw}{{\bf Memo: }#1}}\vspace{0.25in}}
+
+
+
+\newcommand*{\glsgobblenumber}[1]{}
+% \renewcommand*{\glsgobblenumber}[1]{#1}% uncomment for testing
+
+\makeatletter
+%% lockstep's code
+\newcommand*{\glsaddnp}[2][]{%
+  \glsdoifexists{#2}%
+  {%
+%     \def\@glsnumberformat{glsnumberformat}% DELETED
+    \def\@glsnumberformat{glsgobblenumber}% NEW
+    \edef\@gls@counter{\csname glo@#2@counter\endcsname}%
+    \setkeys{glossadd}{#1}%
+    \@gls@saveentrycounter
+    \@do@wrglossary{#2}%
+  }%
+}
+%% new code; modified \glsaddall
+\let\glsaddallunused\undefined %% some systems already define \glsaddallunused
+\newcommand{\glsaddallunused}[1][]{%
+  \edef\@glo@type{\@glo@types}%
+  \setkeys{glossadd}{#1}%
+  \forallglsentries[\@glo@type]{\@glo@entry}{%
+    \ifglsused{\@glo@entry}{}{%
+     \glsaddnp[#1]{\@glo@entry}}}%
+}
+
+
+
+
+% comment-out next line to see Memos
+\renewcommand{\memo}[1]{}
+
+\makeglossaries
+
+\begin{document}
+
+\firstpage
+
+\partnerpage
+
+
+%\newpage
+%\tableofcontents
+%\newpage
+%\listoffigures
+
+\newpage
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\section*{Document Control}
+
+\centering
+\begin{tabular}{|p{.1\textwidth}|p{.55\textwidth}|p{.25\textwidth}|}\hline
+\centering{\bf Version} &
+\centering{\bf Status} &
+\centering{\bf Date}\tabularnewline\hline
+\centering{1.1} & \centering{Initial O-ETB Glossary (for MedSecurance)}   & \centering{January 2025} \tabularnewline\hline
+\end{tabular}
+
+%\cleardoublepage
+\clearpage
+\pagenumbering{arabic}
+
+\newpage
+%\glsaddall
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+%\label{sec:glossary}
+
+
+\nocite{SACM,SACM2,IIVocab,Rushby05,GSN_standard_3,CITADEL-D5.1,CITADEL-D5.2,CITADEL-D5.4}
+%\nocite{*}
+
+\glsaddallunused
+%\printglossaries
+\printglossary[style=altlist,nonumberlist]
+\newpage
+\printglossary[type=\acronymtype,style=list,nonumberlist]
+
+
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+\clearpage
+%\addcontentsline{toc}{section}{References}
+\bibliographystyle{plain}
+\bibliography{../assurance-refs}
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+%\appendix
+% % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
+
+\end{document}
