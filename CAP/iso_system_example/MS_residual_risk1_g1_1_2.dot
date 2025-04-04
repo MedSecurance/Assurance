@@ -1,0 +1,18 @@
+digraph MS_residual_risk1 {
+  node [fontsize=10]
+g1_1_2 [shape=rectangle label=<<b>goal</b><br/> G1.1: Residual risk<br/> - risk to node {node1}<br/> of {hit-spec} is tolerated<br/>>]
+context_1 [shape=rectangle style=rounded label=<<b>context</b><br/> Con3: Risk Criteria<br/> - Criteria used to classify,<br/> evaluate and accept<br/> risk>]
+{ rank=same; g1_1_2 -> context_1 [style=dashed]; }
+context_2 [shape=rectangle style=rounded label=<<b>context</b><br/> Con4: Tolerable Risk<br/> - Risk meeting criteria<br/> (acceptable) or outweighed<br/> by clinical benefit<br/> (accepted)>]
+{ rank=same; g1_1_2 -> context_2 [style=dashed]; }
+strategy_3 [shape=parallelogram margin=0 label=<<b>strategy</b><br/> for every identified<br/> hazard>]
+g1_1_2 -> strategy_3
+g1_1_1_4 [shape=rectangle label=<<b>goal</b><br/> Risk of hazard {a-hazard}<br/> is acceptable/accepted<br/> in node {node1}>]
+strategy_3 -> g1_1_1_4
+evidence_4 [shape=ellipse label=<<b>hazard_log</b><br/> {node1} Hazard log<br/> identifies {a-hazard}<br/> risk assessment<br/>pending xref: 10001> color=blue]
+g1_1_1_4 -> evidence_4
+g1_1_1_5 [shape=rectangle label=<<b>goal</b><br/> Risk of hazard {b-hazard}<br/> is acceptable/accepted<br/> in node {node1}>]
+strategy_3 -> g1_1_1_5
+evidence_5 [shape=ellipse label=<<b>hazard_log</b><br/> {node1} Hazard log<br/> identifies {b-hazard}<br/> risk assessment<br/>pending xref: 10002> color=blue]
+g1_1_1_5 -> evidence_5
+}

@@ -1,0 +1,4 @@
+digraph application_plane_process_properties {
+  node [fontsize=10]
+g0_27 [shape=rectangle label=<<b>goal</b><br/> Properties required<br/> of the IoMT platform<br/> by {P2} in order to satisfy<br/> its specification<br/> are assured>]
+}

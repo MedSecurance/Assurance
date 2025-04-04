@@ -1,0 +1,18 @@
+digraph person {
+  node [fontsize=10]
+g0_75 [shape=rectangle label=<<b>goal</b><br/> {Roberto} is sufficiently<br/> trustworthy>]
+g1_76 [shape=rectangle label=<<b>goal</b><br/> {Roberto} has the necessary<br/> attributes to perform<br/> {Development}>]
+g0_75 -> g1_76
+strategy_1 [shape=parallelogram margin=0 label=<<b>strategy</b><br/> argument over attributes<br/>>]
+g1_76 -> strategy_1
+g11_77 [shape=rectangle label=<<b>goal</b><br/> {Roberto} has sufficient<br/> {capability} to perform<br/> {Development}>]
+strategy_1 -> g11_77
+evidence_2 [shape=ellipse label=<<b>certificate</b><br/> {Roberto} {capability}<br/> for {Development}<br/><br/>ongoing xref: 10032> color=blue]
+g11_77 -> evidence_2
+g11_78 [shape=rectangle label=<<b>goal</b><br/> {Roberto} has sufficient<br/> {experience} to perform<br/> {Development}>]
+strategy_1 -> g11_78
+evidence_3 [shape=ellipse label=<<b>certificate</b><br/> {Roberto} {experience}<br/> for {Development}<br/><br/>ongoing xref: 10033> color=blue]
+g11_78 -> evidence_3
+g2_79 [shape=rectangle label=<<b>goal</b><br/> {Roberto} has sufficient<br/> level of supervision<br/> and review to successfully<br/> perform {Development}<br/>>]
+g0_75 -> g2_79
+}

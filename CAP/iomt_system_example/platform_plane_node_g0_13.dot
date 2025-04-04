@@ -1,0 +1,27 @@
+digraph platform_plane_node {
+  node [fontsize=10]
+g0_13 [shape=rectangle label=<<b>goal</b><br/> The platform node {node2}<br/> meets the requirements<br/> stated in the local<br/> requirements>]
+strategy_1 [shape=parallelogram margin=0 label=<<b>strategy</b><br/> Argument over desired<br/> behaviour and requirements<br/> of each node OS>]
+g0_13 -> strategy_1
+g1_36 [shape=rectangle label=<<b>goal</b><br/> Node OS ensures data<br/> separation and fair<br/> processor time scheduling<br/> per processor>]
+strategy_1 -> g1_36
+g11_37 [shape=rectangle label=<<b>goal</b><br/> Runtime resource constructors<br/> and destructors ensure<br/> initialization function<br/> and low-level primitives<br/> to create and destroy<br/> resources, and the<br/> underlying allocation<br/> and management of primitive<br/> resources>]
+g1_36 -> g11_37
+g4_38 [shape=rectangle label=<<b>goal</b><br/> CC evaluation of the<br/> operating system indicates<br/> compliance to the Protection<br/> Profile for General<br/> Purpose Operating<br/> Systems and is extended<br/> with the aforementioned<br/> subgoals>]
+g11_37 -> g4_38
+evidence_2 [shape=ellipse label=<<b>certificate</b><br/> CC Evaluation certificate<br/><br/>ongoing xref: 10011> color=blue]
+g4_38 -> evidence_2
+g12_39 [shape=rectangle label=<<b>goal</b><br/> Node OS provides runtime<br/> reconfiguration primitives<br/> that permit an authorized<br/> subject to perform<br/> configuration changes<br/>>]
+g1_36 -> g12_39
+g12_39 -> g4_38
+g13_40 [shape=rectangle label=<<b>goal</b><br/> Node OS provides configuration<br/> introspection primitives<br/> that permit an authorised<br/> subject to obtain a<br/> representation of<br/> the current configuration<br/>>]
+g1_36 -> g13_40
+g131_41 [shape=rectangle label=<<b>goal</b><br/> The configuration<br/> plane generates configuration<br/> blueprints and low-level<br/> system configuration<br/> properties that can<br/> be monitored at runtime<br/> from high-level specifications<br/> of the bounds of safe<br/> and secure operation<br/> and permissible configuration<br/>>]
+g13_40 -> g131_41
+evidence_3 [shape=ellipse label=<<b>unknown</b><br/> configuration blueprints<br/><br/>pending xref: 10012> color=blue]
+g131_41 -> evidence_3
+strategy_4 [shape=parallelogram margin=0 label=<<b>strategy</b><br/> Argument over desired<br/> behaviour and requirements<br/> of each network software<br/> (NS) instance>]
+g0_13 -> strategy_4
+g2_42 [shape=rectangle label=<<b>goal</b><br/> Requirements of NS<br/> instance are met>]
+strategy_4 -> g2_42
+}

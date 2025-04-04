@@ -1,0 +1,18 @@
+digraph person {
+  node [fontsize=10]
+g0_70 [shape=rectangle label=<<b>goal</b><br/> {Alicia} is sufficiently<br/> trustworthy>]
+g1_71 [shape=rectangle label=<<b>goal</b><br/> {Alicia} has the necessary<br/> attributes to perform<br/> {Assurance}>]
+g0_70 -> g1_71
+strategy_1 [shape=parallelogram margin=0 label=<<b>strategy</b><br/> argument over attributes<br/>>]
+g1_71 -> strategy_1
+g11_72 [shape=rectangle label=<<b>goal</b><br/> {Alicia} has sufficient<br/> {capability} to perform<br/> {Assurance}>]
+strategy_1 -> g11_72
+evidence_2 [shape=ellipse label=<<b>certificate</b><br/> {Alicia} {capability}<br/> for {Assurance}<br/>ongoing xref: 10030> color=blue]
+g11_72 -> evidence_2
+g11_73 [shape=rectangle label=<<b>goal</b><br/> {Alicia} has sufficient<br/> {experience} to perform<br/> {Assurance}>]
+strategy_1 -> g11_73
+evidence_3 [shape=ellipse label=<<b>certificate</b><br/> {Alicia} {experience}<br/> for {Assurance}<br/>ongoing xref: 10031> color=blue]
+g11_73 -> evidence_3
+g2_74 [shape=rectangle label=<<b>goal</b><br/> {Alicia} has sufficient<br/> level of supervision<br/> and review to successfully<br/> perform {Assurance}<br/>>]
+g0_70 -> g2_74
+}

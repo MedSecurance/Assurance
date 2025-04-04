@@ -1,0 +1,16 @@
+digraph IoMT_system {
+  node [fontsize=10]
+g0_1 [shape=rectangle label=<<b>goal</b><br/> The IoMT system satisfies<br/> its required properties<br/>>]
+context_1 [shape=rectangle style=rounded label=<<b>context</b><br/> The system is defined<br/> by the specifications<br/> of its application<br/> plane and its platform<br/> plane>]
+{ rank=same; g0_1 -> context_1 [style=dashed]; }
+strategy_2 [shape=parallelogram margin=0 label=<<b>strategy</b><br/> The IoMT system depends<br/> on the synergy between<br/> the platform and the<br/> application planes<br/>>]
+g0_1 -> strategy_2
+g1_2 [shape=rectangle label=<<b>goal</b><br/> The application plane<br/> behaves according<br/> to its specification<br/> and required properties<br/>>]
+strategy_2 -> g1_2
+away_goal_3 [shape=rectangle label=<<b>away goal</b><br/> The application plane<br/> guarantees that the<br/> {iomt_spec1} is met<br/><br/>[ application_plane_g0_3 ]> color=blue]
+g1_2 -> away_goal_3
+g2_4 [shape=rectangle label=<<b>goal</b><br/> The platform plane<br/> guarantees the properties<br/> on which the application<br/> plane depends>]
+strategy_2 -> g2_4
+away_goal_4 [shape=rectangle label=<<b>away goal</b><br/> The platform plane<br/> guarantees that the<br/> platform properties<br/> and the application<br/> plane assumptions<br/> are met<br/>[ platform_plane_g0_5 ]> color=blue]
+g2_4 -> away_goal_4
+}

@@ -1,0 +1,20 @@
+digraph application_plane {
+  node [fontsize=10]
+g0_3 [shape=rectangle label=<<b>goal</b><br/> The application plane<br/> guarantees that the<br/> {iomt_spec1} is met<br/>>]
+context_1 [shape=rectangle style=rounded label=<<b>context</b><br/> The IoMT system model<br/> describes the application<br/> plane and the architecture,<br/> properties and local<br/> specification of the<br/> plane>]
+{ rank=same; g0_3 -> context_1 [style=dashed]; }
+away_goal_2 [shape=rectangle label=<<b>away goal</b><br/> Interactions are as<br/> defined by the architecture<br/> spec {iomt_spec1}<br/><br/>[ application_plane_interface_g0_6 ]> color=blue]
+g0_3 -> away_goal_2
+g1_7 [shape=rectangle label=<<b>goal</b><br/> Compositional behaviour<br/> of separate components<br/> demonstrated to meet<br/> the local specification<br/>>]
+g0_3 -> g1_7
+strategy_3 [shape=parallelogram margin=0 label=<<b>strategy</b><br/> no. of processes>]
+g1_7 -> strategy_3
+away_goal_4 [shape=rectangle label=<<b>away goal</b><br/> process {P1} enforces<br/> its local spec<br/>[ application_plane_process_g0_8 ]> color=blue]
+strategy_3 -> away_goal_4
+away_goal_5 [shape=rectangle label=<<b>away goal</b><br/> process {P2} enforces<br/> its local spec<br/>[ application_plane_process_g0_9 ]> color=blue]
+strategy_3 -> away_goal_5
+g2_10 [shape=rectangle label=<<b>goal</b><br/> Compositional behaviour<br/> of compositions demonstrated<br/> to meet the local specification<br/>>]
+g0_3 -> g2_10
+away_goal_6 [shape=rectangle label=<<b>away goal</b><br/> The composition guarantess<br/> that {iomt_spec1}<br/> is satisfied<br/>[ application_plane_composition_g0_11 ]> color=blue]
+g2_10 -> away_goal_6
+}

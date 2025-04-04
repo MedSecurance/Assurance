@@ -2,12 +2,18 @@
 *~
 *#
 RUNTIME/LOG/*
-BUILD/*
-CAP/*.txt
-CAP/*/*.html
-CAP/*/*.dot
-CAP/*/*.svg
-REPOSITORY/ASSURANCE/*/repository.pl
+#BUILD/*
+CAP/*
+!CAP/iomt_system_example
+!CAP/iomt_system_example.txt
+!CAP/iso_system_example
+!CAP/iso_system_example.txt
+!CAP/README.md
+#CAP/*.txt
+#CAP/*/*.html
+#CAP/*/*.dot
+#CAP/*/*.svg
+REPOSITORY/CASES/*/repository.pl
 REPOSITORY/EVIDENCE/axiom/*/status
 REPOSITORY/EVIDENCE/certificate/*/status
 REPOSITORY/EVIDENCE/ichecker/*/status

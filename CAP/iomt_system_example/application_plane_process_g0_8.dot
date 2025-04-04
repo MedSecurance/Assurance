@@ -1,0 +1,14 @@
+digraph application_plane_process {
+  node [fontsize=10]
+g0_8 [shape=rectangle label=<<b>goal</b><br/> process {P1} enforces<br/> its local spec>]
+context_1 [shape=rectangle style=rounded label=<<b>context</b><br/> process {P1} is defined<br/> through its local spec<br/> and architecture>]
+{ rank=same; g0_8 -> context_1 [style=dashed]; }
+g1_22 [shape=rectangle label=<<b>goal</b><br/> Local spec is realized<br/> through the design<br/> of the component>]
+g0_8 -> g1_22
+missing_goal_2 [shape=rectangle label=<<b>missing goal</b>> color=red]
+g1_22 -> missing_goal_2
+away_goal_3 [shape=rectangle label=<<b>away goal</b><br/> Threats on {P1} will<br/> not affect the performance<br/> or consistency of communications<br/><br/>[ application_plane_process_threats_g0_23 ]> color=blue]
+g0_8 -> away_goal_3
+away_goal_4 [shape=rectangle label=<<b>away goal</b><br/> Properties required<br/> of the IoMT platform<br/> by {P1} in order to satisfy<br/> its specification<br/> are assured<br/>[ application_plane_process_properties_g0_24 ]> color=blue]
+g0_8 -> away_goal_4
+}

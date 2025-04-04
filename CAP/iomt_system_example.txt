@@ -1,0 +1,188 @@
+goal g0_1 : The IoMT system satisfies its required properties
+  - context : The system is defined by the specifications of its application plane and its platform plane
+  strategy : The IoMT system depends on the synergy between the platform and the application planes
+    goal g1_2 : The application plane behaves according to its specification and required properties
+      away goal -> g0_3
+    goal g2_4 : The platform plane guarantees the properties on which the application plane depends
+      away goal -> g0_5
+goal g0_3 : The application plane guarantees that the {iomt_spec1} is met
+  - context : The IoMT system model describes the application plane and the architecture, properties and local specification of the plane
+  away goal -> g0_6
+  goal g1_7 : Compositional behaviour of separate components demonstrated to meet the local specification
+    strategy : no. of processes
+      away goal -> g0_8
+      away goal -> g0_9
+  goal g2_10 : Compositional behaviour of compositions demonstrated to meet the local specification
+    away goal -> g0_11
+goal g0_5 : The platform plane guarantees that the platform properties and the application plane assumptions are met
+  - context : The IoMT system model describes the plane
+  strategy : Argument over the desired behavior and requirements of each IoMT platform node
+    away goal -> g0_12
+    away goal -> g0_13
+  away goal -> g0_14
+goal g0_6 : Interactions are as defined by the architecture spec {iomt_spec1}
+  - context : application plane | composition
+  goal g1_15 : communication occur only over defined connections
+    - context : connections are as specified in the {iomt_spec1} system model
+    strategy : argument over the requirements that need to be satisfied to guarantee communication will only occur over defined connections
+      goal g11_16 : specific {availability} of {iomt_spec1} are satisfied
+        evidence unknown : evidence of satisfaction of {availability} on {iomt_spec1}
+           pending reference -> 10005
+      goal g11_17 : specific {reliability} of {iomt_spec1} are satisfied
+        evidence unknown : evidence of satisfaction of {reliability} on {iomt_spec1}
+           pending reference -> 10006
+  goal g2_18 : the defined connections are correctly implemented
+    - context : communication is as specified in the {iomt_spec1} system model dataflows
+    goal g21_19 : all required connections are implemented
+      strategy : argument over connections specified in the system model
+        goal g211_20 : The {p1p2} connection is implemented
+          evidence unknown : Nodes and network configuration
+             pending reference -> 10007
+    goal g22_21 : no additional connections are implemented
+      evidence unknown : Nodes and network configuration
+         pending reference -> 10008
+goal g0_8 : process {P1} enforces its local spec
+  - context : process {P1} is defined through its local spec and architecture
+  goal g1_22 : Local spec is realized through the design of the component
+    missing goal
+  away goal -> g0_23
+  away goal -> g0_24
+goal g0_9 : process {P2} enforces its local spec
+  - context : process {P2} is defined through its local spec and architecture
+  goal g1_25 : Local spec is realized through the design of the component
+    missing goal
+  away goal -> g0_26
+  away goal -> g0_27
+goal g0_11 : The composition guarantess that {iomt_spec1} is satisfied
+  - context : The composition is defined through the local specification, parameters and properties
+  goal g1_28 : compositional behavior of the processes satisfies the local specification
+    strategy : no. of processes
+      away goal -> g0_8
+      away goal -> g0_9
+  away goal -> g0_6
+goal g0_12 : The platform node {node1} meets the requirements stated in the local requirements
+  strategy : Argument over desired behaviour and requirements of each node OS
+    goal g1_29 : Node OS ensures data separation and fair processor time scheduling per processor
+      goal g11_30 : Runtime resource constructors and destructors ensure initialization function and low-level primitives to create and destroy resources, and the underlying allocation and management of primitive resources
+        goal g4_31 : CC evaluation of the operating system indicates compliance to the Protection Profile for General Purpose Operating Systems and is extended with the aforementioned subgoals
+          evidence certificate : CC Evaluation certificate
+             ongoing reference -> 10009
+      goal g12_32 : Node OS provides runtime reconfiguration primitives that permit an authorized subject to perform configuration changes
+        goal -> g4_31
+      goal g13_33 : Node OS provides configuration introspection primitives that permit an authorised subject to obtain a representation of the current configuration
+        goal g131_34 : The configuration plane generates configuration blueprints and low-level system configuration properties that can be monitored at runtime from high-level specifications of the bounds of safe and secure operation and permissible configuration
+          evidence unknown : configuration blueprints
+             pending reference -> 10010
+  strategy : Argument over desired behaviour and requirements of each network software (NS) instance
+    goal g2_35 : Requirements of NS instance are met
+goal g0_13 : The platform node {node2} meets the requirements stated in the local requirements
+  strategy : Argument over desired behaviour and requirements of each node OS
+    goal g1_36 : Node OS ensures data separation and fair processor time scheduling per processor
+      goal g11_37 : Runtime resource constructors and destructors ensure initialization function and low-level primitives to create and destroy resources, and the underlying allocation and management of primitive resources
+        goal g4_38 : CC evaluation of the operating system indicates compliance to the Protection Profile for General Purpose Operating Systems and is extended with the aforementioned subgoals
+          evidence certificate : CC Evaluation certificate
+             ongoing reference -> 10011
+      goal g12_39 : Node OS provides runtime reconfiguration primitives that permit an authorized subject to perform configuration changes
+        goal -> g4_38
+      goal g13_40 : Node OS provides configuration introspection primitives that permit an authorised subject to obtain a representation of the current configuration
+        goal g131_41 : The configuration plane generates configuration blueprints and low-level system configuration properties that can be monitored at runtime from high-level specifications of the bounds of safe and secure operation and permissible configuration
+          evidence unknown : configuration blueprints
+             pending reference -> 10012
+  strategy : Argument over desired behaviour and requirements of each network software (NS) instance
+    goal g2_42 : Requirements of NS instance are met
+goal g0_14 : TS network (TSN) ensures that critical information is delivered timely and additionally optimises bandwidth by labelling messages with different levels of priority
+  strategy : Argument over correct implementation of TSN
+    - assumption : TSN configuration file is correct
+    goal g1_43 : TSN supports the dynamic reconfiguration of IoMT system
+      - assumption : TSN End system primitives are in place to enhance dynamic reconfiguration
+      - assumption : TSN switch primitives are in place to enhance dynamic reconfiguration
+      strategy : Argument over TSN reconfiguration protocols
+        goal g11_44 : A protocol is in place to collect IoMT reconfiguration requests
+          evidence unknown : Verification results for the reconfiguration request protocol
+             pending reference -> 10013
+        goal g12_45 : A protocol is in place to distribute new TSN schedules to platform nodes
+          evidence unknown : Verification results for TSN schedule distribution protocol
+             pending reference -> 10014
+    goal g2_46 : TSN configuration file is correctly implemented by the hardware
+      goal g21_47 : The hardware is configured according to the configuration files
+        goal g211_48 : Configuration data is downloaded into platform node controllers and switches over TSN network from application on central management
+    goal g3_49 : Mechanisms in the network switches and end-nodes dynamically add and remove links (runtime configuration changes) whilst maintaining availability and guaranteed time-sensitive properties
+      goal g31_50 : A mechanisms is in place that safely requests and distributes configuration data
+    goal g4_51 : TSN ensures that only communications with the implemented configuration occur
+      goal g41_52 : TSN network fault-tolerant design ensures consistency of communications
+        goal g411_53 : TSN switches and endpoints cards have fault tolerant design
+          goal g4111_54 : Incorrect frames cannot be generated
+            goal g41111_55 : All faulty frames are intercepted by a monitor
+              evidence unknown : TSN high integrity switch design
+                 pending reference -> 10015
+              evidence unknown : TSN high integrity endpoint card design
+                 pending reference -> 10016
+          goal g4112_56 : The availability of frames is ensured through path redundancy
+            evidence unknown : TSN network design
+               pending reference -> 10017
+        goal g412_57 : Analysis of TSN network demonstrates sufficiency of TSN fault tolerance
+          evidence unknown : Results of network fault propagation analysis
+             pending reference -> 10018
+      goal g42_58 : TSN ensures temporal behavior frames
+        goal g421_59 : Synchronized time is maintained in the network even in the presence of failures
+          strategy : Argument over TSN synchronization protocols
+            goal g4211_60 : Permanence function ensures local clocks of components are synchronised
+              evidence unknown : Formal verification results for permanence function
+                 pending reference -> 10019
+            goal g4212_61 : Clock-synchronisation protocol ensures synchronised global time is maintained
+              evidence unknown : Formal verification results for clock synchronization
+                 pending reference -> 10020
+            goal g4213_62 : Precision of the system is improved by detecting and removing faulty TSN devices from clock synchronisation
+              goal g42131_63 : Verification demonstrates the bound of overall precision
+                evidence unknown : Verification results
+                   pending reference -> 10021
+goal g0_23 : Threats on {P1} will not affect the performance or consistency of communications
+  - context : Defined threats for {P1}
+  strategy : argument over mitigation of identified threats
+    goal g1_64 : {Technical failure} is mitigated for {P1}
+      evidence unknown : {Technical failure} specific mitigation
+         pending reference -> 10022
+      evidence unknown : Evidence that controls are in place
+         pending reference -> 10023
+    goal g1_65 : {Unauthorised action} is mitigated for {P1}
+      evidence unknown : {Unauthorised action} specific mitigation
+         pending reference -> 10024
+      evidence unknown : Evidence that controls are in place
+         pending reference -> 10025
+  goal g2_66 : The identified threats for {P1} are complete
+goal g0_24 : Properties required of the IoMT platform by {P1} in order to satisfy its specification are assured
+goal g0_26 : Threats on {P2} will not affect the performance or consistency of communications
+  - context : Defined threats for {P2}
+  strategy : argument over mitigation of identified threats
+    goal g1_67 : {Technical failure} is mitigated for {P2}
+      evidence unknown : {Technical failure} specific mitigation
+         pending reference -> 10026
+      evidence unknown : Evidence that controls are in place
+         pending reference -> 10027
+    goal g1_68 : {Unauthorised action} is mitigated for {P2}
+      evidence unknown : {Unauthorised action} specific mitigation
+         pending reference -> 10028
+      evidence unknown : Evidence that controls are in place
+         pending reference -> 10029
+  goal g2_69 : The identified threats for {P2} are complete
+goal g0_27 : Properties required of the IoMT platform by {P2} in order to satisfy its specification are assured
+goal g0_70 : {Alicia} is sufficiently trustworthy
+  goal g1_71 : {Alicia} has the necessary attributes to perform {Assurance}
+    strategy : argument over attributes
+      goal g11_72 : {Alicia} has sufficient {capability} to perform {Assurance}
+        evidence certificate : {Alicia} {capability} for {Assurance}
+           ongoing reference -> 10030
+      goal g11_73 : {Alicia} has sufficient {experience} to perform {Assurance}
+        evidence certificate : {Alicia} {experience} for {Assurance}
+           ongoing reference -> 10031
+  goal g2_74 : {Alicia} has sufficient level of supervision and review to successfully perform {Assurance}
+goal g0_75 : {Roberto} is sufficiently trustworthy
+  goal g1_76 : {Roberto} has the necessary attributes to perform {Development}
+    strategy : argument over attributes
+      goal g11_77 : {Roberto} has sufficient {capability} to perform {Development}
+        evidence certificate : {Roberto} {capability} for {Development}
+           ongoing reference -> 10032
+      goal g11_78 : {Roberto} has sufficient {experience} to perform {Development}
+        evidence certificate : {Roberto} {experience} for {Development}
+           ongoing reference -> 10033
+  goal g2_79 : {Roberto} has sufficient level of supervision and review to successfully perform {Development}

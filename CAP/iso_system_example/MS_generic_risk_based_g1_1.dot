@@ -1,0 +1,16 @@
+digraph MS_generic_risk_based {
+  node [fontsize=10]
+g1_1 [shape=rectangle label=<<b>goal</b><br/> G1: {hit-spec} Safety<br/> - Health IT is safe to<br/> use in defined care<br/> setting>]
+context_1 [shape=rectangle style=rounded label=<<b>context</b><br/> Con1: Care Setting<br/> - Care setting definition<br/> and description>]
+{ rank=same; g1_1 -> context_1 [style=dashed]; }
+context_2 [shape=rectangle style=rounded label=<<b>context</b><br/> Con2: {hit-spec} -<br/> HIT specification<br/>>]
+{ rank=same; g1_1 -> context_2 [style=dashed]; }
+strategy_3 [shape=parallelogram margin=0 label=<<b>strategy</b><br/> S1: Risk Management<br/> - Argument based on<br/> adherence to ISO 80001-1<br/> risk management process<br/> standard>]
+g1_1 -> strategy_3
+justification_4 [shape=rectangle style=rounded label=<<b>justification</b><br/> J1: Effective Process<br/> - ISO 80001-1 is an internationally<br/> published standard<br/>>]
+{ rank=same; strategy_3 -> justification_4 [style=dashed]; }
+away_goal_5 [shape=rectangle label=<<b>away goal</b><br/> G1.1: Residual risk<br/> - risk to node {node1}<br/> of {hit-spec} is tolerated<br/><br/>[ MS_residual_risk1_g1_1_2 ]> color=blue]
+strategy_3 -> away_goal_5
+away_goal_6 [shape=rectangle label=<<b>away goal</b><br/> G1.1: Residual risk<br/> - risk to node {node2}<br/> of {hit-spec} is tolerated<br/><br/>[ MS_residual_risk1_g1_1_3 ]> color=blue]
+strategy_3 -> away_goal_6
+}

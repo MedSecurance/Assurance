@@ -1,0 +1,36 @@
+digraph application_plane_interface {
+  node [fontsize=10]
+g0_6 [shape=rectangle label=<<b>goal</b><br/> Interactions are as<br/> defined by the architecture<br/> spec {iomt_spec1}<br/>>]
+context_1 [shape=rectangle style=rounded label=<<b>context</b><br/> application plane<br/> | composition>]
+{ rank=same; g0_6 -> context_1 [style=dashed]; }
+g1_15 [shape=rectangle label=<<b>goal</b><br/> communication occur<br/> only over defined connections<br/>>]
+g0_6 -> g1_15
+context_2 [shape=rectangle style=rounded label=<<b>context</b><br/> connections are as<br/> specified in the {iomt_spec1}<br/> system model>]
+{ rank=same; g1_15 -> context_2 [style=dashed]; }
+strategy_3 [shape=parallelogram margin=0 label=<<b>strategy</b><br/> argument over the requirements<br/> that need to be satisfied<br/> to guarantee communication<br/> will only occur over<br/> defined connections<br/>>]
+g1_15 -> strategy_3
+g11_16 [shape=rectangle label=<<b>goal</b><br/> specific {availability}<br/> of {iomt_spec1} are<br/> satisfied>]
+strategy_3 -> g11_16
+evidence_4 [shape=ellipse label=<<b>unknown</b><br/> evidence of satisfaction<br/> of {availability}<br/> on {iomt_spec1}<br/>pending xref: 10005> color=blue]
+g11_16 -> evidence_4
+g11_17 [shape=rectangle label=<<b>goal</b><br/> specific {reliability}<br/> of {iomt_spec1} are<br/> satisfied>]
+strategy_3 -> g11_17
+evidence_5 [shape=ellipse label=<<b>unknown</b><br/> evidence of satisfaction<br/> of {reliability} on<br/> {iomt_spec1}<br/>pending xref: 10006> color=blue]
+g11_17 -> evidence_5
+g2_18 [shape=rectangle label=<<b>goal</b><br/> the defined connections<br/> are correctly implemented<br/>>]
+g0_6 -> g2_18
+context_6 [shape=rectangle style=rounded label=<<b>context</b><br/> communication is as<br/> specified in the {iomt_spec1}<br/> system model dataflows<br/>>]
+{ rank=same; g2_18 -> context_6 [style=dashed]; }
+g21_19 [shape=rectangle label=<<b>goal</b><br/> all required connections<br/> are implemented>]
+g2_18 -> g21_19
+strategy_7 [shape=parallelogram margin=0 label=<<b>strategy</b><br/> argument over connections<br/> specified in the system<br/> model>]
+g21_19 -> strategy_7
+g211_20 [shape=rectangle label=<<b>goal</b><br/> The {p1p2} connection<br/> is implemented>]
+strategy_7 -> g211_20
+evidence_8 [shape=ellipse label=<<b>unknown</b><br/> Nodes and network configuration<br/><br/>pending xref: 10007> color=blue]
+g211_20 -> evidence_8
+g22_21 [shape=rectangle label=<<b>goal</b><br/> no additional connections<br/> are implemented>]
+g2_18 -> g22_21
+evidence_9 [shape=ellipse label=<<b>unknown</b><br/> Nodes and network configuration<br/><br/>pending xref: 10008> color=blue]
+g22_21 -> evidence_9
+}

@@ -1,0 +1,7 @@
+<h2> application_plane_process_properties_g0_27 </h2>
+<h3>Pattern 'application_plane_process_properties'</h2>
+<li>Process : application_plane:process = process('P2',[port(p,[],[])],[],[processor(x,[family(cpu),frequency('2GHz'),schedule(80)]),memory(z,[family(ram),size(5)])])
+<li>App_Spec : application_plane:specification = policy(iomt_spec1,[process('P1',[port(p,[],[])],[],[processor(x,[family(cpu),frequency('2GHz'),schedule(70)]),memory(z,[family(ram),size(1)])]),process('P2',[port(p,[],[])],[],[processor(x,[family(cpu),frequency('2GHz'),schedule(80)]),memory(z,[family(ram),size(5)])])],[object(o1,[],[memory(u,[family(ram),size(3)])]),object(o2,[],[memory(u,[family(ram),size(6)])])],[ipc_flow(p1p2,['P1',p],['P2',p],[],[])],[po_flow(p1o1,'P1',o1,[],[]),po_flow(p2o2,'P2',o2,[],[])],[specfilename('x.spec')],[deployment(not_same(['P1','P2']))])
+<hr><h3>GSN Representation</h3>
+<img src="application_plane_process_properties_g0_27.svg" alt="graphical view">
+<hr><h3>Error Log</h3>

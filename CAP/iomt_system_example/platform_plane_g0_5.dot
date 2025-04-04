@@ -1,0 +1,14 @@
+digraph platform_plane {
+  node [fontsize=10]
+g0_5 [shape=rectangle label=<<b>goal</b><br/> The platform plane<br/> guarantees that the<br/> platform properties<br/> and the application<br/> plane assumptions<br/> are met>]
+context_1 [shape=rectangle style=rounded label=<<b>context</b><br/> The IoMT system model<br/> describes the plane<br/>>]
+{ rank=same; g0_5 -> context_1 [style=dashed]; }
+strategy_2 [shape=parallelogram margin=0 label=<<b>strategy</b><br/> Argument over the desired<br/> behavior and requirements<br/> of each IoMT platform<br/> node>]
+g0_5 -> strategy_2
+away_goal_3 [shape=rectangle label=<<b>away goal</b><br/> The platform node {node1}<br/> meets the requirements<br/> stated in the local<br/> requirements<br/>[ platform_plane_node_g0_12 ]> color=blue]
+strategy_2 -> away_goal_3
+away_goal_4 [shape=rectangle label=<<b>away goal</b><br/> The platform node {node2}<br/> meets the requirements<br/> stated in the local<br/> requirements<br/>[ platform_plane_node_g0_13 ]> color=blue]
+strategy_2 -> away_goal_4
+away_goal_5 [shape=rectangle label=<<b>away goal</b><br/> TS network (TSN) ensures<br/> that critical information<br/> is delivered timely<br/> and additionally optimises<br/> bandwidth by labelling<br/> messages with different<br/> levels of priority<br/><br/>[ platform_plane_TS_network_g0_14 ]> color=blue]
+g0_5 -> away_goal_5
+}

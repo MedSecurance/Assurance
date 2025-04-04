@@ -1,0 +1,76 @@
+digraph platform_plane_TS_network {
+  node [fontsize=10]
+g0_14 [shape=rectangle label=<<b>goal</b><br/> TS network (TSN) ensures<br/> that critical information<br/> is delivered timely<br/> and additionally optimises<br/> bandwidth by labelling<br/> messages with different<br/> levels of priority<br/>>]
+strategy_1 [shape=parallelogram margin=0 label=<<b>strategy</b><br/> Argument over correct<br/> implementation of<br/> TSN>]
+g0_14 -> strategy_1
+assumption_2 [shape=rectangle style=rounded label=<<b>assumption</b><br/> TSN configuration<br/> file is correct>]
+{ rank=same; strategy_1 -> assumption_2 [style=dashed]; }
+g1_43 [shape=rectangle label=<<b>goal</b><br/> TSN supports the dynamic<br/> reconfiguration of<br/> IoMT system>]
+strategy_1 -> g1_43
+assumption_3 [shape=rectangle style=rounded label=<<b>assumption</b><br/> TSN End system primitives<br/> are in place to enhance<br/> dynamic reconfiguration<br/>>]
+{ rank=same; g1_43 -> assumption_3 [style=dashed]; }
+assumption_4 [shape=rectangle style=rounded label=<<b>assumption</b><br/> TSN switch primitives<br/> are in place to enhance<br/> dynamic reconfiguration<br/>>]
+{ rank=same; g1_43 -> assumption_4 [style=dashed]; }
+strategy_5 [shape=parallelogram margin=0 label=<<b>strategy</b><br/> Argument over TSN reconfiguration<br/> protocols>]
+g1_43 -> strategy_5
+g11_44 [shape=rectangle label=<<b>goal</b><br/> A protocol is in place<br/> to collect IoMT reconfiguration<br/> requests>]
+strategy_5 -> g11_44
+evidence_6 [shape=ellipse label=<<b>unknown</b><br/> Verification results<br/> for the reconfiguration<br/> request protocol<br/>pending xref: 10013> color=blue]
+g11_44 -> evidence_6
+g12_45 [shape=rectangle label=<<b>goal</b><br/> A protocol is in place<br/> to distribute new TSN<br/> schedules to platform<br/> nodes>]
+strategy_5 -> g12_45
+evidence_7 [shape=ellipse label=<<b>unknown</b><br/> Verification results<br/> for TSN schedule distribution<br/> protocol<br/>pending xref: 10014> color=blue]
+g12_45 -> evidence_7
+g2_46 [shape=rectangle label=<<b>goal</b><br/> TSN configuration<br/> file is correctly implemented<br/> by the hardware>]
+strategy_1 -> g2_46
+g21_47 [shape=rectangle label=<<b>goal</b><br/> The hardware is configured<br/> according to the configuration<br/> files>]
+g2_46 -> g21_47
+g211_48 [shape=rectangle label=<<b>goal</b><br/> Configuration data<br/> is downloaded into<br/> platform node controllers<br/> and switches over TSN<br/> network from application<br/> on central management<br/>>]
+g21_47 -> g211_48
+g3_49 [shape=rectangle label=<<b>goal</b><br/> Mechanisms in the network<br/> switches and end-nodes<br/> dynamically add and<br/> remove links (runtime<br/> configuration changes)<br/> whilst maintaining<br/> availability and guaranteed<br/> time-sensitive properties<br/>>]
+strategy_1 -> g3_49
+g31_50 [shape=rectangle label=<<b>goal</b><br/> A mechanisms is in place<br/> that safely requests<br/> and distributes configuration<br/> data>]
+g3_49 -> g31_50
+g4_51 [shape=rectangle label=<<b>goal</b><br/> TSN ensures that only<br/> communications with<br/> the implemented configuration<br/> occur>]
+strategy_1 -> g4_51
+g41_52 [shape=rectangle label=<<b>goal</b><br/> TSN network fault-tolerant<br/> design ensures consistency<br/> of communications<br/>>]
+g4_51 -> g41_52
+g411_53 [shape=rectangle label=<<b>goal</b><br/> TSN switches and endpoints<br/> cards have fault tolerant<br/> design>]
+g41_52 -> g411_53
+g4111_54 [shape=rectangle label=<<b>goal</b><br/> Incorrect frames cannot<br/> be generated>]
+g411_53 -> g4111_54
+g41111_55 [shape=rectangle label=<<b>goal</b><br/> All faulty frames are<br/> intercepted by a monitor<br/>>]
+g4111_54 -> g41111_55
+evidence_8 [shape=ellipse label=<<b>unknown</b><br/> TSN high integrity<br/> switch design<br/>pending xref: 10015> color=blue]
+g41111_55 -> evidence_8
+evidence_9 [shape=ellipse label=<<b>unknown</b><br/> TSN high integrity<br/> endpoint card design<br/><br/>pending xref: 10016> color=blue]
+g41111_55 -> evidence_9
+g4112_56 [shape=rectangle label=<<b>goal</b><br/> The availability of<br/> frames is ensured through<br/> path redundancy>]
+g411_53 -> g4112_56
+evidence_10 [shape=ellipse label=<<b>unknown</b><br/> TSN network design<br/><br/>pending xref: 10017> color=blue]
+g4112_56 -> evidence_10
+g412_57 [shape=rectangle label=<<b>goal</b><br/> Analysis of TSN network<br/> demonstrates sufficiency<br/> of TSN fault tolerance<br/>>]
+g41_52 -> g412_57
+evidence_11 [shape=ellipse label=<<b>unknown</b><br/> Results of network<br/> fault propagation<br/> analysis<br/>pending xref: 10018> color=blue]
+g412_57 -> evidence_11
+g42_58 [shape=rectangle label=<<b>goal</b><br/> TSN ensures temporal<br/> behavior frames>]
+g4_51 -> g42_58
+g421_59 [shape=rectangle label=<<b>goal</b><br/> Synchronized time<br/> is maintained in the<br/> network even in the<br/> presence of failures<br/>>]
+g42_58 -> g421_59
+strategy_12 [shape=parallelogram margin=0 label=<<b>strategy</b><br/> Argument over TSN synchronization<br/> protocols>]
+g421_59 -> strategy_12
+g4211_60 [shape=rectangle label=<<b>goal</b><br/> Permanence function<br/> ensures local clocks<br/> of components are synchronised<br/>>]
+strategy_12 -> g4211_60
+evidence_13 [shape=ellipse label=<<b>unknown</b><br/> Formal verification<br/> results for permanence<br/> function<br/>pending xref: 10019> color=blue]
+g4211_60 -> evidence_13
+g4212_61 [shape=rectangle label=<<b>goal</b><br/> Clock-synchronisation<br/> protocol ensures synchronised<br/> global time is maintained<br/>>]
+strategy_12 -> g4212_61
+evidence_14 [shape=ellipse label=<<b>unknown</b><br/> Formal verification<br/> results for clock synchronization<br/><br/>pending xref: 10020> color=blue]
+g4212_61 -> evidence_14
+g4213_62 [shape=rectangle label=<<b>goal</b><br/> Precision of the system<br/> is improved by detecting<br/> and removing faulty<br/> TSN devices from clock<br/> synchronisation>]
+strategy_12 -> g4213_62
+g42131_63 [shape=rectangle label=<<b>goal</b><br/> Verification demonstrates<br/> the bound of overall<br/> precision>]
+g4213_62 -> g42131_63
+evidence_15 [shape=ellipse label=<<b>unknown</b><br/> Verification results<br/><br/>pending xref: 10021> color=blue]
+g42131_63 -> evidence_15
+}

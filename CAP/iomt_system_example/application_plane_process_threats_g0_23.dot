@@ -1,0 +1,22 @@
+digraph application_plane_process_threats {
+  node [fontsize=10]
+g0_23 [shape=rectangle label=<<b>goal</b><br/> Threats on {P1} will<br/> not affect the performance<br/> or consistency of communications<br/>>]
+context_1 [shape=rectangle style=rounded label=<<b>context</b><br/> Defined threats for<br/> {P1}>]
+{ rank=same; g0_23 -> context_1 [style=dashed]; }
+strategy_2 [shape=parallelogram margin=0 label=<<b>strategy</b><br/> argument over mitigation<br/> of identified threats<br/>>]
+g0_23 -> strategy_2
+g1_64 [shape=rectangle label=<<b>goal</b><br/> {Technical failure}<br/> is mitigated for {P1}<br/>>]
+strategy_2 -> g1_64
+evidence_3 [shape=ellipse label=<<b>unknown</b><br/> {Technical failure}<br/> specific mitigation<br/><br/>pending xref: 10022> color=blue]
+g1_64 -> evidence_3
+evidence_4 [shape=ellipse label=<<b>unknown</b><br/> Evidence that controls<br/> are in place<br/>pending xref: 10023> color=blue]
+g1_64 -> evidence_4
+g1_65 [shape=rectangle label=<<b>goal</b><br/> {Unauthorised action}<br/> is mitigated for {P1}<br/>>]
+strategy_2 -> g1_65
+evidence_5 [shape=ellipse label=<<b>unknown</b><br/> {Unauthorised action}<br/> specific mitigation<br/><br/>pending xref: 10024> color=blue]
+g1_65 -> evidence_5
+evidence_6 [shape=ellipse label=<<b>unknown</b><br/> Evidence that controls<br/> are in place<br/>pending xref: 10025> color=blue]
+g1_65 -> evidence_6
+g2_66 [shape=rectangle label=<<b>goal</b><br/> The identified threats<br/> for {P1} are complete<br/>>]
+g0_23 -> g2_66
+}

@@ -1,0 +1,27 @@
+goal g1_1 : G1: {hit-spec} Safety - Health IT is safe to use in defined care setting
+  - context : Con1: Care Setting - Care setting definition and description
+  - context : Con2: {hit-spec} - HIT specification
+  strategy : S1: Risk Management - Argument based on adherence to ISO 80001-1 risk management process standard
+    - justification : J1: Effective Process - ISO 80001-1 is an internationally published standard
+    away goal -> g1_1_2
+    away goal -> g1_1_3
+goal g1_1_2 : G1.1: Residual risk - risk to node {node1} of {hit-spec} is tolerated
+  - context : Con3: Risk Criteria - Criteria used to classify, evaluate and accept risk
+  - context : Con4: Tolerable Risk - Risk meeting criteria (acceptable) or outweighed by clinical benefit (accepted)
+  strategy : for every identified hazard
+    goal g1_1_1_4 : Risk of hazard {a-hazard} is acceptable/accepted in node {node1}
+      evidence hazard_log : {node1} Hazard log identifies {a-hazard} risk assessment
+         pending reference -> 10001
+    goal g1_1_1_5 : Risk of hazard {b-hazard} is acceptable/accepted in node {node1}
+      evidence hazard_log : {node1} Hazard log identifies {b-hazard} risk assessment
+         pending reference -> 10002
+goal g1_1_3 : G1.1: Residual risk - risk to node {node2} of {hit-spec} is tolerated
+  - context : Con3: Risk Criteria - Criteria used to classify, evaluate and accept risk
+  - context : Con4: Tolerable Risk - Risk meeting criteria (acceptable) or outweighed by clinical benefit (accepted)
+  strategy : for every identified hazard
+    goal g1_1_1_6 : Risk of hazard {a-hazard} is acceptable/accepted in node {node2}
+      evidence hazard_log : {node2} Hazard log identifies {a-hazard} risk assessment
+         pending reference -> 10003
+    goal g1_1_1_7 : Risk of hazard {b-hazard} is acceptable/accepted in node {node2}
+      evidence hazard_log : {node2} Hazard log identifies {b-hazard} risk assessment
+         pending reference -> 10004
