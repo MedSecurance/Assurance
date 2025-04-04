@@ -2,7 +2,8 @@
 *~
 *#
 RUNTIME/LOG/*
-#BUILD/*
+BUILD/*
+!BUILD/README.md
 CAP/*
 !CAP/iomt_system_example
 !CAP/iomt_system_example.txt
