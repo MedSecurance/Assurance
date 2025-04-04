@@ -1,51 +1,6 @@
 % ETB-specific command procedures
 :- use_module('etb').
 
-proc(m18review, [
-		help(show_proc),
-		help(show_pattern),
-
-		show_proc(m18review),
-	        show_pats,
-		etb_reset,
-	
-		show_pattern(person),
-		help(instantiate_pattern),
-		instantiate_pattern('person', ['Marius', 'Programming'], 'person_example'),
-		export_case(person_example, txt),
-		export_case(person_example, html),
-		detach_case,
-
-		show_pattern(teamOfN),
-                instantiate_pattern(teamOfN, [programming, list([marius,rance])], team_example),
-		export_case(team_example, html),
-		detach_case,
-
-	        show_pattern('IoMT_system'),
-	        show_pattern('application_plane'),
-	        show_pattern('platform_plane'),
-	        show_proc('IoMT_system_inst'),
-
-		set_v(ModelId, '2.0'),
-		set_v(CaseId, iomt_system_example),
-		load_model_v(ModelId, App_Specification, Platform, _Configuration),
-		set_v(APL,
-			[ 'IoMT_system'-[App_Specification, Platform],
-			'person'-['Alicia', 'Assurance'],
-			'person'-['Roberto', 'Development']
-			]),
-		instantiate_pattern_list(APL, CaseId),
-		export_case(CaseId, html),
-		detach_case,
-
-		show_pattern('MS_generic_risk_based'),
-		show_pattern('MS_residual_risk'),
-		show_pattern('MS_acceptable_risk'),
-		show_pattern('MS_accepted_risk'),
-		
-		echo('DONE!')
-	]).
-
 proc('IoMT_system_inst', [
 		set_v(ModelId, '2.0'),
 		set_v(CaseId, iomt_system_example),
@@ -63,7 +18,7 @@ proc('IoMT_system_inst', [
 
 proc('ISO_case_inst', [
 		set_v(ModelId, '2.0'),
-		set_v(CaseId, iomt_system_example),
+		set_v(CaseId, iso_system_example),
 		load_model_v(ModelId, App_Specification, Platform, _Configuration),
                 instantiate_pattern('MS_generic_risk_based',['hit-spec',App_Specification,Platform],CaseId),
 	        export_case(CaseId,txt),
@@ -72,13 +27,14 @@ proc('ISO_case_inst', [
     ]).
 
 %%%%%%%%%%
-
+% instantiate the person pattern as person_examp
 proc(person_inst, [
         instantiate_pattern('person', ['Marius', 'Programming'], 'person_examp'),
         export_case(cap_person,txt),
 	detach_case
     ]).
 
+% export person_examp created by the person_inst proc
 proc(person_exp, [
         update,
         attach_case(person_examp),
@@ -86,6 +42,7 @@ proc(person_exp, [
 	detach_case
     ]).
 
+% instantiate a list of patterns using model 1.0 as system_examp and export
 proc(system_inst, [
 		set_v(ModelId, '1.0'),
 		set_v(CaseId, system_examp),
@@ -105,9 +62,12 @@ proc(system_inst, [
 		detach_case
     ]).
 
+% pass a list as an actual parameter to pattern instantiation
 proc(teamN, [
-                instantiate_pattern(teamOfN, [programming, list([marius,rance])], teamN)
-        ]).
+        instantiate_pattern(teamOfN, [programming, list([marius,rance])], teamN)
+    ]).
+
+%%%% PAST DEMOS %%%%
 
 proc(demo_day, [
 		help,
@@ -154,3 +114,49 @@ proc(demo_day, [
 
 		echo('DONE!')
 	]).
+
+proc(m18review, [
+	help(show_proc),
+	help(show_pattern),
+
+	show_proc(m18review),
+		show_pats,
+	etb_reset,
+
+	show_pattern(person),
+	help(instantiate_pattern),
+	instantiate_pattern('person', ['Marius', 'Programming'], 'person_example'),
+	export_case(person_example, txt),
+	export_case(person_example, html),
+	detach_case,
+
+	show_pattern(teamOfN),
+			instantiate_pattern(teamOfN, [programming, list([marius,rance])], team_example),
+	export_case(team_example, html),
+	detach_case,
+
+		show_pattern('IoMT_system'),
+		show_pattern('application_plane'),
+		show_pattern('platform_plane'),
+		show_proc('IoMT_system_inst'),
+
+	set_v(ModelId, '2.0'),
+	set_v(CaseId, iomt_system_example),
+	load_model_v(ModelId, App_Specification, Platform, _Configuration),
+	set_v(APL,
+		[ 'IoMT_system'-[App_Specification, Platform],
+		'person'-['Alicia', 'Assurance'],
+		'person'-['Roberto', 'Development']
+		]),
+	instantiate_pattern_list(APL, CaseId),
+	export_case(CaseId, html),
+	detach_case,
+
+	show_pattern('MS_generic_risk_based'),
+	show_pattern('MS_residual_risk'),
+	show_pattern('MS_acceptable_risk'),
+	show_pattern('MS_accepted_risk'),
+	
+	echo('DONE!')
+]).
+
