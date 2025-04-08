@@ -1,7 +1,14 @@
 % ETB-specific command procedures
 :- use_module('etb').
 
-proc('IoMT_system_inst', [
+%%%%%%%%%%
+% The procedures IoMT_system_inst and ISO_case_inst 
+% generate the correspoding text and htmp exports to CAP that are maintained
+% as examples. The procs can be re-run to regenerate the example outputs.
+% If the procs or anything they are dependent upon (e.g. model, patterns, etc.)
+% are modified the procs should be re-run to regenerate the CAP outputs.
+%
+proc('IoMT_case', [
 		set_v(ModelId, '2.0'),
 		set_v(CaseId, iomt_system_example),
 		load_model_v(ModelId, App_Specification, Platform, _Configuration),
@@ -16,7 +23,7 @@ proc('IoMT_system_inst', [
 		detach_case
     ]).
 
-proc('ISO_case_inst', [
+proc('ISO_case', [
 		set_v(ModelId, '2.0'),
 		set_v(CaseId, iso_system_example),
 		load_model_v(ModelId, App_Specification, Platform, _Configuration),
@@ -25,6 +32,7 @@ proc('ISO_case_inst', [
 		export_case(CaseId,html),
 		detach_case
     ]).
+%%%%%%%%%%
 
 %%%%%%%%%%
 % instantiate the person pattern as person_examp
