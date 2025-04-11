@@ -32,10 +32,10 @@ ac_pattern('qualified_person',
 	[arg('Qualification', person:activity),
 	 arg('Person', person:participant)
 	],
-	goal(g0, 'The programming team possesses the necessary qualifications',
-		[context('IoMT system')],
-		[goal(g1, 'all members meet specified qualification {Qualification}', [],
-			[strategy('establish qualification for the person to do activity',
+	goal(g0, 'The ability to perform the activity {Qualification} is possessed by the person {Person}',
+		[],
+		[goal(g1, 'the person is qualified to do {Qualification}', [],
+			[strategy('establish the {Person} exists and is qualified to do the activity',
 				[],
 				[ ac_pattern_ref('person', ['Person','Qualification'])])
 			]

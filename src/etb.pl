@@ -175,7 +175,7 @@ initialize_all :-
 	param:setparam(initialized,true).
 
 etb_reset :- % TODO currently not resulting in a complete reset, use make clean
-        shell('make clean'),
+        shell('make clean'), % just use makefile unless it becomes a problem
 	% etb_reset(repos),
 	% etb_reset(cap),
 	true.

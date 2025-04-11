@@ -20,7 +20,8 @@ person-examp:	../BUILD/etb
 clean: clean_cap clean_repo
 
 clean_cap:
-	find -d ../CAP -not \( -name "README.md" -or -name "CAP" \) -delete
+#	find ../CAP -not \( -name "README.md" -or -name "CAP" -or -name "iomt_system_example/*" -or -name "iomt_system_example.txt" -or -name "iso_system_example/*" -or -name "iso_system_example.txt" \) -delete
+	find -d ../CAP -not \( -name "README.md" -or -name "CAP" -or -path "../CAP/iomt_system_example/*" -or -name "iomt_system_example.txt" -or -name "iomt_system_example" -or -path "../CAP/iso_system_example/*" -or -name "iso_system_example.txt" -or -name "iso_system_example" \) -delete
 
 clean_repo:
 	find -d ../REPOSITORY/CASES -not \( -name "README.md" -or -name "CASES" \) -delete

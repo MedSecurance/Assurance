@@ -37,38 +37,40 @@ proc('ISO_case', [
 %%%%%%%%%%
 % instantiate the person pattern as person_examp
 proc(person_inst, [
-        instantiate_pattern('person', ['Marius', 'Programming'], 'person_examp'),
-        export_case(cap_person,txt),
+    instantiate_pattern('person', ['Marius', 'Programming'], 'person_examp'),
+    export_case(cap_person,txt),
 	detach_case
-    ]).
+]).
 
 % export person_examp created by the person_inst proc
 proc(person_exp, [
-        update,
-        attach_case(person_examp),
-        export_case(cap_person,html),
+    update,
+    attach_case(person_examp),
+    export_case(cap_person,html),
 	detach_case
-    ]).
+]).
+
+proc(qualified_person_inst, [
+	instantiate_pattern('qualified_person', ['Programming', 'Marius'], 'qual_person_examp'),
+	export_case(cap_qual_person,txt),
+	detach_case
+]).
 
 % instantiate a list of patterns using model 1.0 as system_examp and export
-proc(system_inst, [
-		set_v(ModelId, '1.0'),
-		set_v(CaseId, system_examp),
-		load_model_v(ModelId, Policy, Platform, _Configuration),
-		set_v(AC,
-			[ 'foundational_plane'-[Platform],
-			'operational_plane'-[Policy],
-			'person'-['Alice', 'AC Patterns Definition'],
-			'person'-['Bob', 'ETB Development']
-				/*
-				'invariant_property'-[ModelId, 'p1'],
-				'invariant_property'-[ModelId, 'p2']
-				*/
-			]),
-		instantiate_pattern_list(AC,CaseId),
-		export_case(CaseId,html),
-		detach_case
-    ]).
+proc(mils_system_inst, [
+	set_v(ModelId, '1.0'),
+	set_v(CaseId, mils_system_example),
+	load_model_v(ModelId, Policy, Platform, _Configuration),
+	set_v(AC,
+		[ 'foundational_plane'-[Platform],
+		'operational_plane'-[Policy],
+		'person'-['Alice', 'AC Patterns Definition'],
+		'person'-['Bob', 'ETB Development']
+		]),
+	instantiate_pattern_list(AC,CaseId),
+	export_case(CaseId,html),
+	detach_case
+]).
 
 % pass a list as an actual parameter to pattern instantiation
 proc(teamN, [
@@ -88,7 +90,7 @@ proc(demo_day, [
 		show_proc(person_inst),
 		
 		show_pattern(qualified_person),
-		instantiate_pattern('qualified_person', ['Marius', 'Programming'], 'person_examp'),
+		instantiate_pattern('qualified_person', ['Programming', 'Marius'], 'person_examp'),
 		export_case(cap_person,txt),
 		export_case(cap_person,html),
 		detach_case,

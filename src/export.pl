@@ -7,15 +7,17 @@
 
 
 reset_CAP :-
-	param:cap(CapRoot), param:cap_dir(CapDir),
-	atomic_list_concat(['find -d ',CapDir,' -not "(" -name README.md -or -name ',CapRoot,' ")" -delete'],Cmd),
-	shell(Cmd).
+	% param:cap(CapRoot), param:cap_dir(CapDir),
+	% atomic_list_concat(['find -d ',CapDir,' -not "(" -name README.md -or -name ',CapRoot,' ")" -delete'],Cmd),
+	% shell(Cmd).
 	% e.g. 'find -d ../CAP -not "(" -name README.md -or -name CAP ")" -delete'
+	% Following version is to save examples in CAP
+	shell('make clean_cap'). % just use makefile unless it becomes a problem
 
-				%
-				%
-				% ac_export(Filename, Format)
-				%
+%
+%
+% ac_export(Filename, Format)
+%
 
 ac_export(FileBasename, 'txt') :- atom(FileBasename),
 	param:cap_dir(CapDir),
