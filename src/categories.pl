@@ -1,6 +1,6 @@
 % ETB Knowledge Base - Evidence Categories
 
-:- module(categories, [evidence_category/4]).
+:- module(categories, [evidence_category/4, evidence_categories/1]).
 
 :- use_module([  ]).
 

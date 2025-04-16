@@ -22,7 +22,8 @@
 :- use_module(agents/certificate_agent).
 :- use_module(agents/ocra_agent).
 :- use_module(agents/ichecker_agent).
-:- use_module(agent).
+% :- use_module(agent).
+:- use_module(agent_interface).
 
 :- use_module(instantiate).
 :- use_module(export).

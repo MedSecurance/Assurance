@@ -5,7 +5,8 @@
 :- use_module(patterns).
 :- use_module(assurance).
 :- use_module(evidence).
-:- use_module(agent).
+% :- use_module(agent).
+:- use_module(agent_interface).
 
 :- use_module(stringutil).
 

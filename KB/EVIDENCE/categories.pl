@@ -7,7 +7,10 @@ evidence_category(certificate, _, _, cert_check).
 evidence_category(ichecker, _, _, invariant_check).
 evidence_category(contract, _, _, contract_check).
 evidence_category(property, _, _, property_check).
-evidence_category(unknown, _, _, _).
+% evidence_category(unknown, _, _, _).
+
+evidence_categories(Categories) :- var(Categories), !,
+	findall(Category, evidence_category(Category,_,_,_), Categories).
 
 %	validation_method(ValName, ValDescription, ValidationAgent)
 
