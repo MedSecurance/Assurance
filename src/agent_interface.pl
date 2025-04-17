@@ -6,7 +6,10 @@
 				% evidence_validate(+Category, +Claim, +Context, +AArgs, +XRef)
 evidence_validate(Category, Claim, Context, AArgs, XRef) :-
 	atom(Category), evidence_categories(Categories), member(Category, Categories), !,
-	atomic_concat(Category, '_agent', CatAgent), atomic_concat(Category, '_validate', CatValidate),
+	evidence_category(Category, _CatDesc, _CatType, CatValidationMethod),
+	validation_method(CatValidationMethod, _ValDesc, CatAgent), % lookup agent for category
+	% atomic_concat(Category, '_agent', CatAgent),
+	atomic_concat(Category, '_validate', CatValidate),
 	ValidateGoal =.. [CatValidate,Claim,Context,AArgs,XRef,Status],
 	% calling CatAgent:CatValidate(Claim, Context, AArgs, XRef, Status)
 	call(CatAgent:ValidateGoal),

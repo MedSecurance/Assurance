@@ -1,6 +1,7 @@
 % ETB Knowledge Base - Evidence Categories
 
-:- module(categories, [evidence_category/4, evidence_categories/1]).
+:- module(categories, [evidence_category/4, evidence_categories/1,
+			validation_method/3, validation_agent/3]).
 
 :- use_module([  ]).
 
@@ -18,19 +19,4 @@
 
 :- include('../KB/EVIDENCE/categories.pl').
 
-:- include('../KB/EVIDENCE/agents.pl').
-
-/*
-evidence_category(axiom,_,_,_).
-evidence_category(certificate,_,_,_).
-evidence_category(ichecker,_,_,_).
-evidence_category(ocra,_,_,_).
-%evidence_category(_,_,_,_).
-evidence_category(unknown,_,_,_).
-
-		%
-		% validation_method(MethodId,ValidationAgent)
-		%
-
-validation_method(model_checking,_).
-*/
+:- include('../KB/EVIDENCE/agents.pl'). % may not be necessary, currently all info in KB/EVIDENCE/categories.pl
