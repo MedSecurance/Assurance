@@ -123,6 +123,7 @@ syntax(help(command),			basic).
 syntax(import_model(model),             basic).
 syntax(inspect,                                                         developer).
 syntax(inspect(item),                                                   developer).
+syntax(load_procs(file),                basic).
 syntax(make,                                                            developer).
 syntax(noop,				basic).
 syntax(nl,                              basic).
@@ -167,6 +168,7 @@ semantics(echo(S)) :- !, ground(S).
 semantics(help(C)) :- !, ground(C).
 semantics(import_model(M)) :- atom(M).
 semantics(inspect(I)) :- nonvar(I).
+semantics(load_procs(F)) :- !, atom(F).
 semantics(proc(P)) :- !, atom(P).
 semantics(proc(P,Opt)) :- !, atom(P), atom(Opt),
 	member(Opt,[step,s,verbose,v]). % other opts can be added
@@ -209,6 +211,9 @@ help(help,	'With a command name as argument it provides help on that command.').
 help(inspect,	'Inspect values of internal structures or variables based on arg.').
 help(inspect,	'arg options: settings, xml, str, current or other structures.').
 help(inspect,	'arg: target(<target>,<element>) will show intermediate facts.').
+
+help(load_procs,'Load proc definitions from a named file.').
+help(load_procs,'Arg is the procs file name.').
 
 help(make,	'Recompile changed source files.').
 
@@ -309,6 +314,8 @@ do(inspect(Item)) :- !, inspect(Item).
 
 do(level(L)) :- !, retractall(user_lev(_)), assert(user_lev(L)),
 	user_mode(M), level_commands(L,LCs), union([M],LCs,Cmds), set_avail_commands(Cmds).
+
+do(load_procs(F)) :- !, procs:load_procs(F).
 
 do(make) :- !, make.
 do(noop) :- !.
