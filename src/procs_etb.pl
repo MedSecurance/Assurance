@@ -1,5 +1,4 @@
 % ETB-specific command procedures
-:- use_module('etb').
 
 %%%%%%%%%%
 % The procedures IoMT_system_inst and ISO_case_inst 

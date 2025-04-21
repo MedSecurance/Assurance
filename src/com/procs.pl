@@ -28,4 +28,13 @@ procs_defined(repo).
 defined_procs(ProcSets) :- findall(ProcSet, procs_defined(ProcSet), ProcSets).
 % e.g.: defined_procs([etb,kb,repo]).
 
-load_procs(File) :- ensure_loaded(File).
+load_procs(FullFile) :-
+    ensure_loaded(FullFile),
+    file_base_name(FullFile,Base), file_name_extension(Core,_,Base),
+    atom(Core), % remember core of basename of loaded file
+    (   procs_defined(Core)
+    ->  retractall( procs_defined(Core) )
+    ;   true
+    ),
+    assert( procs_defined(Core) ).
+    
