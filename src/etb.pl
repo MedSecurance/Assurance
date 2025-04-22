@@ -18,11 +18,11 @@
 
 :- use_module(evidence).
 
-:- use_module(agents/axiom_agent).
-:- use_module(agents/certificate_agent).
-:- use_module(agents/ocra_agent).
-:- use_module(agents/ichecker_agent).
-% :- use_module(agent).
+% :- use_module(agents/axiom_agent).
+% :- use_module(agents/certificate_agent).
+% :- use_module(agents/ocra_agent).
+% :- use_module(agents/ichecker_agent).
+% :- use_module(agent).  % obsolete, now using agent_interface
 :- use_module(agent_interface).
 
 :- use_module(instantiate).
@@ -170,31 +170,33 @@ initialize_all :-
         
 	% individual module initializations, e.g.: kb:init(full), % basic or full
         patterns:init,
+		agent_interface:init,
 
 	attach_evidence_repository,
 
 	param:setparam(initialized,true).
 
-etb_reset :- % TODO currently not resulting in a complete reset, use make clean
-        shell('make clean'), % just use makefile unless it becomes a problem
+etb_reset :- 
+        shell('make clean'), % just use makefile unless it's a problem in some env
+	% TODO following currently not resulting in a perfect reset, using make clean
 	% etb_reset(repos),
 	% etb_reset(cap),
+	true.
+
+etb_reset(all) :- !,
+	etb_reset,
 	true.
 
 etb_reset(cap) :- !,
 	reset_CAP.
 
 etb_reset(repos) :- !,
-	reset_assurance_repository,
-	reset_evidence_repository,
-	true.
+	etb_reset(cases),
+	etb_reset(evidence).
 
-etb_reset(all) :- !,
-	etb_reset,
-	% everything etb_reset does, plus the following:
-	% reset_CAP,
-	% reset_parameters,
-	true.
+etb_reset(cases) :- reset_assurance_repository.
+
+etb_reset(evidence) :- reset_evidence_repository.
 
 % Test
 %

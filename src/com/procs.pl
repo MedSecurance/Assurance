@@ -31,7 +31,7 @@ defined_procs(ProcSets) :- findall(ProcSet, procs_defined(ProcSet), ProcSets).
 load_procs(FullFile) :-
     ensure_loaded(FullFile),
     file_base_name(FullFile,Base), file_name_extension(Core,_,Base),
-    atom(Core), % remember core of basename of loaded file
+    atom(Core), % remember core of basename of loaded
     (   procs_defined(Core)
     ->  retractall( procs_defined(Core) )
     ;   true

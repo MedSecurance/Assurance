@@ -355,7 +355,10 @@ do(set(P,V)) :- atom(P), ground(V), param:setparam(P,V), !.
 do(set(_,_)) :- !,
 	writeln('Unknown parameter name or illegal parameter value').
 do(show_proc(P)) :- !, listing(proc(P,_)).
-do(show_procs) :- !, listing(procs:proc/2).
+do(show_procs) :- !,
+	procs:defined_procs(ProcSets),
+	format('Defined proc sets: ~w~n',[ProcSets]),
+	listing(procs:proc/2).
 do(status) :- user_mode(M), param:name_string(M,N), user_lev(L),
 	write(' '), writeln(N),
 	write('   Command Mode: '), writeln(M),

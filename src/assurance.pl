@@ -33,7 +33,8 @@ current_assurance_repository(none).
 ar_write_status :-
 	current_assurance_repository(ACid),
 	write('   Current assurance case: '), writeln(ACid),
-	writeln('   CASES Repository:').
+	writeln('   CASES Repository:'),
+	param:verbose(on) -> command:do(show_cases) ; true.
 
 set_current_assurance_repository(CaseId) :-
 	( atom(CaseId) -> ACid = CaseId ; ACid = defaultCID ),
@@ -44,8 +45,9 @@ set_current_assurance_repository(CaseId) :-
 
 reset_assurance_repository :-
 	detach_assurance_repository,
-	param:cases_repo_dir(ACRepoDir), param:cases(Cases),
-	atomic_list_concat(['find -d ',ACRepoDir,' -not "(" -name README.md -or -name ',Cases,' ")" -delete'],Cmd),
+	% param:cases_repo_dir(ACRepoDir), param:cases(Cases),
+	% atomic_list_concat(['find -d ',ACRepoDir,' -not "(" -name README.md -or -name ',Cases,' ")" -delete'],Cmd),
+	Cmd = 'make clean_cases', % just use make
 	shell(Cmd).
 
 				% init repository db

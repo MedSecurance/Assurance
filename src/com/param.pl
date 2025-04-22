@@ -71,8 +71,8 @@ build_name(erepo,'O-EREPO','o-erepo').
 name_string('').
 name_string(etb,'Open Evidential Tool Bus').
 name_string(kb,'O-ETB Knowledge Base').
-name_string(arepo,'O-ETB Assurance Case Repository').
-name_string(erepo,'O-ETB Evidence Repository').
+name_string(arepo,'O-ETB Assurance CASES Repository').
+name_string(erepo,'O-ETB EVIDENCE Repository').
 
 % SETTABLE PARAMETERS
 %
@@ -120,7 +120,7 @@ verbose(on). % off/on
 jsonresp_server(off).
 jsonresp(off). % off / on / separate / same
 
-% API ports
+% API ports - not yet implemented
 server_port(9001). % default server port
 etb_port(9001).
 etb_api_port(9001).
@@ -132,7 +132,7 @@ serverhost_ip('127.0.0.1').
 
 server_sleeptime(32767).
 
-% AUTHORIZATION TOKENS (default tokens)
+% AUTHORIZATION TOKENS (default token values)
 etb_token('etb_token').
 kb_token('kb_token').
 repo_token('repo_token').
@@ -199,6 +199,7 @@ server_version('0.1').
 ac_repo_file('repository.pl').
 ev_repo_file('repository.pl').
 ev_status_file('status').
+ev_validate_extension('_validate').
 mod_policy_file('policy.pl').
 mod_platform_file('platform.pl').
 mod_configuration_file('configuration.pl').

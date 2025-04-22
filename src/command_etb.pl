@@ -3,31 +3,27 @@
 :- use_module('etb').
 :- use_module('patterns').
 
+commands_defined(etb).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % definition of the ETB tool interactive commands syntax
 % syntax( Signature, CommandSet ).
 %
-syntax(export_case(basename, format),                            etb).
-syntax(show_case,						 etb).
-syntax(show_case(case_id),					 etb).
-syntax(show_cases,						 etb).
-syntax(show_pattern(pattern_id),                                 etb).
-syntax(show_pattern(pattern_id,mode),                            etb).
-syntax(show_patterns,			                         etb).
-syntax(show_patterns(mode),			                 etb).
-syntax(show_pats,				                 etb).
 syntax(attach_case(case_id),                                     etb).
 syntax(detach_case,                                              etb).
 
 syntax(etb,                            basic).
-syntax(etb_server,                                               etb).
+% syntax(etb_server,                                               etb).
 syntax(etb_reset,						 etb).
-syntax(etb_server(arg),                                          etb).
+% syntax(etb_server(arg),                                          etb).
+
 syntax(etbt,                                                     etb).
 syntax(etbt(test_id),                                            etb).
 syntax(etbt(test_id,mode),                                       etb).
 
 syntax(etbtests,                                                 etb).
+
+syntax(export_case(basename, format),                            etb).
 
 syntax(import(spec_type,file,s_id),                              etb).
 
@@ -36,6 +32,17 @@ syntax(instantiate_pattern(pattern_name,arg_list,ac_id),	 etb).
 syntax(instantiate_pattern_list(pattern_list,ac_id),		 etb).
 
 syntax(load_model_v(modelid,policy,platform,config),		 etb).
+
+syntax(load_patterns(file),										 etb).
+
+syntax(show_case,						 etb).
+syntax(show_case(case_id),					 etb).
+syntax(show_cases,						 etb).
+syntax(show_pattern(pattern_id),                                 etb).
+syntax(show_pattern(pattern_id,mode),                            etb).
+syntax(show_patterns,			                         etb).
+syntax(show_patterns(mode),			                 etb).
+syntax(show_pats,				                 etb).
 
 syntax(update,                                                   etb).
 
@@ -46,19 +53,17 @@ syntax(update,                                                   etb).
 % optional static semantics entry, e.g., used to check command arguments
 % distinct from syntax so syntax can be called separately
 %
-semantics(export_case(Name,Format)) :- !, atom(Name), atom(Format), (Format==txt;Format==html).
-semantics(show_case(Case)) :- !, atom(Case).
 
 semantics(attach_case(Case)) :- !, atom(Case).
 
-semantics(show_pattern(PatId)) :- !, atom(PatId).
-semantics(show_pattern(PatId,Mode)) :- !, atom(PatId), atom(Mode), member(Mode,[text,header,pp]).
-semantics(show_patterns(M)) :- !, atom(M), member(M,[text,header,pp]).
 semantics(etb_reset(D)) :- !, (D == cap ; D == repos ; D == all).
 
 semantics(etb_server(A)) :- !, atomic(A), (number(A) ; A==nurvsim).
+
 semantics(etbt(T)) :- !, atom(T).
 semantics(etbt(T,E)) :- !, atom(T), atom(E).
+
+semantics(export_case(Name,Format)) :- !, atom(Name), atom(Format), (Format==txt;Format==html).
 
 semantics(import(T,F,Id)) :- !, atom(T), atom(F), atom(Id).
 
@@ -67,6 +72,14 @@ semantics(instantiate_pattern_list(PatList,CaseId)) :- !, is_list(PatList), atom
 
 semantics(load_model_v(Mid,Pol,Plat,Config)) :- !, atom(Mid), var(Pol), var(Plat), var(Config).
 
+semantics(load_patterns(F)) :- !, atom(F).
+
+semantics(show_case(Case)) :- !, atom(Case).
+
+semantics(show_pattern(PatId)) :- !, atom(PatId).
+semantics(show_pattern(PatId,Mode)) :- !, atom(PatId), atom(Mode), member(Mode,[text,header,pp]).
+semantics(show_patterns(M)) :- !, atom(M), member(M,[text,header,pp]).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % command help strings
 %   help(Key,    HelpString)
@@ -74,22 +87,6 @@ semantics(load_model_v(Mid,Pol,Plat,Config)) :- !, atom(Mid), var(Pol), var(Plat
 %   all strings for a given key are displayed when key is given as an
 %   argument to the help command, e.g., "help(etb_server)"
 %
-help(export_case,	'Export the current assurance case to the CAP.').
-help(export_case,	'Arg1 is a name in the CAP directory for the export.').
-help(export_case, 'Arg2 is the format (currently either txt or html).').
-
-help(show_case, 'Show the current or identified assurance case.').
-help(show_case, 'Arg1 (opt) is the assurance case ID, otherwise current case.').
-
-help(show_cases, 'Show all assurance cases in the CASES Repo.').
-
-help(show_pattern, 'Show the assurance case pattern.').
-help(show_pattern, 'Arg1 is the identifier for the pattern.').
-help(show_pattern, 'Arg2 (opt) is the mode {all,header,pp}.').
-
-help(show_patterns, 'Show all defined assurance case patterns.').
-help(show_patterns, 'Arg1 (opt) is the mode {all,header,pp}.').
-
 help(attach_case, 'Attach the identified assurance case in the repository.').
 help(attach_case, 'Arg is an assurance case identifier.').
 
@@ -103,6 +100,10 @@ help(etb_server,'Start the ETB server.').
 help(etbt,      'Run an etb built-in test. Default is \'e2e\'.').
 help(etbt,      'Arg1 (opt) is a test identifier.').
 help(etbt,      'Arg2 (opt) is etb mode.').
+
+help(export_case,	'Export the current assurance case to the CAP.').
+help(export_case,	'Arg1 is a name in the CAP directory for the export.').
+help(export_case, 'Arg2 is the format (currently either txt or html).').
 
 help(import,    'Import a specification of type (model, property, ...).').
 help(import,    'Arg1 is a specification type.').
@@ -124,13 +125,67 @@ help(load_model_v, 'Arg2 is a variable to receive the policy component.').
 help(load_model_v, 'Arg3 is a variable to receive the platform component.').
 help(load_model_v, 'Arg4 is a variable to receive the configuration component.').
 
+help(load_patterns,'Load pattern definitions from a named file.').
+help(load_patterns,'Arg is the patterns file name.').
+
+help(show_case, 'Show the current or identified assurance case.').
+help(show_case, 'Arg1 (opt) is the assurance case ID, otherwise current case.').
+
+help(show_cases, 'Show all assurance cases in the CASES Repo.').
+
+help(show_pattern, 'Show the assurance case pattern.').
+help(show_pattern, 'Arg1 is the identifier for the pattern.').
+help(show_pattern, 'Arg2 (opt) is the mode {all,header,pp}.').
+
+help(show_patterns, 'Show all defined assurance case patterns.').
+help(show_patterns, 'Arg1 (opt) is the mode {all,header,pp}.').
+
 help(update,	'Update assurance cases and evidence.').
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % do the command, should be one for every implemented valid command form
 % known broken or unimplemented commands should just "fail." straightaway
 %
+
+do(attach_case(Case)) :- !, assurance:attach_assurance_repository(Case).
+
+do(detach_case) :- !, assurance:detach_assurance_repository.
+
+do(etb) :- user_mode(etb), !, writeln('Already in etb mode').
+do(etb) :- !, user_mode(M), retractall(user_mode(_)), assert(user_mode(etb)),
+	param:prompt_string(etb,Prompt), param:setparam(prompt_string,Prompt),
+	rem_commands(M), add_commands(etb), banner(etb).
+
+do(etb_reset) :- !, do(detach_case), etb_reset.
+
+do(etb_reset(D)) :- !, do(detach_case), etb_reset(D).
+
+do(etb_server) :- !, etb_server:etb_server_cmd.
+do(etb_server(A)) :- !, etb_server:etb_server_cmd(A).
+
+do(etbt) :- !, etbt(e2e). % abbrev-change to suit current need
+do(etbt(e2e)) :- !, etbt(e2e).
+do(etbt(T,Mode)) :- !, etbt(T,Mode).
+do(etbtests) :- !, load_test_files([]), run_tests. % .plt tests
+
 do(export_case(Name,Format)) :- !, export:ac_export(Name,Format).
+
+do(import(T,F,Sid)) :- !,
+    kb:load_specification_from_file(T,F,Sid).
+
+do(instantiate_pattern(Name,Args,ACid)) :- !,
+	assurance:detach_assurance_repository,
+	instantiate:instantiate_pattern(Name,Args,ACid),
+	(param:verbose(on) -> (export:ac_string(S), writeln(S)) ; true).
+
+do(instantiate_pattern_list(PatList,ACid)) :- !,
+	assurance:detach_assurance_repository,
+	instantiate:instantiate_pattern_list(PatList,ACid),
+	(param:verbose(on) -> (export:ac_string(S), writeln(S)) ; true).
+
+do(load_model_v(Mid,Pol,Plat,Conf)) :- !, model:load_model(Mid,M), M = model(Pol,Plat,Conf).
+
+do(load_patterns(F)) :- !, patterns:load_patterns(F).
 
 do(show_case) :- !,
 	assurance:current_assurance_repository(ACid),	
@@ -214,42 +269,6 @@ do(show_patterns(M)) :-
 			), fail
 	), !.
 do(show_patterns(_)).
-
-do(attach_case(Case)) :- !, assurance:attach_assurance_repository(Case).
-
-do(detach_case) :- !, assurance:detach_assurance_repository.
-
-do(etb) :- user_mode(etb), !, writeln('Already in etb mode').
-do(etb) :- !, user_mode(M), retractall(user_mode(_)), assert(user_mode(etb)),
-	param:prompt_string(etb,Prompt), param:setparam(prompt_string,Prompt),
-	rem_commands(M), add_commands(etb), banner(etb).
-
-do(etb_reset) :- !, do(detach_case), etb_reset.
-
-do(etb_reset(D)) :- !, do(detach_case), etb_reset(D).
-
-do(etb_server) :- !, etb_server:etb_server_cmd.
-do(etb_server(A)) :- !, etb_server:etb_server_cmd(A).
-
-do(etbt) :- !, etbt(e2e). % abbrev-change to suit current need
-do(etbt(e2e)) :- !, etbt(e2e).
-do(etbt(T,Mode)) :- !, etbt(T,Mode).
-do(etbtests) :- !, load_test_files([]), run_tests. % .plt tests
-
-do(import(T,F,Sid)) :- !,
-    kb:load_specification_from_file(T,F,Sid).
-
-do(instantiate_pattern(Name,Args,ACid)) :- !,
-	assurance:detach_assurance_repository,
-	instantiate:instantiate_pattern(Name,Args,ACid),
-	(param:verbose(on) -> (export:ac_string(S), writeln(S)) ; true).
-
-do(instantiate_pattern_list(PatList,ACid)) :- !,
-	assurance:detach_assurance_repository,
-	instantiate:instantiate_pattern_list(PatList,ACid),
-	(param:verbose(on) -> (export:ac_string(S), writeln(S)) ; true).
-
-do(load_model_v(Mid,Pol,Plat,Conf)) :- !, model:load_model(Mid,M), M = model(Pol,Plat,Conf).
 
 do(update) :- evidence:update_ongoing.
 

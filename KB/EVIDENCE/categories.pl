@@ -9,9 +9,6 @@ evidence_category(contract, _, _, contract_check).
 evidence_category(property, _, _, property_check).
 % evidence_category(unknown, _, _, _).
 
-evidence_categories(Categories) :- var(Categories), !,
-	findall(Category, evidence_category(Category,_,_,_), Categories).
-
 %	validation_method(ValName, ValDescription, ValidationAgent)
 
 validation_method(fact_check, 'Evidence is validated by declared premises', axiom_agent).
@@ -23,9 +20,11 @@ validation_method(property_check, 'Behavior property is valid for artefact', nus
 %	validation_agent(AgentName, AgentArgs, AgentResult)
 %		additional information about the agent to support improved agent interface
 %		AgentArgs / AgentResult are: <term> ::= <atom> | <compound term> | <list>
+%
+% 		a corresonding file agents/<AgentName>.pl must exist or a warning will be given
 
 validation_agent(axiom_agent, _, _).
 validation_agent(certificate_agent, _, _).
 validation_agent(ichecker_agent, _, _).
 validation_agent(ocra_agent, _, _).
-validation_agent(nusmv_agent, _, _).
+% validation_agent(nusmv_agent, _, _). % doesn't currently exist
