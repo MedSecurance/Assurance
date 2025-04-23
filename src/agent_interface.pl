@@ -40,3 +40,9 @@ update_evidence_status(Category, Claim, Context, AArgs, XRef, Status) :-
 	write_term(Output, Status, [fullstop(true)]),
 	close(Output).
 
+load_agent(AgentFile) :-
+	(	exists_file(AgentFile)
+	->	use_module(AgentFile),
+		format('Agent file ~q loaded~n',AgentFile)
+	;	format('Agent file ~q does not exist~n',AgentFile)
+	).

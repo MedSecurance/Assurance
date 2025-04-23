@@ -27,13 +27,17 @@ syntax(export_case(basename, format),                            etb).
 
 syntax(import(spec_type,file,s_id),                              etb).
 
-syntax(instantiate_pattern(pattern_name,arg_list,ac_id),	 etb).
+syntax(instantiate_pattern(pattern_name,arg_list,ac_id),		 etb).
 
-syntax(instantiate_pattern_list(pattern_list,ac_id),		 etb).
+syntax(instantiate_pattern_list(pattern_list,ac_id),			 etb).
 
-syntax(load_model_v(modelid,policy,platform,config),		 etb).
+syntax(load_agent(agent_file),									etb).
 
-syntax(load_patterns(file),										 etb).
+syntax(load_model_v(modelid,policy,platform,config),			 etb).
+
+syntax(load_patterns(patterns_file),							etb).
+
+% load_procs is defined in commands.pl
 
 syntax(show_case,						 etb).
 syntax(show_case(case_id),					 etb).
@@ -43,6 +47,8 @@ syntax(show_pattern(pattern_id,mode),                            etb).
 syntax(show_patterns,			                         etb).
 syntax(show_patterns(mode),			                 etb).
 syntax(show_pats,				                 etb).
+
+% show_proc, show_procs are defined in commands.pl
 
 syntax(update,                                                   etb).
 
@@ -69,6 +75,8 @@ semantics(import(T,F,Id)) :- !, atom(T), atom(F), atom(Id).
 
 semantics(instantiate_pattern(PName,Args,CaseId)) :- !, atom(PName), is_list(Args), atom(CaseId).
 semantics(instantiate_pattern_list(PatList,CaseId)) :- !, is_list(PatList), atom(CaseId).
+
+semantics(load_agent(F)) :- !, atom(F).
 
 semantics(load_model_v(Mid,Pol,Plat,Config)) :- !, atom(Mid), var(Pol), var(Plat), var(Config).
 
@@ -119,6 +127,9 @@ help(instantiate_pattern_list,	'Instantiate the given AC pattern into the REPO.'
 help(instantiate_pattern_list,	'Arg1 is an AC pattern list.').
 help(instantiate_pattern_list,	'Arg2 is a valid new assurance case ID.').
 
+help(load_agent,'Load Prolog-side agent definition from specified file.').
+help(load_agent,'Arg is the Prolog-side agent file name.').
+
 help(load_model_v, 'Load model from KB and return policy, platform and config components.').
 help(load_model_v, 'Arg1 is a model identifier.').
 help(load_model_v, 'Arg2 is a variable to receive the policy component.').
@@ -160,6 +171,10 @@ do(etb_reset) :- !, do(detach_case), etb_reset.
 
 do(etb_reset(D)) :- !, do(detach_case), etb_reset(D).
 
+do(etb_status) :- !,
+	assurance:ar_write_status,
+	evidence:er_write_status.
+
 do(etb_server) :- !, etb_server:etb_server_cmd.
 do(etb_server(A)) :- !, etb_server:etb_server_cmd(A).
 
@@ -182,6 +197,8 @@ do(instantiate_pattern_list(PatList,ACid)) :- !,
 	assurance:detach_assurance_repository,
 	instantiate:instantiate_pattern_list(PatList,ACid),
 	(param:verbose(on) -> (export:ac_string(S), writeln(S)) ; true).
+
+do(load_agent(F)) :- !, agent_interface:load_agent(F).
 
 do(load_model_v(Mid,Pol,Plat,Conf)) :- !, model:load_model(Mid,M), M = model(Pol,Plat,Conf).
 

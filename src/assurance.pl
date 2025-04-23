@@ -33,8 +33,10 @@ current_assurance_repository(none).
 ar_write_status :-
 	current_assurance_repository(ACid),
 	write('   Current assurance case: '), writeln(ACid),
-	writeln('   CASES Repository:'),
-	param:verbose(on) -> command:do(show_cases) ; true.
+	writeln('   CASES Repository status:'),
+	% too verbose: ( param:verbose(on) -> command:do(show_cases) ; true ),
+	% gather and show some AR statistics
+	true.
 
 set_current_assurance_repository(CaseId) :-
 	( atom(CaseId) -> ACid = CaseId ; ACid = defaultCID ),

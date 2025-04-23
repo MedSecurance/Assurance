@@ -23,7 +23,9 @@
 :- persistent ac_evidence_counter(value:positive_integer).
 
 er_write_status :-
-	writeln('   EVIDENCE Repository:').
+	writeln('   EVIDENCE Repository status:'),
+	% gather and show some ER statistics
+	true.
 
 reset_evidence_repository :-
 	detach_evidence_repository,

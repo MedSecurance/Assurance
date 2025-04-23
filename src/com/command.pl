@@ -123,7 +123,7 @@ syntax(help(command),			basic).
 syntax(import_model(model),             basic).
 syntax(inspect,                                                         developer).
 syntax(inspect(item),                                                   developer).
-syntax(load_procs(file),                basic).
+syntax(load_procs(procs_file),           basic).
 syntax(make,                                                            developer).
 syntax(noop,				basic).
 syntax(nl,                              basic).
@@ -364,8 +364,7 @@ do(status) :- user_mode(M), param:name_string(M,N), user_lev(L),
 	write('   Command Mode: '), writeln(M),
 	write('   Command Level: '), writeln(L),
 	available_commands(Cmds), write('   Command sets: '), writeln(Cmds),
-	assurance:ar_write_status,
-	evidence:er_write_status.
+	do(etb_status).
 do(time(Command)) :- !, time(do(Command)).
 do(time(Command,N)) :- !,
 	current_output(S), param:null_stream(Null), set_output(Null),

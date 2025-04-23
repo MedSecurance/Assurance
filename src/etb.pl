@@ -51,7 +51,11 @@ etb_opt_spec([
          help( 'command to execute when ETB starts' )],
         [opt(model), type(atom), shortflags([m]), longflags(['model']),
          help( 'load model specification when ETB starts' )],
-        [opt(selftest), type(boolean), default(true), shortflags([s]), longflags(['selftest']),
+		 [opt(patterns), type(atom), shortflags([p]), longflags(['patterns']),
+         help( 'load patterns file when ETB starts' )],
+		 [opt(procs), type(atom), shortflags([x]), longflags(['procs']),
+         help( 'load procs file when ETB starts' )],
+        [opt(test), type(boolean), default(true), shortflags([t]), longflags(['test']),
          help( 'run self tests when ETB starts' )],
         [opt(verbose), type(boolean), default(true), shortflags([v]), longflags(['verbose']),
          help( 'verbose reporting' )]
@@ -89,17 +93,34 @@ etb_with_opts(Opts) :-
 	format('Options=~q~n',[Opts]),
 	(   memberchk(command(CommandStr),Opts); true ),
 	(   memberchk(model(ModelName),Opts); true ),
-	(   memberchk(selftest(S),Opts); true ),
+	(   memberchk(patterns(PatternsName),Opts); true ),
+	(   memberchk(procs(ProcsName),Opts); true ),
+	(   memberchk(test(T),Opts); true ),
 	(   memberchk(verbose(V),Opts); true ),
+
 	(   nonvar(ModelName)
 	->  model:load_model(ModelName,_M)
-        ;   true
-        ),
+        ;   true ),
+
+	(   nonvar(PatternsName)
+	->  patterns:load_patterns(PatternsName,_M)
+	;   true ),
+
+	(   nonvar(ProcsName)
+	->  procs:load_procs(ProcsName,_M)
+	;   true ),
+
+	(	T==true -> Test=on ; true ),
+
 	(   var(CommandStr)
-	->  etb(_,_,_,_) % go to interactive command interpreter
+	->  etb(Test,_,_,_) % go to interactive command interpreter
 	;   % otherwise execute the command given in command line option
             initialize_all,
-            read_term_from_atom(CommandStr, Command, []),
+			(	T == true
+				->	self_test_all
+				;	true
+			),
+			read_term_from_atom(CommandStr, Command, []),
             format('executing command: ~w~n',Command),
             % guitracer, trace,
             command:add_commands(advanced), command:add_commands(developer), command:add_commands(etb),
@@ -112,8 +133,8 @@ etb(regression_test) :- !, etb(off,on,on,_).
 etb(no_initial) :- !, etb(off,off,off,_).
 etb(verbose) :- !, etb(_,_,_,on).
 
-etb(Selftest,Regression,Init,Verbose) :-
-	(   var(Selftest) -> param:self_test(Selftest) ; true ),
+etb(Test,Regression,Init,Verbose) :-
+	(   var(Test) -> param:self_test(Test) ; true ),
 	(   var(Regression) -> param:regression_test(Regression) ; true),
 	(   var(Init) -> param:initialize(Init) ; true ),
 	(   var(Verbose) -> param:verbose(Verbose) ; true ),
@@ -121,15 +142,15 @@ etb(Selftest,Regression,Init,Verbose) :-
 	(   Verbose == on
 	->  param:command_mode(CMode), param:user_level(UL), param:etb_mode(EMode),
 		format('command_mode=~a user_level=~a etb_mode=~a~n', [CMode,UL,EMode]),
-		format('self_test=~a regression_test=~a initialize=~a verbose=~a~n',
-		  [Selftest,Regression,Init,Verbose])
+		format('test=~a regression_test=~a initialize=~a verbose=~a~n',
+		  [Test,Regression,Init,Verbose])
 	; true),
 
 	(   Init == on
 	-> initialize_all
 	; true ),
 
-	(   Selftest == on
+	(   Test == on
 	->  self_test_all
 	;   true ),
 
