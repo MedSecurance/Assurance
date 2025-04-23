@@ -55,7 +55,7 @@ etb_opt_spec([
          help( 'load patterns file when ETB starts' )],
 		 [opt(procs), type(atom), shortflags([x]), longflags(['procs']),
          help( 'load procs file when ETB starts' )],
-        [opt(test), type(boolean), default(true), shortflags([t]), longflags(['test']),
+        [opt(test), type(boolean), default(false), shortflags([t]), longflags(['test']),
          help( 'run self tests when ETB starts' )],
         [opt(verbose), type(boolean), default(true), shortflags([v]), longflags(['verbose']),
          help( 'verbose reporting' )]

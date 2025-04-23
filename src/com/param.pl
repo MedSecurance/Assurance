@@ -50,9 +50,11 @@ build_version(etb,'1.0.3','various changes toward Prototype #1').
 
 build_version(etb,'1.1.0','Prototype #1').
 
-build_version(etb,'1.1.1' /* ongoing development */ ).
+build_version(etb,'1.1.1','Revisions to Prototype #1, incl: commands and pattern extensions').
 
-build_current_version_description(etb,'minor revisions to Prototype #1, incl: commands and pattern extensions').
+build_version(etb,'1.1.2' /* ongoing development */ ).
+
+build_current_version_description(etb,'ongoing developments to ease integration with other tools').
 %
 
 % Used by the command interpreter
