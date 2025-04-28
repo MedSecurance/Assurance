@@ -10,6 +10,7 @@ commands_defined(etb).
 % syntax( Signature, CommandSet ).
 %
 syntax(attach_case(case_id),                                     etb).
+syntax(attach_evidence,                                     	etb).
 syntax(detach_case,                                              etb).
 
 syntax(etb,                            basic).
@@ -98,6 +99,8 @@ semantics(show_patterns(M)) :- !, atom(M), member(M,[text,header,pp]).
 help(attach_case, 'Attach the identified assurance case in the repository.').
 help(attach_case, 'Arg is an assurance case identifier.').
 
+help(attach_evidence, 'Attach the EVIDENCE repository.').
+
 help(detach_case, 'Detach the currently attached assurance case.').
 
 help(etb,       'Switch to etb user mode.').
@@ -159,6 +162,8 @@ help(update,	'Update assurance cases and evidence.').
 %
 
 do(attach_case(Case)) :- !, assurance:attach_assurance_repository(Case).
+
+do(attach_evidence) :- !, evidence:attach_evidence_repository.
 
 do(detach_case) :- !, assurance:detach_assurance_repository.
 
