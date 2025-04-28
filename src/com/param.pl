@@ -25,7 +25,8 @@
 		  null_stream/1, sleep_after_server_start/1,
                   jsonresp_server/1, jsonresp/1,
                   localhost_ip/1, serverhost_ip/1,
-		  etb_run_with_http_server/1, etb_server_is_running/1
+		  etb_run_with_http_server/1, etb_server_is_running/1,
+		  path_prefix/1
 		 ]).
 
 % Versioning of various things
@@ -78,19 +79,21 @@ name_string(erepo,'O-ETB EVIDENCE Repository').
 
 % SETTABLE PARAMETERS
 %
-% enter new params both in dynamic directive and settable_params
+% enter new settable params both in dynamic directive and settable_params
 %
 :- dynamic prompt_string/1, debug/1, statusprt/1, guitracer/1, guiserver/1,
         self_test/1, regression_test/1, verbose/1,
         initialize/1, initialized/1, etb_initialized/1, user_level/1,
         etb_mode/1, etb_logging/1, null_stream/1, sleep_after_server_start/1,
-        etb_run_with_http_server/1, etb_server_is_running/1.
+        etb_run_with_http_server/1, etb_server_is_running/1,
+		 path_prefix/1.
 
 settable_params([prompt_string,debug,statusprt,guitracer,guiserver,
 		 self_test,regression_test,verbose,
 		 initialize,initialized,etb_initialized,user_level,
 		 etb_mode, etb_logging, null_stream, sleep_after_server_start,
-		 etb_run_with_http_server, etb_server_is_running
+		 etb_run_with_http_server, etb_server_is_running,
+		 path_prefix
                 ]).
 
 setparam(Param,Value) :- atom(Param), ground(Value),
@@ -210,11 +213,14 @@ kb_evidence_category_file('categories.pl').
 
 % Key pathname components
 %
-path_prefix('..').		% relative to expected execution location
+
+% path_prefix/1 is declared above as dynamic and settable
+path_prefix('..').		% prefix to KB and REPOSITORY paths relative to execution location
 
 cap('CAP').			% Certification Assurance Package(s)
 
 kb('KB').			% Base of the Knowledge Base
+agents('AGENTS').	% Agent Interfaces dir name
 patterns('PATTERNS').		% Assurance Case Patterns dir name
 models('MODELS').		% System Models dir name
 workflows('WORKFLOWS').	% Workflow definitions dir name
@@ -222,18 +228,21 @@ categories('CATEGORIES').	% Evidence Categories dir name
 
 repository('REPOSITORY').	% Base of the Repositories
 cases('CASES').			% Assurance Case Repository name
-evidence('EVIDENCE').		% Evidence Repository name
+evidence('EVIDENCE').		% Evidence Repository and Evidence KB dir name
 
 test_directory('TEST').
 patterns_directory('KB/PATTERNS').
 models_directory('KB/MODELS').
 workflows_directory('KB/WORKFLOWS').
 categories_directory('KB/CATEGORIES').
+evidence_directory('KB/EVIDENZCE').
+agents_directory('KB/AGENTS').
+
 log_directory('RUNTIME/LOG').
 
-pattern_files( [ 'IoMT', 'ISO_81001', 'MILS' ] ).
+pattern_files( [ 'patterns_IoMT', 'patterns_ISO_81001', 'patterns_MILS' ] ).
 
-% Constructors for the primary runtime and persistent storage area names
+% Constructors for the primary runtime, KB and persistent storage area dir names
 %
 cases_repo_dir(CasesDir) :- % used in assurance module
 	path_prefix(Pre), repository(Repository), cases(Cases),
@@ -254,6 +263,14 @@ kb_patterns_dir(KBPdir) :-
 kb_models_dir(KBMdir) :- 
 	path_prefix(Pre), kb(KB), models(Models),
 	atomic_list_concat([Pre,KB,Models],'/',KBMdir).
+
+kb_agents_dir(KBAdir) :-
+	path_prefix(Pre), kb(KB), agents(Agents),
+	atomic_list_concat([Pre,KB,Agents],'/',KBAdir).
+
+kb_evidence_dir(KBEdir) :-
+	path_prefix(Pre), kb(KB), evidence(Evidence),
+	atomic_list_concat([Pre,KB,Evidence],'/',KBEdir).
 
 % Misc values
 %

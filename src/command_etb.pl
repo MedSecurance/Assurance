@@ -144,11 +144,11 @@ help(show_case, 'Arg1 (opt) is the assurance case ID, otherwise current case.').
 
 help(show_cases, 'Show all assurance cases in the CASES Repo.').
 
-help(show_pattern, 'Show the assurance case pattern.').
+help(show_pattern, 'Show a loaded assurance case pattern.').
 help(show_pattern, 'Arg1 is the identifier for the pattern.').
 help(show_pattern, 'Arg2 (opt) is the mode {all,header,pp}.').
 
-help(show_patterns, 'Show all defined assurance case patterns.').
+help(show_patterns, 'Show all currently loaded assurance case patterns.').
 help(show_patterns, 'Arg1 (opt) is the mode {all,header,pp}.').
 
 help(update,	'Update assurance cases and evidence.').

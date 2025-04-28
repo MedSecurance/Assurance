@@ -29,6 +29,16 @@ defined_procs(ProcSets) :- findall(ProcSet, procs_defined(ProcSet), ProcSets).
 % e.g.: defined_procs([etb,kb,repo]).
 
 load_procs(FullFile) :-
+    (   (   ( exists_file(FullFile), !)
+            ;
+            ( atom_concat(FullFile,'.pl',FullFilePL),
+              exists_file(FullFilePL)
+            )
+        )
+    ->  true
+    ;   format('~q: file not found.~n',[FullFile]),
+        !, fail
+    ),
     ensure_loaded(FullFile),
     file_base_name(FullFile,Base), file_name_extension(Core,_,Base),
     atom(Core), % remember core of basename of loaded
