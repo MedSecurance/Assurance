@@ -9,7 +9,7 @@
           ]).
 
 :- use_module(library(persistency)).
-:- use_module(categories).
+:- use_module(category).
 :- use_module('com/param').
 
 % :- persistent ac_evidence(category:oneof([axiom,certificate,ichecker,ocra,hazard_log,risk_acceptance,unknown]),

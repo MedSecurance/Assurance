@@ -1,7 +1,7 @@
 :- module(agent_interface, [evidence_validate/5]).
 
 :- use_module(evidence).
-:- use_module(categories).
+:- use_module(category).
 
 init :-
 	validation_agents(Agents), param:kb_agents_dir(KBAdir),
