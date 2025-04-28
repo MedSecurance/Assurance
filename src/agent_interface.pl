@@ -4,9 +4,9 @@
 :- use_module(categories).
 
 init :-
-	validation_agents(Agents),
+	validation_agents(Agents), param:kb_agents_dir(KBAdir),
 	forall(member(Agent,Agents),
-			(	atomic_list_concat(['agents/',Agent,'.pl'], AgentFile),
+			(	atomic_list_concat([KBAdir,'/',Agent,'.pl'], AgentFile),
 				(	exists_file(AgentFile)
 				->	use_module(AgentFile)
 				;	format('File ~q for declared agent ~q does not exist~n',[AgentFile,Agent])
