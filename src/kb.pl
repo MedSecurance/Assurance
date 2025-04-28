@@ -3,7 +3,7 @@
 :- module(kb, [load_specification_from_file/3,kb_reset/0]).
 
 :- use_module([
-	patterns, categories,
+	patterns, category,
 	models_api/model
   ]).
 

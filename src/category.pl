@@ -1,6 +1,6 @@
 % ETB Knowledge Base - Evidence Categories
 
-:- module(categories, [evidence_category/4, evidence_categories/1,
+:- module(category, [evidence_category/4, evidence_categories/1,
 			validation_method/3, validation_agent/3,
 			validation_agents/1]).
 
