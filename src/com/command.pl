@@ -306,6 +306,8 @@ do(guiserver) :- !,
 	;   do(echo('already on'))
 	).
 
+do(halt) :- !, etb_halting, halt.
+
 do(help) :- !, help_commands.
 do(help(C)) :- !, show_help(C).
 
@@ -326,8 +328,7 @@ do(proc(Pid,Opt)) :- !, procs:proc(Pid,Proc), user_mode(M),
 	retractall(interactive(_)), assert(interactive(false)),
 	run_commands(M,Proc,Opt),
 	retractall(interactive(_)), assert(interactive(true)).
-do(quit) :- !.
-do(halt) :- !, halt.
+do(quit) :- !, etb_halting.
 do(regtest) :- !, user_mode(M), M:regression_test_all.
 do(reinit) :- !, writeln('No top-level reinit currently').
 do(reset) :- !, etb_reset.

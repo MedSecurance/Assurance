@@ -299,3 +299,7 @@ etbt(e2e) :- % end-to-end test
 etbt(Test,Emode) :-
 	param:setparam(etb_mode,Emode),
 	etbt(Test).
+
+etb_halting :- % be certain persistent data is flushed
+	evidence:detach_evidence_repository,
+	assurance:detach_assurance_repository.
