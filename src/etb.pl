@@ -75,7 +75,7 @@ etb :- % most typical entry
 etb :- halt(1).
 
 etb_with_args(Argv) :-
-	format('Argv: ~q~n',[Argv]),
+	vformat('Argv: ~q~n',[Argv]),
 
 	% process the arguments
 	etb_opt_spec(OptSpec),
@@ -90,7 +90,7 @@ etb_with_args(Argv) :-
 	etb_with_opts(Opts).
 
 etb_with_opts(Opts) :-
-	format('Options=~q~n',[Opts]),
+	vformat('Options=~q~n',[Opts]),
 	(   memberchk(command(CommandStr),Opts); true ),
 	(   memberchk(model(ModelName),Opts); true ),
 	(   memberchk(patterns(PatternsName),Opts); true ),

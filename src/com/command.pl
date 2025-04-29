@@ -484,9 +484,9 @@ unimplemented_command :- param:msg_unimplemented_command(M), writeln(M).
 %
 rd(Prompt,C) :-
 	atom_concat(Prompt,'> ',FullPrompt),
-        % use read_term_with_history for newer SWI version
-	read_history(h, '!h', [], FullPrompt, C, _Bindings),
-        % read_term_with_history(C, [prompt(FullPrompt)]),
+    % use read_term_with_history for newer SWI version
+	% read_history(h, '!h', [], FullPrompt, C, _Bindings),
+    read_term_with_history(C, [show(h),help('!h'),prompt(FullPrompt)]),
 	nonvar(C), % nonvar instead of ground to allow Prolog goals w/vars
 	(   (C=..[:-,P];C=..[?-,P]) % command is a Prolog goal
 	->  call(P), nl, !, fail    % bypass other goals in tl, repeat
