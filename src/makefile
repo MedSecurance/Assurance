@@ -1,5 +1,4 @@
-etb:	agents/axiom_agent.pl agents/certificate_agent.pl agents/ichecker_agent.pl agents/ocra_agent.pl \
-	com/command.pl com/param.pl com/procs.pl com/test.pl com/ui.pl \
+etb:	com/command.pl com/param.pl com/procs.pl com/test.pl com/ui.pl \
 	models_api/common.pl models_api/configuration.pl models_api/model.pl models_api/platform.pl models_api/policy.pl \
 	../KB/PATTERNS/patterns_MILS.pl ../KB/PATTERNS/patterns_ISO_81001.pl ../KB/PATTERNS/patterns_IoMT.pl \
 	../KB/PATTERNS/patterns_MS_Risk.pl \
