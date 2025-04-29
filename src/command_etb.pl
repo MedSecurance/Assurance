@@ -12,6 +12,8 @@ commands_defined(etb).
 syntax(attach_case(case_id),                                     etb).
 syntax(attach_evidence,                                     	etb).
 syntax(detach_case,                                              etb).
+syntax(detach_evidence,											etb).
+syntax(detach_repos,											etb).
 
 syntax(etb,                            basic).
 % syntax(etb_server,                                               etb).
@@ -102,6 +104,8 @@ help(attach_case, 'Arg is an assurance case identifier.').
 help(attach_evidence, 'Attach the EVIDENCE repository.').
 
 help(detach_case, 'Detach the currently attached assurance case.').
+help(detach_evidence, 'Detach the EVIDENCE repository.').
+help(detach_repos, 'Detach the CASES and EVIDENCE repositories.').
 
 help(etb,       'Switch to etb user mode.').
 help(etb_reset,	'Reset ETB repositories.').
@@ -166,6 +170,8 @@ do(attach_case(Case)) :- !, assurance:attach_assurance_repository(Case).
 do(attach_evidence) :- !, evidence:attach_evidence_repository.
 
 do(detach_case) :- !, assurance:detach_assurance_repository.
+do(detach_evidence) :- !, evidence:detach_evidence_repository.
+do(detach_repos) :- !, do(detach_case), do(detach_evidence).
 
 do(etb) :- user_mode(etb), !, writeln('Already in etb mode').
 do(etb) :- !, user_mode(M), retractall(user_mode(_)), assert(user_mode(etb)),
