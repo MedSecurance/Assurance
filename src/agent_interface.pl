@@ -22,7 +22,7 @@ evidence_validate(Category, Claim, Context, AArgs, XRef) :-
 	param:ev_validate_extension(Validate),
 	atomic_concat(Category, Validate, CatValidate),
 	ValidateGoal =.. [CatValidate,Claim,Context,AArgs,XRef,Status],
-	% calling CatAgent:CatValidate(Claim, Context, AArgs, XRef, Status)
+	% calling CatAgent:CatValidate(+Claim, +Context, +AArgs, +XRef, -Status)
 	call(CatAgent:ValidateGoal),
 	update_evidence_status(Category, Claim, Context, AArgs, XRef, Status).
 
@@ -33,11 +33,11 @@ evidence_validate(_Category, _Claim, _Context, _AArgs, _XRef) :-
 				% update_evidence_status(+Category, +Claim, +Context, +AArgs, +XRef, +Status)
 
 update_evidence_status(Category, Claim, Context, AArgs, XRef, Status) :-
-	update_ac_evidence(Category, Claim, Context, AArgs, XRef, Status),
+	update_ac_evidence(Category, Claim, Context, AArgs, XRef, Status), % update evidence DB
 	param:evidence_repo_dir(RepoDir), param:ev_status_file(StatusFile),
 	atomic_list_concat([RepoDir, Category, XRef , StatusFile], '/', Filename),
 	open(Filename, write, Output),
-	write_term(Output, Status, [fullstop(true)]),
+	write_term(Output, Status, [fullstop(true)]), % update status file
 	close(Output).
 
 load_agent(AgentFile) :-
