@@ -1,6 +1,6 @@
 % Evidential Tool Bus
 
-:- module(etb, [etb/0,etb/1,etb/4,etb_server/0,etb_reset/0,etb_reset/1]).
+:- module(etb, [etb/0,etb/1,etb/4,etb_reset/0,etb_reset/1]).
 :- use_module([
        'com/command','com/param','com/procs','com/ui'
   ]).
@@ -27,7 +27,7 @@
 
 :- use_module(instantiate).
 :- use_module(export).
-:- use_module(etb_server).
+% :- use_module(etb_server).
 
 :- use_module('com/test').
 
@@ -165,10 +165,10 @@ etb(Test,Regression,Init,Verbose) :-
 	param:prompt_string(etb,Prompt), param:setparam(prompt_string,Prompt),
 	command:tl(etb). % run the top-level etb command interpreter
 
-etb_server :-
-	get_command_args(Argv),
-	initialize_all,
-	etb_server:etb_server_with_args(Argv).
+% etb_server :-
+% 	get_command_args(Argv),
+% 	initialize_all,
+% 	etb_server:etb_server_with_args(Argv).
 
 get_command_args(Argv) :-
 	current_prolog_flag(argv, Argv),

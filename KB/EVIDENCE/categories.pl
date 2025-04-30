@@ -7,7 +7,8 @@ evidence_category(certificate, _, _, cert_check).
 evidence_category(ichecker, _, _, invariant_check).
 evidence_category(contract, _, _, contract_check).
 evidence_category(property, _, _, property_check).
-% evidence_category(unknown, _, _, _).
+% other categories ...
+% evidence_category(unknown, _, _, _). Implicit special category, do not create another one
 
 %	validation_method(ValName, ValDescription, ValidationAgent)
 
@@ -22,6 +23,7 @@ validation_method(property_check, 'Behavior property is valid for artefact', nus
 %		AgentArgs / AgentResult are: <term> ::= <atom> | <compound term> | <list>
 %
 % 		a corresonding file agents/<AgentName>.pl must exist or a warning will be given
+%   These facts are used to generate the list of agents that will be expected in KB/AGENTS
 
 validation_agent(axiom_agent, _, _).
 validation_agent(certificate_agent, _, _).

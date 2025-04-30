@@ -60,8 +60,8 @@ insert_ac_evidence(Category, Claim, Context, AArgs, XRef, 'pending') :-
 	ac_evidence(Category, Claim, Context, AArgs, XRef, _), !.
 
 insert_ac_evidence(Category, Claim, Context, AArgs, XRef, 'pending') :-
-	evidence_categories(Categories),
-	(	member(Category,Categories)
+	evidence_categories(Categories), union(Categories,[unknown],CategoriesWithUnk),
+	(	member(Category,CategoriesWithUnk)
 	->	true
 	;	!, fail % Category not a KB defined evidence category - see KB/EVIDENCE/categories.pl
 	),

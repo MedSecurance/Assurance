@@ -67,7 +67,7 @@ semantics(attach_case(Case)) :- !, atom(Case).
 
 semantics(etb_reset(D)) :- !, (D == cap ; D == repos ; D == all).
 
-semantics(etb_server(A)) :- !, atomic(A), (number(A) ; A==nurvsim).
+% semantics(etb_server(A)) :- !, atomic(A).
 
 semantics(etbt(T)) :- !, atom(T).
 semantics(etbt(T,E)) :- !, atom(T), atom(E).
@@ -110,7 +110,7 @@ help(detach_repos, 'Detach the CASES and EVIDENCE repositories.').
 help(etb,       'Switch to etb user mode.').
 help(etb_reset,	'Reset ETB repositories.').
 help(etb_reset, 'Arg (opt) domain to reset (cap or repos).').
-help(etb_server,'Start the ETB server.').
+% help(etb_server,'Start the ETB server.').
 
 help(etbt,      'Run an etb built-in test. Default is \'e2e\'.').
 help(etbt,      'Arg1 (opt) is a test identifier.').
@@ -186,8 +186,8 @@ do(etb_status) :- !,
 	assurance:ar_write_status,
 	evidence:er_write_status.
 
-do(etb_server) :- !, etb_server:etb_server_cmd.
-do(etb_server(A)) :- !, etb_server:etb_server_cmd(A).
+% do(etb_server) :- !, etb_server:etb_server_cmd.
+% do(etb_server(A)) :- !, etb_server:etb_server_cmd(A).
 
 do(etbt) :- !, etbt(e2e). % abbrev-change to suit current need
 do(etbt(e2e)) :- !, etbt(e2e).

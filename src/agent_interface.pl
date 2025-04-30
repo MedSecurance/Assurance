@@ -27,7 +27,7 @@ evidence_validate(Category, Claim, Context, AArgs, XRef) :-
 	update_evidence_status(Category, Claim, Context, AArgs, XRef, Status).
 
 evidence_validate(_Category, _Claim, _Context, _AArgs, _XRef) :-
-				% unknown evidence category
+				% undefined evidence category or 'unknown'
 	true.
 
 				% update_evidence_status(+Category, +Claim, +Context, +AArgs, +XRef, +Status)
