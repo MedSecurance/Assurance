@@ -24,10 +24,12 @@ evidence_validate(Category, Claim, Context, AArgs, XRef) :-
 	ValidateGoal =.. [CatValidate,Claim,Context,AArgs,XRef,Status],
 	% calling CatAgent:CatValidate(+Claim, +Context, +AArgs, +XRef, -Status)
 	call(CatAgent:ValidateGoal),
-	update_evidence_status(Category, Claim, Context, AArgs, XRef, Status).
+	update_evidence_status(Category, Claim, Context, AArgs, XRef, Status), !.
+
+evidence_validate(unknown, _, _, _, _) :- !, true; % do nothing for 'unknown'
 
 evidence_validate(_Category, _Claim, _Context, _AArgs, _XRef) :-
-				% undefined evidence category or 'unknown'
+				% undefined evidence category or other error handling here
 	true.
 
 				% update_evidence_status(+Category, +Claim, +Context, +AArgs, +XRef, +Status)
