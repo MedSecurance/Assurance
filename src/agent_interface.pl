@@ -19,14 +19,14 @@ evidence_validate(Category, Claim, Context, AArgs, XRef) :-
 	atom(Category), evidence_categories(Categories), member(Category, Categories), !,
 	evidence_category(Category, _CatDesc, _CatType, CatValidationMethod),
 	validation_method(CatValidationMethod, _ValDesc, CatAgent), % lookup agent for category
-	param:ev_validate_extension(Validate),
-	atomic_concat(Category, Validate, CatValidate),
+	param:ev_validate_extension(Validate), % convention is '_validate'
+	atomic_concat(Category, Validate, CatValidate), % form validate pred name
 	ValidateGoal =.. [CatValidate,Claim,Context,AArgs,XRef,Status],
 	% calling CatAgent:CatValidate(+Claim, +Context, +AArgs, +XRef, -Status)
 	call(CatAgent:ValidateGoal),
 	update_evidence_status(Category, Claim, Context, AArgs, XRef, Status), !.
 
-evidence_validate(unknown, _, _, _, _) :- !, true; % do nothing for 'unknown'
+evidence_validate(unknown, _, _, _, _) :- !, true. % do nothing for 'unknown'
 
 evidence_validate(_Category, _Claim, _Context, _AArgs, _XRef) :-
 				% undefined evidence category or other error handling here

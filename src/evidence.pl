@@ -91,6 +91,8 @@ update_ac_evidence(Category, Claim, Context, AArgs, XRef, Status) :-
 
 
 				% update_ongoing
+				% check all ac_evidence DB records that are 'ongoing'
+				% update the DB record if status file has changed to valid or invalid
 
 update_ongoing :-
 	format('*** updating evidence repository ...'),
