@@ -89,7 +89,7 @@ semantics(load_patterns(F)) :- !, atom(F).
 
 semantics(show_case(Case)) :- !, atom(Case).
 
-semantics(show_evidence(Opt)) :- !, ( Opt=='summary' ; Opt=='all')).
+semantics(show_evidence(Opt)) :- !, ( Opt=='summary' ; Opt=='all').
 
 semantics(show_pattern(PatId)) :- !, atom(PatId).
 semantics(show_pattern(PatId,Mode)) :- !, atom(PatId), atom(Mode), member(Mode,[text,header,pp]).
