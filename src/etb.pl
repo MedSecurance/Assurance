@@ -107,7 +107,7 @@ etb_with_opts(Opts) :-
 	;   true ),
 
 	(   nonvar(ProcsName)
-	->  procs:load_procs(ProcsName,_M)
+	->  procs:load_procs(ProcsName)
 	;   true ),
 
 	(	T==true -> Test=on ; true ),

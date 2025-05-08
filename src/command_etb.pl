@@ -45,6 +45,8 @@ syntax(load_patterns(patterns_file),							etb).
 syntax(show_case,						 etb).
 syntax(show_case(case_id),					 etb).
 syntax(show_cases,						 etb).
+syntax(show_evidence,											etb).
+syntax(show_evidence(opt),										etb).
 syntax(show_pattern(pattern_id),                                 etb).
 syntax(show_pattern(pattern_id,mode),                            etb).
 syntax(show_patterns,			                         etb).
@@ -86,6 +88,8 @@ semantics(load_model_v(Mid,Pol,Plat,Config)) :- !, atom(Mid), var(Pol), var(Plat
 semantics(load_patterns(F)) :- !, atom(F).
 
 semantics(show_case(Case)) :- !, atom(Case).
+
+semantics(show_evidence(Opt)) :- !, ( Opt=='summary' ; Opt=='all')).
 
 semantics(show_pattern(PatId)) :- !, atom(PatId).
 semantics(show_pattern(PatId,Mode)) :- !, atom(PatId), atom(Mode), member(Mode,[text,header,pp]).
@@ -134,8 +138,8 @@ help(instantiate_pattern_list,	'Instantiate the given AC pattern into the REPO.'
 help(instantiate_pattern_list,	'Arg1 is an AC pattern list.').
 help(instantiate_pattern_list,	'Arg2 is a valid new assurance case ID.').
 
-help(load_agent,'Load Prolog-side agent definition from specified file.').
-help(load_agent,'Arg is the Prolog-side agent file name.').
+help(load_agent,'Load Prolog-side agent module definition from specified file.').
+help(load_agent,'Arg is the Prolog-side agent module file name.').
 
 help(load_model_v, 'Load model from KB and return policy, platform and config components.').
 help(load_model_v, 'Arg1 is a model identifier.').
@@ -150,6 +154,9 @@ help(show_case, 'Show the current or identified assurance case.').
 help(show_case, 'Arg1 (opt) is the assurance case ID, otherwise current case.').
 
 help(show_cases, 'Show all assurance cases in the CASES Repo.').
+
+help(show_evidence, 'Show current evidence records.').
+help(show_evidence, 'Arg1 (opt) is summary or all (summary if not specified).').
 
 help(show_pattern, 'Show a loaded assurance case pattern.').
 help(show_pattern, 'Arg1 is the identifier for the pattern.').
@@ -255,6 +262,8 @@ do(show_cases) :- !,
 	;       true
         ).
 
+do(show_evidence) :- !, etb_show_evidence(summary).
+do(show_evidence(Opt)) :- !, etb_show_evidence(Opt).
 
 do(show_pattern(PatId)) :- !, do(show_pattern(PatId,pp)).
 do(show_pattern(PatId,M)) :- !,
@@ -314,3 +323,10 @@ etbt(Test,Emode) :-
 etb_halting :- % be certain persistent data is flushed
 	evidence:detach_evidence_repository,
 	assurance:detach_assurance_repository.
+
+etb_show_evidence(all) :-
+	listing(evidence:ac_evidence/6).
+etb_show_evidence(summary) :-
+	forall( evidence:ac_evidence(Cat,Clm,_Ctx,_A,X,S),
+			format('~q ~q ~q ~q~n',[X,S,Cat,Clm]) ).
+
