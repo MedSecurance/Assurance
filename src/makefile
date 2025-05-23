@@ -12,13 +12,13 @@ person-examp:	../BUILD/etb
 clean: clean_cap clean_repos
 
 clean_cap:
-	find -d ../CAP -not \( -name "README.md" -or -name "CAP" -or -path "../CAP/iomt_system_example/*" -or -name "iomt_system_example.txt" -or -name "iomt_system_example" -or -path "../CAP/iso_system_example/*" -or -name "iso_system_example.txt" -or -name "iso_system_example" \) -delete
+	find ../CAP -depth -not \( -name "README.md" -or -name "CAP" -or -path "../CAP/iomt_system_example/*" -or -name "iomt_system_example.txt" -or -name "iomt_system_example" -or -path "../CAP/iso_system_example/*" -or -name "iso_system_example.txt" -or -name "iso_system_example" \) -delete
 
 clean_repos: clean_cases clean_evidence
 
 clean_cases:
-	find -d ../REPOSITORY/CASES -not \( -name "README.md" -or -name "CASES" \) -delete
+	find ../REPOSITORY/CASES -depth -not \( -name "README.md" -or -name "CASES" \) -delete
 
 clean_evidence:
-	find -d ../REPOSITORY/EVIDENCE -not \( -name "README.md" -or -name "EVIDENCE" -or -name "axiom" -or -name "certificate" -or -name "iomtmodeling" -or -name "ichecker" -or -name "ocra" -or -name "unknown" \) -delete
+	find ../REPOSITORY/EVIDENCE -depth -not \( -name "README.md" -or -name "EVIDENCE" -or -name "axiom" -or -name "certificate" -or -name "iomtmodeling" -or -name "ichecker" -or -name "ocra" -or -name "unknown" \) -delete
 	echo "assert(ac_evidence_counter(10000))." > ../REPOSITORY/EVIDENCE/repository.pl
