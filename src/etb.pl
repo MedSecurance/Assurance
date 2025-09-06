@@ -38,7 +38,10 @@
 % :- initialization(etb).
 %
 
+% note: the prolog_flag verbose is different to the option verbose is different to the param verbose!
 :- set_prolog_flag(verbose, silent).
+:- set_prolog_flag(history, 50).
+:- set_prolog_flag(readline, editline).
 
 %
 % etb command line options
@@ -57,7 +60,7 @@ etb_opt_spec([
          help( 'load procs file when ETB starts' )],
         [opt(test), type(boolean), default(false), shortflags([t]), longflags(['test']),
          help( 'run self tests when ETB starts' )],
-        [opt(verbose), type(boolean), default(true), shortflags([v]), longflags(['verbose']),
+        [opt(verbose), type(boolean), default(false), shortflags([v]), longflags(['verbose']),
          help( 'verbose reporting' )]
 ]).
 
@@ -90,7 +93,6 @@ etb_with_args(Argv) :-
 	etb_with_opts(Opts).
 
 etb_with_opts(Opts) :-
-	vformat('Options=~q~n',[Opts]),
 	(   memberchk(command(CommandStr),Opts); true ),
 	(   memberchk(model(ModelName),Opts); true ),
 	(   memberchk(patterns(PatternsName),Opts); true ),
@@ -111,6 +113,9 @@ etb_with_opts(Opts) :-
 	;   true ),
 
 	(	T==true -> Test=on ; true ),
+	(	V==true -> setparam(verbose,on) ; setparam(verbose,off) ),
+
+	vformat('Options=~q~n',[Opts]),
 
 	(   var(CommandStr)
 	->  etb(Test,_,_,_) % go to interactive command interpreter

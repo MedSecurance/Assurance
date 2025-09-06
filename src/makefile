@@ -6,6 +6,9 @@ etb:	com/command.pl com/param.pl com/procs.pl com/test.pl com/ui.pl \
 	patterns.pl procs_etb.pl stringutil.pl
 	swipl -v -o ../BUILD/etb -g etb -c etb.pl
 
+image:
+	docker build -t o-etb ..
+
 person-examp:	../BUILD/etb
 	../BUILD/etb -c "instantiate_pattern(person, [marius, programming], 'person_examp')"
 

@@ -55,7 +55,7 @@ build_version(etb,'1.1.1','Revisions to Prototype #1, incl: commands and pattern
 
 build_version(etb,'1.1.2' /* ongoing development */ ).
 
-build_current_version_description(etb,'ongoing developments to ease integration with other tools').
+build_current_version_description(etb,'ongoing integration and use case testing').
 %
 
 % Used by the command interpreter
@@ -120,7 +120,7 @@ regression_test(off). % off/on
 null_stream(x).
 initialize(on). % off/on
 initialized(false).
-verbose(on). % off/on
+verbose(off). % off/on
 
 jsonresp_server(off).
 jsonresp(off). % off / on / separate / same
