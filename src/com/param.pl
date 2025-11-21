@@ -235,7 +235,7 @@ patterns_directory('KB/PATTERNS').
 models_directory('KB/MODELS').
 workflows_directory('KB/WORKFLOWS').
 categories_directory('KB/CATEGORIES').
-evidence_directory('KB/EVIDENZCE').
+evidence_directory('KB/EVIDENCE').
 agents_directory('KB/AGENTS').
 
 log_directory('RUNTIME/LOG').

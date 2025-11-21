@@ -76,6 +76,49 @@ proc(teamN, [
         instantiate_pattern(teamOfN, [programming, list([marius,rance])], teamN)
     ]).
 
+proc(shortdemo, [
+	help(proc),
+	help(show_proc),
+	help(show_pattern),
+
+	show_proc(shortdemo),
+	show_pats,
+	etb_reset,
+
+	show_pattern(person),
+	help(instantiate_pattern),
+	instantiate_pattern('person', ['Marius', 'Programming'], 'person_example'),
+	export_case(person_example, txt),
+	export_case(person_example, html),
+	detach_case,
+
+	show_pattern(teamOfN),
+	instantiate_pattern(teamOfN, [programming, list([marius,rance])], team_example),
+	export_case(team_example, html),
+	detach_case,
+
+	show_pattern('IoMT_system'),
+	show_pattern('application_plane'),
+	show_pattern('platform_plane'),
+
+	set_v(ModelId, '2.0'),
+	set_v(CaseId, iomt_system_example),
+	load_model_v(ModelId, App_Specification, Platform, _Configuration),
+	set_v(APL,
+		[ 'IoMT_system'-[App_Specification, Platform],
+		'person'-['Alicia', 'Assurance'],
+		'person'-['Roberto', 'Development']
+		]),
+	instantiate_pattern_list(APL, CaseId),
+	export_case(CaseId, html),
+	export_case(CaseId, txt),
+	detach_case,
+
+	echo('DONE!')
+]).
+
+
+
 %%%% PAST DEMOS %%%%
 
 proc(demo_day, [
