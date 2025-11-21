@@ -43,10 +43,10 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newcommand{\dnumber}{0}
 \newcommand{\dtitle}{%
-  Construction of Assurance Case\\Argument Pattern Catalogues for O-ETB\\(including MILS Catalog Case Study)
+  Construction of Assurance Case\\Argument Pattern Catalogues for O-ETB\\(with MILS Case Study)
 }
 \newcommand{\dshorttitle}{Constructing O-ETB Argument Patterns}
-\newcommand{\dversion}{0.1}  % Document Version number
+\newcommand{\dversion}{0.2}  % Document Version number
 \newcommand{\dauthors}{The Open Group}
 \newcommand{\dstatus}{Draft}
 \newcommand{\ddist}{Public}
@@ -64,6 +64,7 @@
 %\fancyfoot[LO,RE]{\footnotesize \ddate}
 %\fancyfoot[RO,LE]{\footnotesize\rm Page \thepage}
 \fancyfoot[LO,RE]{\ddate}
+\fancyfoot[CO,CE]{Version \dversion}
 \fancyfoot[RO,LE]{\rm Page \thepage}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -171,9 +172,10 @@ parameterized to be reusable and modular.
 \subsection{Acknowledgments}The O-ETB is based on the Adaptive MILS Evidential Tool Bus (AM-ETB) from the EC CITADEL Project  (Critical Infrastructure Protection Using Adaptive MILS, Project Number 700665)
 \cite{CITADEL-WWW,CITADEL-D5.1,CITADEL-D5.4,CITADEL-D5.4a},
 implemented by Marius Bozga of Universite Grenoble Alpes, with reorganization and continuing development by Rance DeLong of The Open Group.
-The MILS Argument Patterns and descriptions contained in this document were developed by atsec information systems and other partners of the CITADEL Project with groundwork laid by partners of the prior EC D-MILS Project (Distributed MILS)
-\cite{D-MILS-WWW,D-MILS-D4.2,D-MILS-D4.3}.
-Copyright in portions of this document borrowed from cited references remains vested in the respective Project Partners.
+The MILS Argument Patterns and descriptions contained in this document were developed by atsec information systems and other partners of the CITADEL Project.
+Groundwork for MILS assurance cases was laid by partners of the prior EC D-MILS Project (Distributed MILS, Project Number 318772), in particular, University of York
+\cite{D-MILS-WWW,D-MILS-D2.3,D-MILS-D2.4,D-MILS-D4.2,D-MILS-D4.3}.
+Copyright in portions of this document borrowed from the cited references remains vested in the respective Project Partners.
 Edits and new material, including the assembly of this document were supported by the MedSecurance Project
 \cite{MedSecurance-WWW}.
 
@@ -187,7 +189,7 @@ experts.  A prototype of the ETB concept was demonstrated by SRI
 International \cite{TI-ETB}.
 The Adaptive MILS (CITADEL) project re-introduced the concepts
 of the ETB and provided a design workflow, interfaces, and mechanisms for a
-new realization of the concept for Adaptive MILS, first appearing as AM-ETB and now through continuing development by The Open Group embodied in the O-ETB (Open Evidential Tool Bus).
+new realization of the concept for Adaptive MILS, first appearing as AM-ETB and now through continuing development by The Open Group as embodied in the O-ETB (Open Evidential Tool Bus).
 
 \subsection{Open Evidential Tool Bus}
 O-ETB fits naturally into a model-based system engineering process
@@ -294,9 +296,48 @@ The top-level system properties may include distinct goals such as safety, secur
 Each of these lead to a separate strand in the overall assurance case.
 Distinct strands may share some low-level argument modules and evidence.
 
+\subsection{Assurance Case Evaluation Criteria}
+\label{sec:eval}
+
+There are three aspects to the criteria for evaluation of an assurance case.
+
+\begin{itemize}
+\item Generic, objective, quantitative, criteria for every assurance case.
+\item Qualitative criteria about content of a specific assurance case
+\item Qualitative and quantitative criteria about the efficiency of the production of a specific assurance case
+\end{itemize}
+Some of the quantitative criteria were formalised in \cite{D-MILS-D2.4}.
+
+\subsubsection{Metrics and Sanity Checks}
+
+Some simple metrics and sanity checks can be performed for an assurance case, particularly one which is at least partly instantiated automatically from a detailed system model and appropriate assurance case argument patterns. These allow the assurance case developer to be confident that all the appropriate elements are there and have been discussed. Although such metrics alone cannot measure the {\it quality} of the argument or evidence, they can:
+
+\begin{itemize}
+\item Check that all nodes in the final argument are instantiated and developed. If they are not they can be highlighted and a justification provided if necessary (for example, a placeholder for functionality which will be integrated later).
+\item Highlight criticality of certain nodes in terms of the argument structure. For example, how many claims are supported by a single solution (evidence item). If many claims are supported by a single item of evidence, then changing that evidence will have a high impact on the argument. Highlighting this issue allows us to consider whether the evidence can be decomposed further in order to ameliorate the potential impact of a change.
+\item Ensure that all relevant elements of an input model, or input data, are included. For example, do all components in an architecture model have a corresponding argument module. As another example, have all hazards or threats have been mentioned in a claim somewhere in the argument.
+\end{itemize}
+
+\subsubsection{Content Assessment}
+
+The purpose of the assurance case is to provide a compelling case to show that the system is fit for purpose. Further, it may need to show that several processes running on the same platform are fit for purpose and sufficiently protected from one another.  As such, it needs to demonstrate the the configured system is sufficiently dependable, safe and secure for the related and identified reliability hazards and threats. For example, will a particular data asset be secure from a particular kind of unauthorized modification and will a particular hazard be mitigated by effective detection and recovery. The assurance case should also provide confidence that there is no undesired emergent behavior.
+
+Assessment of such aspects may need to be determined on a case by case basis. Whilst a process and checklist for review can be defined, the content of different assurance cases will differ so much that the results may be difficult to compare. Users and evaluators should be provided with a checklist of highlighted aspects to examine closely, and in turn they are expected to provide independent feedback on the usefulness of the assurance case.
+
+\subsubsection{Efficiency of the assurance case approach}
+
+In addition to providing a compelling assurance case, we want to construct an assurance case in an efficient and maintainable way. A non-modular, manually constructed assurance case may be compelling, but with laborious and error-prone production methods, especially in the ongoing maintenance of the assurance case in the face of system evolution, the is cost of the benefits may be too high for some application domains. The cost of producing the assurance case initially, re-usability of argument parts, and efficient maintainability of the argument (e.g. when a component is changed) must be considered. 
+
+It is expected that the model based approach with substantial automated instantiation of assurance case patterns to build an assurance case will be less costly than manual methods.
+At present, there may be no known assurance cases nor argument patterns for certain domains, manually constructed or otherwise. Thus there is no current baseline against which to easily measure improvements in cost and time in new domains. However, we can, roughly compare with the manual construction of assurance cases in other domains (e.g. safety domain). Once an initial baseline has been developed, we can show improvements in the time taken to incorporate changes, e.g. to regenerate an assurance case following system changes such as component alteration or replacement. 
+
+The re-usability of modular and argument pattern-based assurance case development can be demonstrated and assessed for supporting platform arguments by showing they can be re-used for multiple product certification projects that use the same platform. For example, are the assurance argument patterns for the platform applicable without substantial alteration to a different application project that uses the same platform. The re-usability of the patterns can be assessed by instantiating them for numerous components and observing how robust they are to variations, e.g. in component type, scale and error types. This activity has the side benefit of providing an opportunity to improve the parameterization and versatility of the argument pattern catalog.
+
+The maintainability aspect, can be evaluated by generating typical change scenarios, and assessing the impact that has on the argument. For example, how many claims in a module (and related modules) are affected by the introduction of a new error or software requirement, or other alteration. Another test might be a modified or alternative architectural configuration of the same components. Finally, it would be beneficial to evaluate the argument pattern catalog's ability to create or maintain an application assurance case in the face of changes to the platform or to the operational environment. 
+
 % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % % %
 \newpage
-\section{Assurance Cases for the MILS Domain}\label{sec:ac-structure}
+\section{Case Study: MILS Domain Assurance Case}\label{sec:ac-structure}
 MILS\footnote{ ``MILS'' was originally an acronym for ``Multiple
   Independent Levels of Security.''  Today we use ``MILS'' as a proper noun
   to denote the architectural approach promulgated by the \emph{MILS
@@ -455,13 +496,13 @@ The following is the set of patterns that can be employed to aid in the developm
 	\item Monitoring plane: create an argument that the plane monitors and detects component failures such as malfunctioning or disruption of the communication network
 	\item Adaptation plane: create an argument about the development of adaptation strategies in order to adapt to changing environmental conditions or dynamic repurposing of the system, while ensuring that adaptations preserve or recover vital overarching properties defined for the system
 	\item Configuration plane: create an argument about dynamic reconfiguration capabilities
-	\item Certification assurance plane: create an argument about AM-ETB tool integration and the verification and validation of results
+	\item Certification assurance plane: create an argument about ETB tool integration and the verification and validation of results
 	\end{itemize}
-\item Interface: Create an argument that the communication between components or compositions in the architecture only occurs via connections explicitly defined in the CITADEL system model
+\item Interface: Create an argument that the communication between components or compositions in the architecture only occurs via connections explicitly defined in the system model
 \item Threats: Create an argument that threats are sufficiently mitigated
-\item States and transitions: Create arguments that states and state transitions of components are in accordance with the states and transitions as specified in the CITADEL system model
-\item Modes and transitions: Create arguments that modes and mode transitions of compositions are in accordance with the modes and transitions as specified in the CITADEL system model
-\item Composition: Create arguments that formally defined properties of a system, as specified in the modelling language architecture description, are implemented and satisfied by an Adaptive MILS system.
+\item States and transitions: Create arguments that states and state transitions of components are in accordance with the states and transitions as specified in the system model
+\item Modes and transitions: Create arguments that modes and mode transitions of compositions are in accordance with the modes and transitions as specified in the system model
+\item Composition: Create arguments that formally defined properties of a system, as specified in the modeling language architecture description, are implemented and satisfied by a system.
 \item Process: Create an argument for any component during the development, real-time adaptation and reconfiguration of an adaptive MILS system.
 \item Tool: Create an argument about the trustworthiness of tools used as part of a process included in the assurance case. 
 \item Person: Create an argument about the trustworthiness of people involved in a process included in the assurance case. 
@@ -471,7 +512,7 @@ The following is the set of patterns that can be employed to aid in the developm
 \item Trusted software component: Create an argument about the correct implementation of trusted software components within a process.  
 \end{itemize}
 
-Furthermore, the AM-ETB should support the addition of supplementary (custom) assurance patterns, which are required to conform to the specification of Adaptive MILS assurance case argument patterns (see Section~\ref{sec:ap-rules}). In addition, it is important to note that the argument patterns are used as aid for the instantiation of the assurance case, and may be modified and are further defined upon instantiation. 
+Furthermore, the O-ETB should support the addition of supplementary (custom) assurance patterns, which are required to conform to the specification of the assurance case argument patterns (see Section~\ref{sec:ap-rules}). In addition, it is important to note that the argument patterns are used as aid for the instantiation of the assurance case, and may be modified and are further defined upon instantiation. 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -545,7 +586,7 @@ In case there are multiple ways to demonstrate satisfaction of goals (i.e. based
 ~\\
 The evidence to substantiate the claims made in an assurance case should not only consider the system itself, but should additionally take into account the operational environment of the system. Considering the environment, and the risks these pose on the system, is especially important in cases where the evidence supports claims regarding the resilience of the system. "For example, determining whether the security risks to the system's mission have been reduced to as low as reasonably practicable (ALARP) cannot be accomplished by considering (e.g., analysing or observing) the system's security mechanisms solely in isolation" \cite{Lipson13evidence-of-assurance}. Therefore, the operational environment of the system should either be considered and included as part of the evidence, or incorporated as environmental assumptions. 
 
-Hence, it is necessary to specify assumptions under which the system or design satisfies the claims. Realistically, assumptions are to be specified and reviewed manually. \cite{Lipson13evidence-of-assurance} provides insight into what environmental aspects and other, more general, aspects may be included in the assumptions. However, as Rushby states, "mechanised tools such as theorem provers and model checkers can analyse theorems of this form and provide an inestimable benefit by helping to identify necessary assumptions" \cite{Rushby09asafety-case}. These mechanised tools could be provided by the AM-ETB to identify necessary assumptions, yet manual review and refinement of assumptions remains a requirement. 
+Hence, it is necessary to specify assumptions under which the system or design satisfies the claims. Realistically, assumptions are to be specified and reviewed manually. \cite{Lipson13evidence-of-assurance} provides insight into what environmental aspects and other, more general, aspects may be included in the assumptions. However, as Rushby states, "mechanised tools such as theorem provers and model checkers can analyse theorems of this form and provide an inestimable benefit by helping to identify necessary assumptions" \cite{Rushby09asafety-case}. These mechanised tools could be provided by the O-ETB to identify necessary assumptions, yet manual review and refinement of assumptions remains a requirement. 
 
 \paragraph{Compatibility with System Model}\label{sec:languagemodelcompatibility}
 ~\\
@@ -650,7 +691,7 @@ Moreover, the foundational plane includes a Network Scheduling Master (NSM), whi
 \begin{figure}[htbp]
 \begin{center}
 %\includegraphics[scale=0.5,width=\textwidth,height=\textheight,keepaspectratio]{figures/patterns/foundationalplane3.pdf}
-\includegraphics[height=\textheight,keepaspectratio]{figures/patterns/foundationalplane3.pdf}
+\includegraphics[height=0.8\textheight,keepaspectratio]{figures/patterns/foundationalplane3.pdf}
 \caption{\label{fig:foundational-plane}Foundational plane argument pattern}
 \end{center}
 \end{figure}
@@ -740,14 +781,14 @@ The adaptation plane pattern is shown in Figure ~\ref{fig:adaptation-plane}, whi
 
 \begin{figure}[htbp]
 \begin{center}
-\includegraphics[scale=0.8,width=.8\textwidth]{figures/patterns/adaptationplane4-1.pdf}
+\includegraphics[scale=0.8,width=.8\textwidth,height=0.8\textheight]{figures/patterns/adaptationplane4-1.pdf}
 \caption{\label{fig:adaptation-plane} Adaptation plane argument pattern}
 \end{center}
 \end{figure}
 
 \begin{figure}[htbp]
 \begin{center}
-\includegraphics[scale=0.4,width=\textwidth,height=\textheight,keepaspectratio]{figures/patterns/adaptationplane4-2.pdf}
+\includegraphics[scale=0.4,width=\textwidth,height=0.8\textheight,keepaspectratio]{figures/patterns/adaptationplane4-2.pdf}
 \caption{\label{fig:context-adaptation-plane} Context awareness supporting adaptation plane pattern}
 \end{center}
 \end{figure}
@@ -821,7 +862,7 @@ The information required for the parameters of the adaptation plane argument pat
 \clearpage
 \emph{Certification assurance plane}
 
-The certification assurance plane comprises the AM-ETB, which enables tool integration, as well as the verification and validation of results. The AM-ETB encompasses different techniques and mechanisms to generate and manage the evidence needed for certification during system operation. The AM-ETB provides a framework for propagating system-level and inter-component constraints, enforcing standards, checking consistency, and providing automated review of evidence as a proxy for certification experts (Figure ~\ref{fig:certificationassurance-plane}). 
+The certification assurance plane comprises the O-ETB, which enables tool integration, as well as the verification and validation of results. The O-ETB encompasses different techniques and mechanisms to generate and manage the evidence needed for certification during system operation. The O-ETB provides a framework for propagating system-level and inter-component constraints, enforcing standards, checking consistency, and providing automated review of evidence as a proxy for certification experts (Figure ~\ref{fig:certificationassurance-plane}). 
 
 \begin{figure}[htbp]
 \begin{center}
@@ -1337,36 +1378,34 @@ The table below indicates what information regarding the target system is requir
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Automated Instantiation}\label{sec:automated-instantiation}
-The O-ETB allows for the automatic generation of parts of assurance cases, based on the assurance case argument patterns. The O-ETB tool takes as input GSN assurance case argument patterns, CITADEL system models (which are always checked against top-level policy) and a weaving model, which defines the relationships between the argument patterns on the basis of system models (the weaving model includes dependencies between elements of GSN pattern models and elements of system meta-models). The output of the O-ETB comprises the GSN argument model, which together with the evidence builds the assurance case (Figure ~\ref{fig:automaticinstantiation}). 
+Assurance case argument patterns have the ability to reduce the subjectivity of assurance cases, but only if the system models are correctly specified. Therefore, it is required that the local policy, or security requirements (if applicable) are clearly represented in the description of the system model.  
 
-Assurance case argument patterns have the ability to reduce the subjectivity of assurance cases, but only if the system models are correctly specified. Therefore, it is required that the local policy, or security requirements (if applicable) are clearly defined in the description of the CITADEL system model.  
-
-The O-ETB tool automatically identifies parts of argument patterns that are to be instantiated. Therefore, similar to the AADL-SLIM system models used for D-MILS, the CITADEL system model differentiates between systems, processes and compositions to facilitate the automated instantiation of the assurance case argument patterns (Figure ~\ref{fig:automaticinstantiation2}).
+The O-ETB tool automatically identifies parts of argument patterns that are to be instantiated. The system model differentiates between systems, processes and compositions to facilitate the automated instantiation of the assurance case argument patterns (Figure ~\ref{fig:automaticinstantiation}).
 
 The parts of the assurance case that cannot be constructed automatically with assistance of the O-ETB, such as assurance claims that require further development, become obligations in order to build the complete assurance case. In addition, argument patterns may be added or further configured as necessary (the specification of argument patterns as defined in Section~\ref{sec:ap-rules} should in this case be considered). Moreover, even though it is desirable to automatically generate (parts of) assurance cases, the developer should consider each aspect of the assurance case and add or refine the claims, subclaims, assumptions, contexts, strategies and justifications. Therefore, the assurance case must be part of the system design and is best developed simultaneously with the system itself, rather than at the end of the development process (this also ensures that, if applicable, evidence of development processes is collected and maintained). 
 
-Which patterns are to be instantiated are automatically identified on basis of the system model as shown in Figure~\ref{fig:automaticinstantiation2}.
+Which patterns are to be instantiated are automatically identified on basis of the system model as shown in Figure~\ref{fig:automaticinstantiation}.
 
 \begin{figure}[htbp]
 \begin{center}
 \includegraphics[width=.8\textwidth]{figures/automaticinstantiation.png}
-\caption{\label{fig:automaticinstantiation2} Identification of patterns to be instantiated}
+\caption{\label{fig:automaticinstantiation} Identification of patterns to be instantiated}
 \end{center}
 \end{figure}
 
 \subsubsection{Automated Instantiation Based on the System Model}\label{sec:instantiation-systemmodel}
-As opposed to using both the argument patterns and Adaptive MILS system model to construct the assurance case, another manner of establishing the assurance case may be by solely using the Adaptive MILS system model in the SLIM specification. The proposed way of achieving this is to specify the safety and/or security requirements, assumptions and evidence requirements in the Adaptive MILS system model directly. These requirements may be derived from regulatory standards or specified by the system owner. The specification of the various components and subcomponents of the system in the Adaptive MILS system model are taken to establish the structure of the assurance case. The advantage of this approach is that the arguments in the assurance case are completely tailored to a particular system, and do not have to be further refined subsequent to construction to the same extent as when generating an assurance case from a generic set of patterns. It has to be emphasised, however, that the safety and/or security requirements need to be carefully considered and specified in the Adaptive MILS system model and that any potential threats are identified and included when establishing the requirements in order to prevent confirmation bias. Taking a standards-based approach may aid in assuring all relevant security and safety claims, and assumptions are addressed for a particular type of system. 
+As opposed to using both the argument patterns and system model to construct the assurance case, another manner of establishing the assurance case may be by solely using the system model. The proposed way of achieving this is to specify the safety and/or security requirements, assumptions and evidence requirements in the system model directly. These requirements may be derived from regulatory standards or specified by the system owner. The specification of the various components and subcomponents of the system in the system model are taken to establish the structure of the assurance case. The advantage of this approach is that the arguments in the assurance case are completely tailored to a particular system, and do not have to be further refined subsequent to construction to the same extent as when generating an assurance case from a generic set of patterns. It has to be emphasised, however, that the safety and/or security requirements need to be carefully considered and specified in the system model and that any potential threats are identified and included when establishing the requirements in order to prevent confirmation bias. Taking a standards-based approach may aid in assuring all relevant security and safety claims, and assumptions are addressed for a particular type of system. 
 
 \subsubsection{Modifications to the System and Maintaining the Assurance Case}\label{sec:modifications}
 Whenever modifications to the overall system are required to satisfy the security or safety policy (as opposed to the transitions between internal pre-defined modes of compositions or components), the adaptation plane makes modifications to the current system model. It is envisioned that this occurs by establishing a new system model, which comprises the modification of components. The new system model is then directed to the configuration plane, where it is checked against local and system policies by the configuration state controller before instantiation. The configuration state controller permits or denies the new system model, based on the reconfiguration constraints (database). Afterwards, a new, or updated, assurance case may be generated. 
 
-New assurance cases can be generated with the assistance of the AM-ETB, based on the current system model, upon request or at certain specified time intervals, rather than automatically generating new assurance cases each time the system changes. The advantage of generating assurance cases at certain intervals (for instance, daily or weekly) or upon request, is that computational overhead is kept to a minimum.  
+New assurance cases can be generated with the assistance of the O-ETB, based on the current system model, upon request or at certain specified time intervals, rather than automatically generating new assurance cases each time the system changes. The advantage of generating assurance cases at certain intervals (for instance, daily or weekly) or upon request, is that computational overhead is kept to a minimum.  
 
 Assurance cases are generated by establishing direct relationships between Adaptive MILS assurance case argument patterns and CITADEL system models, as described in Section~\ref{sec:automated-instantiation}. Taking this integrated approach to developing the Adaptive MILS assurance argument results in various advantages. First of all, it leads to improved change control for the assurance argument; changes to the system design are reflected in the argument. It additionally has the potential to automatically feed back the results of analysis of the assurance case into the development models \cite{D-MILS-D2.4}: "only once all the models impacted by the change have been updated can a new valid instantiation of the assurance argument be created" \cite{D-MILS-D2.4}. An assurance case argument is finished when the total number of nodes is the same as developed and instantiated nodes. Note that this does not guarantee the quality of the Adaptive MILS system; evidence is required to indicate the quality of the system.
 
 \paragraph{Maintaining Assumptions}
 
-Each assurance pattern has the possibility to include one or several assumptions, which can be added to any goal or strategy included in the assurance patterns. Whenever there is a modification to the system, the AM-ETB will automatically list assumptions that should be clarified or modified: "The problem in updating and maintaining safety/security assurance does not arise from the form of the assurance documentation or in updating the argument once the need for it is established, but in relating the assurance case to the detailed design decisions so that when a design is changed, it is possible to determine what assumptions in the safety analysis are involved" \cite{Weinstock07arguing-security}. Even though the AM-ETB will list which assumptions should be modified, the refinement of the assumptions are to be carried out manually. 
+Each assurance pattern has the possibility to include one or several assumptions, which can be added to any goal or strategy included in the assurance patterns. Whenever there is a modification to the system, the O-ETB will automatically list assumptions that should be clarified or modified: "The problem in updating and maintaining safety/security assurance does not arise from the form of the assurance documentation or in updating the argument once the need for it is established, but in relating the assurance case to the detailed design decisions so that when a design is changed, it is possible to determine what assumptions in the safety analysis are involved" \cite{Weinstock07arguing-security}. Even though the O-ETB will list which assumptions should be modified, the refinement of the assumptions must be accomplished manually. 
 
 \newpage
 \section{Assurance Cases for Other Domains}\label{sec:ac-other}

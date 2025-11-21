@@ -1,0 +1,641 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{lmodern}
+\usepackage{setspace}
+\usepackage{xcolor}
+\usepackage{verbatim}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue
+}
+
+\setlength{\parskip}{0.4em}
+\setlength{\parindent}{0pt}
+
+\begin{document}
+
+\begin{center}
+{\LARGE \textbf{Assurance Case Outline (ACO) Specification v1.0}}\\[0.5em]
+\today
+\end{center}
+
+A human-friendly, indentation-based assurance case outline format designed for authors, supporting automatic transformation into an internal Node Model, APL (Assurance Pattern Language) blocks, and graphical representations.
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Purpose and Scope}
+
+This specification defines a structured textual outline language (``Assurance Case Outline'' -- ACO) for authoring assurance case patterns and instances.
+
+It is:
+\begin{itemize}[leftmargin=2em]
+  \item Initially intended for use in the MedSecurance project.
+  \item Nevertheless domain-independent and platform-neutral.
+  \item Not tied to O-ETB internals, but consistent with O-ETB's APL concepts and with the GSN Community Standard where that does not conflict with the current O-ETB implementation.
+\end{itemize}
+
+The ACO notation aims to balance:
+\begin{itemize}[leftmargin=2em]
+  \item Ease of authoring (minimal punctuation, close to ``normal'' outlines).
+  \item Readability (GSN-like, hierarchical structure).
+  \item Machine-interpretability (convertible to APL, DOT/Graphviz, and other formats).
+\end{itemize}
+
+The \textbf{ACO outline is the human-facing source of truth}; APL and diagrams are generated from it.
+
+In particular:
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{ACO is unambiguous enough} to be parsed into a precise Node Model.
+  \item The Node Model can then be systematically mapped to APL blocks and graphical representations.
+  \item The Node Model is also the place where checks, diagnostics, and transformations are performed.
+\end{itemize}
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Core Concepts}
+
+\subsection{Node Types}
+
+ACO adopts a minimal, GSN-inspired set of node types, aligned with APL concepts:
+
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{Goal} --- a claim that must hold.
+  \item \textbf{Strategy} --- a structure explaining how children collectively support a parent (may be optional in early usage).
+  \item \textbf{Context} --- assumptions, definitions, scope, environmental conditions.
+  \item \textbf{Assumption} --- asserted conditions that are taken as given.
+  \item \textbf{Justification} --- rationale explaining why an approach is acceptable.
+  \item \textbf{Module} --- a reusable or composite block, such as:
+  \begin{itemize}[leftmargin=1.5em]
+    \item a pattern module,
+    \item a component-level argument,
+    \item an evidence-aggregation module.
+  \end{itemize}
+\end{itemize}
+
+Additional types (e.g.\ Evidence blocks or other specialised constructs) can be introduced later, but the initial ACO v1.0 focuses on these.
+
+\subsection{Node Header Syntax}
+
+Each node is introduced by a \textbf{header line}, followed by one or more indented \textbf{body lines}.
+
+The header has the form:
+\begin{quote}
+\texttt{\textless Type\textgreater{} [ID] \textless shortLabel\textgreater:}
+\end{quote}
+
+where:
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{\textless Type\textgreater{}} is one of:
+  \begin{itemize}[leftmargin=1.5em]
+    \item \texttt{Goal}
+    \item \texttt{Strategy}
+    \item \texttt{Context}
+    \item \texttt{Assumption}
+    \item \texttt{Justification}
+    \item \texttt{Module}
+  \end{itemize}
+
+  \item \texttt{[ID]} is an \textbf{optional} identifier, such as \texttt{G0}, \texttt{G1}, \texttt{C3}, \texttt{M2}, etc.
+  \begin{itemize}[leftmargin=1.5em]
+    \item If present, it is a single token (no spaces).
+    \item If absent, the header consists only of \texttt{\textless Type\textgreater{} \textless shortLabel\textgreater:} (see below).
+  \end{itemize}
+
+  \item \texttt{\textless shortLabel\textgreater{}} is a single-token name (no spaces) describing the node.
+  \begin{itemize}[leftmargin=1.5em]
+    \item CamelCase or snake\_case is recommended (e.g.\ \texttt{operationalPlane}, \texttt{componentBehaviour}, \texttt{plane\_definition}).
+  \end{itemize}
+
+  \item The header line \textbf{must end} with a colon (\texttt{:}).
+\end{itemize}
+
+Thus:
+
+\textbf{With ID} (three tokens: Type + ID + label):
+\begin{verbatim}
+Goal G0 operationalPlane:
+  The operational plane guarantees the {local policy} is met.
+\end{verbatim}
+
+\textbf{Without ID} (two tokens: Type + label):
+\begin{verbatim}
+Context planeDefinition:
+  The system model defines the plane and its properties.
+\end{verbatim}
+
+Both forms are allowed; the parsing rules treat the header uniformly and recover Type, optional ID, and label deterministically.
+
+Parsing conventions (informal):
+\begin{itemize}[leftmargin=2em]
+  \item The first token is always the \textbf{Type}.
+  \item If the second token matches the pattern of an ID (e.g.\ \texttt{G\textbackslash d+}, \texttt{C\textbackslash d+}, \texttt{M\textbackslash d+}, etc.), it is treated as the \textbf{ID} and the next token is the \textbf{label}.
+  \item Otherwise, the second token is treated as the \textbf{label} and there is no ID.
+  \item Everything between the label and the trailing colon \texttt{:} must be whitespace only.
+\end{itemize}
+
+\subsection{Node Body Text}
+
+The header line is followed by one or more \textbf{indented body lines}, containing the natural-language description.
+
+Example:
+\begin{verbatim}
+Goal G0 operationalPlane:
+  The operational plane guarantees the {local policy} is met.
+
+Context C0 planeDefinition:
+  The system model describes the plane and its {properties}.
+
+Module M1 component:
+  Behaviour of the {component} meets its local policy.
+\end{verbatim}
+
+Rules:
+\begin{itemize}[leftmargin=2em]
+  \item Body lines must be indented \textbf{more} than the header (at least one indentation level deeper).
+  \item Body text may span multiple lines.
+  \item Blank lines are allowed between nodes for readability, but should not break the structural semantics.
+\end{itemize}
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Indentation-Based Structure}
+
+\subsection{Indentation Rules}
+
+Indentation is the primary way to represent structure and relationships.
+
+\begin{itemize}[leftmargin=2em]
+  \item Indentation uses \textbf{2 spaces per level}.
+  \begin{itemize}[leftmargin=1.5em]
+    \item Tabs are discouraged; tools should normalise or flag tabs.
+  \end{itemize}
+
+  \item A node header at indentation level \(k\) (\(k \geq 0\)):
+  \begin{itemize}[leftmargin=1.5em]
+    \item If \(k = 0\), it is a top-level node.
+    \item If \(k > 0\), it is structurally a \textbf{child} of the nearest preceding node header at indentation level \(k - 1\).
+  \end{itemize}
+
+  \item When the indentation decreases from level \(k\) to level \(j\):
+  \begin{itemize}[leftmargin=1.5em]
+    \item All nodes at levels \(> j\) are considered ``closed''.
+    \item The new node at level \(j\) is attached (as child or sibling) appropriately in the tree implied by indentation.
+  \end{itemize}
+
+  \item Indentation must never ``jump'' by more than one level without passing through the intermediate levels. For example:
+  \begin{itemize}[leftmargin=1.5em]
+    \item Going directly from level 0 to level 3 is \textbf{invalid}.
+    \item This is treated as a structural error (see Section~\ref{sec:errors}).
+  \end{itemize}
+\end{itemize}
+
+\subsection{Default Relationship Semantics}
+
+From the indentation-defined tree, ACO derives \textbf{default relationships}.
+
+For a parent node \(P\) and a child node \(N\) (implied by indentation):
+\begin{itemize}[leftmargin=2em]
+  \item If \(N\) is of type Goal, Strategy, Module, Assumption, or Justification:
+  \begin{itemize}[leftmargin=1.5em]
+    \item A default edge \texttt{supported\_by(P, N)} is added to the Node Model.
+  \end{itemize}
+
+  \item If \(N\) is of type Context:
+  \begin{itemize}[leftmargin=1.5em]
+    \item A default edge \texttt{in\_context\_of(P, N)} is added.
+  \end{itemize}
+\end{itemize}
+
+This means:
+\begin{itemize}[leftmargin=2em]
+  \item Authors do \textbf{not} need to explicitly spell out relations for the common tree-structured argument.
+  \item Non-tree or cross-cutting relations (DAG edges) can be added explicitly using natural-language relation sentences (see Section~\ref{sec:nl-relations}).
+\end{itemize}
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Optional Natural-Language Relations}
+\label{sec:nl-relations}
+
+To improve readability and to express \textbf{non-hierarchical} (non-tree) relations, authors may add optional explicit relation sentences.
+
+These are written in an NL-ish style but parsed into relations over node IDs.
+
+\subsection{Supported Relations}
+
+The following patterns are accepted (case-insensitive, minor variations allowed).
+
+\textbf{Supported-by:}
+\begin{verbatim}
+G0 is supported by G1, G2, C0 and M0.
+G1, G2, C0 and M0 support G0.
+\end{verbatim}
+
+\textbf{In-context-of:}
+\begin{verbatim}
+G0 is in context of C0.
+C0 provides context for G0.
+\end{verbatim}
+
+Where:
+\begin{itemize}[leftmargin=2em]
+  \item Left-hand side and right-hand side refer to existing node IDs (e.g.\ \texttt{G0}, \texttt{C0}, \texttt{M0}).
+  \item The same IDs must appear as node IDs in headers.
+\end{itemize}
+
+\subsection{Semantics and Interaction with Indentation}
+
+\begin{itemize}[leftmargin=2em]
+  \item These explicit relation sentences \textbf{augment} the default relations implied by indentation.
+  \item They may:
+  \begin{itemize}[leftmargin=1.5em]
+    \item reinforce links already implied by the hierarchy, or
+    \item introduce additional DAG edges (e.g.\ supporting relations that cut across branches of the tree).
+  \end{itemize}
+  \item The parser adds these relations into the Node Model as:
+  \begin{itemize}[leftmargin=1.5em]
+    \item \texttt{supported\_by(parent, child)}
+    \item \texttt{in\_context\_of(parent, context)}
+  \end{itemize}
+\end{itemize}
+
+Dangling references (IDs mentioned here that have no corresponding node header) are treated as \textbf{errors} (see Section~\ref{sec:errors}).
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Style and Clarity Guidelines}
+
+\subsection{Goal and Module Bodies}
+
+To keep the ACO both human-understandable and machine-interpretable:
+\begin{itemize}[leftmargin=2em]
+  \item Goal and Module bodies should state \textbf{claims}, not vague aspirations.
+  \item Avoid ambiguous terms such as:
+  \begin{itemize}[leftmargin=1.5em]
+    \item ``may'', ``might'', ``possibly'', ``etc.'', ``various'', ``as appropriate''.
+  \end{itemize}
+  \item Prefer measurable, testable statements, or at least well-scoped qualitative claims.
+\end{itemize}
+
+\subsection{Placeholders}
+
+Placeholders are written in \textbf{braces}:
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{\{component\}}, \texttt{\{local policy\}}, \texttt{\{properties\}}, \texttt{\{environment\}}, etc.
+\end{itemize}
+
+Rules:
+\begin{itemize}[leftmargin=2em]
+  \item Placeholders should be:
+  \begin{itemize}[leftmargin=1.5em]
+    \item defined nearby, or
+    \item conventional/common in the domain, or
+    \item explained in a suitable Context node.
+  \end{itemize}
+  \item Tools should emit \textbf{warnings} when:
+  \begin{itemize}[leftmargin=1.5em]
+    \item placeholders appear that are never defined or are obviously inconsistent.
+  \end{itemize}
+\end{itemize}
+
+\subsection{Naming Rules}
+
+\begin{itemize}[leftmargin=2em]
+  \item IDs (when used) must be \textbf{unique} within a single outline.
+  \begin{itemize}[leftmargin=1.5em]
+    \item Recommended: prefix by type (e.g.\ \texttt{G0}, \texttt{G1}, \texttt{C0}, \texttt{M2}, etc.).
+  \end{itemize}
+
+  \item \texttt{shortLabel} should:
+  \begin{itemize}[leftmargin=1.5em]
+    \item contain no spaces,
+    \item preferably use camelCase or snake\_case.
+  \end{itemize}
+
+  \item The combination of Type, optional ID, and label should make each node recognisable.
+\end{itemize}
+
+\subsection{Text Blocks}
+
+\begin{itemize}[leftmargin=2em]
+  \item All node body text must be indented beneath the header, for example:
+\end{itemize}
+
+\begin{verbatim}
+Goal G1 componentBehaviour:
+  This is body text for G1.
+  It may span multiple lines.
+
+Module M1 component:
+  Behaviour of the {component} meets its local policy.
+\end{verbatim}
+
+\begin{itemize}[leftmargin=2em]
+  \item Blank lines may be inserted for clarity, as long as they do not break the logical grouping of body text with its header.
+\end{itemize}
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Error, Warning, and Undeveloped Checks (Front-End)}
+\label{sec:errors}
+
+A front-end processor parses ACO into the Node Model and performs consistency checks.
+
+\subsection{Errors (Parsing / Structural)}
+
+The following conditions are treated as \textbf{errors}:
+
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{Duplicate node IDs}:
+  \begin{itemize}[leftmargin=1.5em]
+    \item The same ID used in more than one header line.
+  \end{itemize}
+
+  \item \textbf{Dangling references}:
+  \begin{itemize}[leftmargin=1.5em]
+    \item IDs used in explicit relation sentences that do not correspond to any declared node.
+  \end{itemize}
+
+  \item \textbf{Indentation jumps}:
+  \begin{itemize}[leftmargin=1.5em]
+    \item For example, going from level 0 directly to level 3 with no node at level 1 or 2.
+  \end{itemize}
+
+  \item \textbf{Unknown node types}:
+  \begin{itemize}[leftmargin=1.5em]
+    \item A header whose first token is not a recognised Type (Goal, Strategy, Context, Assumption, Justification, Module).
+  \end{itemize}
+
+  \item \textbf{Malformed headers}:
+  \begin{itemize}[leftmargin=1.5em]
+    \item Header lines missing the trailing colon (\texttt{:}),
+    \item or with an ambiguous token sequence that cannot be parsed according to the rules in Section~2.2.
+  \end{itemize}
+\end{itemize}
+
+Such errors should prevent further processing until fixed.
+
+\subsection{Warnings and Undeveloped Nodes}
+
+The following conditions are at least \textbf{warnings}:
+
+\begin{itemize}[leftmargin=2em]
+  \item Ambiguous wording in Goal/Module bodies (use of ``may'', ``etc.'', etc.).
+  \item Undefined placeholders in braces \texttt{\{\dots\}}.
+  \item Goals that:
+  \begin{itemize}[leftmargin=1.5em]
+    \item have neither supporting children (by indentation) \textbf{nor}
+    \item explicit supporting evidence or modules.
+  \end{itemize}
+\end{itemize}
+
+Goals with no supporting structure are considered \textbf{Undeveloped}.
+
+Handling of Undeveloped:
+
+\begin{itemize}[leftmargin=2em]
+  \item Tools should:
+  \begin{itemize}[leftmargin=1.5em]
+    \item treat these as a distinct category (``Undeveloped goals/modules''), and
+    \item optionally also report them as warnings.
+  \end{itemize}
+  \item A report may, for example:
+  \begin{itemize}[leftmargin=1.5em]
+    \item print a dedicated \textbf{Undeveloped} list for fast review, and
+    \item also include them in the warnings list.
+  \end{itemize}
+\end{itemize}
+
+This makes it easy for authors to see where an outline still lacks structure or evidence.
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Worked Example --- Operational Plane Pattern}
+
+Below is a conformant example using only indentation-defined structure, plus some optional explicit relation sentences.
+
+\subsection{Outline Example}
+
+\begin{verbatim}
+Goal G0 operationalPlane:
+  The operational plane guarantees the {local policy} is met.
+
+  Context C0 planeDefinition:
+    The system model describes the plane and its {properties}.
+
+  Goal G1 componentBehaviour:
+    Compositional behaviour of separate components ensures the local policy is met.
+
+    Module M1 component:
+      Behaviour of the {component} meets its local policy.
+
+  Goal G2 compositionBehaviour:
+    Compositional behaviour of compositions ensures the local policy is met.
+
+    Module M2 composition:
+      Behaviour of the {composition} meets the local policy.
+
+  Module M0 interface:
+    Interaction between components and compositions is as defined by the security
+    architecture interface.
+
+G0 is supported by G1, G2, M0.
+G0 is in context of C0.
+G1 is supported by M1.
+G2 is supported by M2.
+\end{verbatim}
+
+\subsection{Derived Node Model (Semantic Graph)}
+
+From this outline, the Node Model contains:
+
+\textbf{Nodes} (with type, ID, and label):
+\begin{verbatim}
+(G0, goal,    operationalPlane)
+(C0, context, planeDefinition)
+(G1, goal,    componentBehaviour)
+(G2, goal,    compositionBehaviour)
+(M1, module,  component)
+(M2, module,  composition)
+(M0, module,  interface)
+\end{verbatim}
+
+\textbf{Relationships} (edges):
+\begin{verbatim}
+supported_by(G0, G1)
+supported_by(G0, G2)
+supported_by(G0, M0)
+in_context_of(G0, C0)
+supported_by(G1, M1)
+supported_by(G2, M2)
+\end{verbatim}
+
+The Node Model is \textbf{the internal semantic representation} on which all further transformations (APL, diagrams, analysis) are based.
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Mapping to APL}
+
+The ACO notation itself is platform-neutral, but it is designed to be systematically mapped to an APL-style representation used by tooling such as O-ETB.
+
+\subsection{General Mapping Principles}
+
+From the Node Model:
+\begin{itemize}[leftmargin=2em]
+  \item Each node becomes an APL \textbf{block} with:
+  \begin{itemize}[leftmargin=1.5em]
+    \item a block identifier (derived from the ID or a canonicalised label),
+    \item a block type (goal, strategy, context, assumption, justification, module),
+    \item a label and body text.
+  \end{itemize}
+
+  \item Each \texttt{supported\_by} edge becomes a corresponding \textbf{support} relation between blocks.
+
+  \item Each \texttt{in\_context\_of} edge becomes a corresponding \textbf{context} relation between blocks.
+\end{itemize}
+
+The precise surface syntax of APL is left to the implementation, but the mapping must be:
+\begin{itemize}[leftmargin=2em]
+  \item Deterministic: the same ACO outline always yields the same APL representation.
+  \item Information-preserving: all node text and relations present in ACO must be recoverable from APL.
+\end{itemize}
+
+\subsection{Example (Conceptual)}
+
+Using a Prolog-like notation for illustration (not a normative APL definition), the example in Section~7.1 could be represented conceptually as:
+
+\begin{verbatim}
+block(g0, goal,    operationalPlane,
+      "The operational plane guarantees the {local policy} is met.").
+block(c0, context, planeDefinition,
+      "The system model describes the plane and its {properties}.").
+block(g1, goal,    componentBehaviour,
+      "Compositional behaviour of separate components ensures the local
+       policy is met.").
+block(g2, goal,    compositionBehaviour,
+      "Compositional behaviour of compositions ensures the local policy
+       is met.").
+block(m1, module,  component,
+      "Behaviour of the {component} meets its local policy.").
+block(m2, module,  composition,
+      "Behaviour of the {composition} meets the local policy.").
+block(m0, module,  interface,
+      "Interaction between components and compositions is as defined by
+       the security architecture interface.").
+
+supported_by(g0, g1).
+supported_by(g0, g2).
+supported_by(g0, m0).
+in_context_of(g0, c0).
+supported_by(g1, m1).
+supported_by(g2, m2).
+\end{verbatim}
+
+Implementations are free to use different concrete syntax for APL blocks, as long as this information is faithfully represented.
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Mapping to DOT (Graphviz)}
+
+The Node Model also maps naturally to DOT/Graphviz for visualisation.
+
+\subsection{Example DOT Rendering}
+
+For the example in Section~7.1, a DOT rendering might be:
+
+\begin{verbatim}
+digraph OperationalPlane {
+  node [shape=box, style=rounded];
+
+  G0 [label="Goal G0: operationalPlane"];
+  C0 [label="Context C0: planeDefinition",
+      shape=note, style="rounded,dashed"];
+  G1 [label="Goal G1: componentBehaviour"];
+  G2 [label="Goal G2: compositionBehaviour"];
+  M1 [label="Module M1: component"];
+  M2 [label="Module M2: composition"];
+  M0 [label="Module M0: interface"];
+
+  G0 -> G1;
+  G0 -> G2;
+  G0 -> M0;
+  G0 -> C0 [style=dashed];
+  G1 -> M1;
+  G2 -> M2;
+}
+\end{verbatim}
+
+Styling (shapes, colours, fonts) is not part of the ACO spec, but visual conventions can help distinguish types (e.g.\ dashed edges for context).
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Future Extensions}
+
+Potential future extensions to this specification include:
+
+\begin{itemize}[leftmargin=2em]
+  \item Pattern roles (meta / property / domain / compliance patterns).
+  \item Parameterised modules and reusable pattern libraries.
+  \item More explicit evidence attachment constructs.
+  \item Optional, richer Strategy nodes (e.g.\ AND/OR decomposition annotations).
+  \item Additional relation types (e.g.\ conflict, refinement, equivalence).
+\end{itemize}
+
+These extensions should preserve:
+\begin{itemize}[leftmargin=2em]
+  \item the basic indentation-driven structure,
+  \item the simple header syntax of \texttt{\textless Type\textgreater{} [ID] \textless shortLabel\textgreater:},
+  \item and the centrality of the Node Model as the semantic representation.
+\end{itemize}
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Summary}
+
+This ACO v1.0 specification establishes:
+
+\begin{itemize}[leftmargin=2em]
+  \item A simple, readable indentation-based outline format for assurance cases.
+  \item A consistent header syntax that merges type, optional ID, and label.
+  \item Optional natural-language relation statements for non-hierarchical links.
+  \item Automated parsing from ACO into an internal Node Model.
+  \item Systematic mappings from the Node Model to:
+  \begin{itemize}[leftmargin=1.5em]
+    \item APL-style assurance case blocks, and
+    \item graphical representations such as DOT/Graphviz.
+  \end{itemize}
+  \item Direct generation of APL and graphical representations from a single textual source.
+\end{itemize}
+
+It is intended to evolve as MedSecurance and related work mature, and as tool integration and pattern libraries become richer.
+
+\end{document}
