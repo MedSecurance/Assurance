@@ -1,0 +1,940 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{lmodern}
+\usepackage{setspace}
+\usepackage{xcolor}
+\usepackage{verbatim}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue
+}
+
+\setlength{\parskip}{0.4em}
+\setlength{\parindent}{0pt}
+
+\begin{document}
+
+\begin{center}
+{\LARGE \textbf{\textcolor{blue}{Assurance Case Outline (ACO) Specification v1.1}}}\\[0.5em]
+\today
+\end{center}
+
+A user-friendly, intuitive, indentation-based assurance case outline format designed for authors, supporting automatic transformation into an internal Node Model, APL (Assurance Pattern Language) blocks, and graphical representations.
+A prototype implementation for ACO is part of the Open Evidential Tool Bus (O-ETB).
+
+\textcolor{blue}{This v1.1 revision is a conservative evolution of the original v1.0 specification. It preserves the basic ACO surface language, while documenting additional conventions (such as optional case headers and hierarchical identifiers) and the behaviour of the accompanying front-end tooling, including, canonicalisation, diagnostics, and an ASCII tree view.}
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Purpose and Scope}
+
+This specification defines a structured textual outline language (``Assurance Case Outline'' -- ACO) for authoring assurance case patterns and instances.
+
+ACO is:
+\begin{itemize}[leftmargin=2em]
+  \item Initially intended for use in the MedSecurance project in conjunction with O-ETB.
+  \item Nevertheless domain-independent and platform-neutral.
+  \item Not tied to O-ETB internals, but consistent with O-ETB's Argument Pattern Language (APL) concepts and with the GSN Community Standard where that does not conflict with the current O-ETB implementation.
+\end{itemize}
+
+The ACO notation aims to balance:
+\begin{itemize}[leftmargin=2em]
+  \item Ease of authoring (minimal punctuation, close to ``normal'' outlines).
+  \item Readability (GSN-like, hierarchical structure).
+  \item Machine-interpretability (convertible to APL, DOT/Graphviz, and other formats).
+\end{itemize}
+
+The \textbf{ACO outline is the human-facing avenue of access to assurance case automation provided by O-ETB}.
+APL and diagrams are generated from it.
+
+In particular:
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{ACO is unambiguous enough} to be parsed into a precise internal representation (Node Model).
+  \item The Node Model is a precursor to, and can then be systematically mapped into, APL blocks and graphical representations.
+  \item The Node Model is also the place where checks, diagnostics, and transformations are performed.
+\end{itemize}
+
+\textcolor{blue}{In addition, v1.1 assumes the existence of a reference front-end that:
+\begin{itemize}[leftmargin=2em]
+  \item parses ACO into the Node Model,
+  \item computes hierarchical identifiers that reflect the indentation structure,
+  \item can canonicalise an ACO outline (renumbering IDs consistently), and
+  \item can quickly generate an ASCII tree view for easier inspection and review.
+\end{itemize}}
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Core Concepts}
+The unit of construction of an assurance case outline is the Node.
+
+\subsection{Node Types}
+
+ACO adopts a minimal, GSN-inspired set of node types, aligned with APL concepts:
+
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{Goal} --- a claim that must hold.
+  \item \textbf{Strategy} --- a structural combinator explaining how child nodes collectively support a parent goal node (may be optional in early usage).
+  \item \textbf{Context} --- relevant facts, definitions, scope, and environmental conditions.
+  \item \textbf{Assumption} --- asserted conditions that are taken as given about another node.
+  \item \textbf{Justification} --- rationale explaining why an approach is acceptable.
+  \item \textbf{Evidence} --- \textcolor{blue}{placeholder for an evidence item that immediately solves the goal it supports.}
+  \item \textbf{Module} --- a reusable or composite block that encapsulates a goal and the structure that supports it, such as:
+  \begin{itemize}[leftmargin=1.5em]
+    \item a pattern module,
+    \item a component-level argument,
+    \item an evidence-aggregation module.
+  \end{itemize}
+\end{itemize}
+
+Additional specialised constructs (e.g.\ richer module structures or domain-specific node flavours) can be introduced later, but the initial ACO v1.x family focuses on these core types.
+
+\subsection{Node Header Syntax}
+
+Each node is introduced by a \textbf{header line}, followed by one or more indented \textbf{body lines}.
+
+The header has the form:
+\begin{quote}
+\texttt{\textless Type\textgreater{} [ID] \textless shortLabel\textgreater:}
+\end{quote}
+
+where:
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{\textless Type\textgreater{}} is one of:
+  \begin{itemize}[leftmargin=1.5em]
+    \item \texttt{Goal}
+    \item \texttt{Strategy}
+    \item \texttt{Context}
+    \item \texttt{Assumption}
+    \item \texttt{Justification}
+    \item \texttt{Evidence}
+    \item \texttt{Module}
+  \end{itemize}
+
+  \item \texttt{[ID]} is an \textbf{optional} identifier, such as \texttt{G0}, \texttt{G1}, \texttt{C3}, \texttt{M2}, etc.
+  \begin{itemize}[leftmargin=1.5em]
+    \item If present, it is a single token (no spaces).
+    \item If absent, the header consists only of \texttt{\textless Type\textgreater{} \textless shortLabel\textgreater:} (see below).
+  \end{itemize}
+
+  \item \texttt{\textless shortLabel\textgreater{}} is a single-token name (no spaces) describing the node.
+  \begin{itemize}[leftmargin=1.5em]
+    \item CamelCase or snake\_case is recommended (e.g.\ \texttt{operationalPlane}, \texttt{componentBehaviour}, \texttt{plane\_definition}).
+  \end{itemize}
+
+  \item The header line \textbf{must end} with a colon (\texttt{:}).
+\end{itemize}
+
+Thus:
+
+\textbf{With ID} (three tokens: Type + ID + label):
+\begin{verbatim}
+Goal G0 operationalPlane:
+  The operational plane guarantees the {local policy} is met.
+\end{verbatim}
+
+\textbf{Without ID} (two tokens: Type + label):
+\begin{verbatim}
+Context planeDefinition:
+  The system model defines the plane and its properties.
+\end{verbatim}
+
+Both forms are allowed; the parsing rules treat the header uniformly and recover Type, optional ID, and label deterministically.
+
+Parsing conventions (informal):
+\begin{itemize}[leftmargin=2em]
+  \item The first token is always the \textbf{Type}.
+  \item If the second token matches the pattern of an ID (e.g.\ \texttt{G\textbackslash d+}, \texttt{C\textbackslash d+}, \texttt{M\textbackslash d+}, etc.), it is treated as the \textbf{ID} and the next token is the \textbf{label}.
+  \item Otherwise, the second token is treated as the \textbf{label} and there is no ID.
+  \item Everything between the label and the trailing colon \texttt{:} must be whitespace only.
+\end{itemize}
+
+\subsection{Node Body Text}
+
+The header line is followed by one or more \textbf{indented body lines}, containing the natural-language description.
+
+Example:
+\begin{verbatim}
+Goal G0 operationalPlane:
+  The operational plane guarantees the {local policy} is met.
+
+Context C0 planeDefinition:
+  The system model describes the plane and its {properties}.
+
+Module M1 component:
+  Behaviour of the {component} meets its local policy.
+\end{verbatim}
+
+Rules:
+\begin{itemize}[leftmargin=2em]
+  \item Body lines must be indented \textbf{more} than the header (at least one indentation level deeper).
+  \item Body text may span multiple lines.
+  \item Blank lines are allowed between nodes for readability, but should not break the structural semantics.
+\end{itemize}
+
+\subsection{\textcolor{blue}{Optional Case Header}}
+
+\begingroup
+\color{blue}
+In larger outlines it is often useful to name the overall case or pattern explicitly. ACO therefore supports an optional \emph{case header} at the top of the file, written in a simple free-text form:
+
+\begin{quote}
+\texttt{Case: \textless Title\textgreater{} - \textless Scope\textgreater}
+\end{quote}
+
+where:
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{\textless Title\textgreater{}} is a short human-readable name for the case or pattern, and
+  \item \texttt{\textless Scope\textgreater{}} (optional) briefly summarises the scope or context of the argument.
+\end{itemize}
+
+Variants such as \texttt{CASE: ...} are accepted. The separator between title and scope is a dash surrounded by spaces; if no dash is present, the entire text after \texttt{Case:} is treated as the title and the scope is empty.
+
+The case header is not a node in the argument graph: it is metadata. The front-end preserves it and may propagate it into generated artefacts (e.g.\ APL block sets, DOT titles, or report headings), but it does not participate in \texttt{supported\_by}/\texttt{in\_context\_of} relations.
+\endgroup
+
+\subsection{\textcolor{blue}{Optional Pattern Header and Pattern Mode}}
+
+\begingroup
+\color{blue}
+In addition to \emph{Case:}, ACO supports an optional \emph{pattern header} that declares an assurance pattern and its formal parameters. The general form is:
+
+\begin{quote}
+\texttt{Pattern: \textless Name\textgreater(\textless arg\_1\textgreater, \dots, \textless arg\_n\textgreater)}
+\end{quote}
+
+where:
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{\textless Name\textgreater{}} is the pattern name (e.g.\ \texttt{milsOperationalPlane}),
+  \item each argument is either a bare name (e.g.\ \texttt{system}) or a name with a simple type annotation (e.g.\ \texttt{system:System}, \texttt{policy:Policy}).
+\end{itemize}
+
+Patterns and cases are \emph{mutually exclusive} at the top of an ACO file:
+\begin{itemize}[leftmargin=2em]
+  \item an ACO file may begin with either a \texttt{Case:} header or a \texttt{Pattern:} header, or with neither, but
+  \item it must not contain both in the same outline.
+\end{itemize}
+
+The pattern header is metadata, not a node: it does not participate directly in \texttt{supported\_by}/\texttt{in\_context\_of} relations. However, in \emph{pattern mode} the front-end:
+\begin{itemize}[leftmargin=2em]
+  \item records the pattern name and parameters alongside the Node Model, and
+  \item may treat occurrences of placeholders in labels and bodies (e.g.\ \texttt{\{system\}}, \texttt{\{localPolicy\}}) as being associated with the pattern parameters.
+\end{itemize}
+
+Future versions of the toolchain are expected to map such patterns into APL pattern definitions with formal parameters, but v1.1 only fixes the surface syntax and basic metadata handling.
+\endgroup
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Indentation-Based Structure}
+
+\subsection{Indentation Rules}
+
+Indentation is the primary way to represent structure and relationships in an outline.
+
+\begin{itemize}[leftmargin=2em]
+  \item Indentation uses \textbf{2 spaces per level} by default.
+  \begin{itemize}[leftmargin=1.5em]
+    \item Tabs are discouraged; tools should normalise or flag tabs.
+  \end{itemize}
+
+  \item A node header at indentation level \(k\) (\(k \geq 0\)):
+  \begin{itemize}[leftmargin=1.5em]
+    \item If \(k = 0\), it is a top-level node.
+    \item If \(k > 0\), it is structurally a \textbf{child} of the nearest preceding node header at indentation level \(k - 1\).
+  \end{itemize}
+
+  \item When the indentation decreases from level \(k\) to level \(j\):
+  \begin{itemize}[leftmargin=1.5em]
+    \item All preceding nodes at levels \(> j\) are considered ``closed''.
+    \item The new node at level \(j\) is attached (as child or sibling) appropriately in the tree implied by indentation level.
+  \end{itemize}
+
+  \item Indentation must never ``jump'' to a greater level by more than one level without passing through the intermediate levels. For example:
+  \begin{itemize}[leftmargin=1.5em]
+    \item Going directly from level 0 to level 3 is \textbf{invalid}.
+    \item This is treated as a structural error (see Section~\ref{sec:errors}).
+  \end{itemize}
+\end{itemize}
+
+\subsection{Default Relationship Semantics}
+
+From the indentation-defined tree, ACO derives \textbf{default relationships}.
+
+For a parent node \(P\) and a child node \(N\) (implied by indentation):
+\begin{itemize}[leftmargin=2em]
+  \item If \(N\) is of type Goal, Strategy, Evidence, Module, Assumption, or Justification:
+  \begin{itemize}[leftmargin=1.5em]
+    \item A default edge \texttt{supported\_by(P, N)} is added to the Node Model.
+  \end{itemize}
+
+  \item If \(N\) is of type Context:
+  \begin{itemize}[leftmargin=1.5em]
+    \item A default edge \texttt{in\_context\_of(P, N)} is added.
+  \end{itemize}
+\end{itemize}
+
+This means:
+\begin{itemize}[leftmargin=2em]
+  \item Authors do \textbf{not} need to explicitly spell out relations for the common tree-structured argument.
+  \item Non-tree or cross-cutting relations (DAG edges) can be added explicitly using natural-language relation sentences (see Section~\ref{sec:nl-relations}).
+\end{itemize}
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Optional Natural-Language Relations}
+\label{sec:nl-relations}
+
+To improve readability and to express \textbf{non-hierarchical} (non-tree) relations, authors may add optional explicit relation sentences.
+
+These are written in an NL-ish style but parsed into relations over node IDs.
+
+\subsection{Supported Relations}
+
+The following patterns are accepted (case-insensitive, minor variations allowed).
+
+\textbf{Supported-by:}
+\begin{verbatim}
+G0 is supported by G1, G2, C0 and M0.
+G1, G2, C0 and M0 support G0.
+\end{verbatim}
+
+\textbf{In-context-of:}
+\begin{verbatim}
+G0 is in context of C0.
+C0 provides context for G0.
+\end{verbatim}
+
+Where:
+\begin{itemize}[leftmargin=2em]
+  \item Left-hand side and right-hand side refer to existing node IDs (e.g.\ \texttt{G0}, \texttt{C0}, \texttt{M0}).
+  \item The same IDs must appear as node IDs in headers.
+\end{itemize}
+
+\subsection{Semantics and Interaction with Indentation}
+
+\begin{itemize}[leftmargin=2em]
+  \item These explicit relation sentences \textbf{augment} the default relations implied by indentation. They may not contradict the default relations.
+  \item They may:
+  \begin{itemize}[leftmargin=1.5em]
+    \item explicitly reinforce links already implied by the hierarchy, or
+    \item introduce additional support or context edges (e.g.\ providing relations that cut across branches of the tree).
+  \end{itemize}
+  \item The parser adds these relations into the Node Model as:
+  \begin{itemize}[leftmargin=1.5em]
+    \item \texttt{supported\_by(parent, child)}
+    \item \texttt{in\_context\_of(parent, context)}
+  \end{itemize}
+\end{itemize}
+
+Dangling references (IDs mentioned in explicit relation sentences that have no corresponding node header) are treated as \textbf{errors} (see Section~\ref{sec:errors}).
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Style and Clarity Guidelines}
+
+\subsection{Goal and Module Bodies}
+
+To keep the ACO both human-understandable and machine-interpretable:
+\begin{itemize}[leftmargin=2em]
+  \item Goal and Module bodies should state \textbf{claims}, not vague aspirations.
+  \item Avoid ambiguous terms such as:
+  \begin{itemize}[leftmargin=1.5em]
+    \item ``may'', ``might'', ``possibly'', ``etc.'', ``various'', ``as appropriate''.
+  \end{itemize}
+  \item Prefer measurable, testable statements, or at least well-scoped qualitative claims.
+\end{itemize}
+
+\subsection{Placeholders}
+
+Placeholders are written in \textbf{braces}:
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{\{component\}}, \texttt{\{local policy\}}, \texttt{\{properties\}}, \texttt{\{environment\}}, etc.
+\end{itemize}
+
+Rules:
+\begin{itemize}[leftmargin=2em]
+  \item Placeholders should be:
+  \begin{itemize}[leftmargin=1.5em]
+    \item defined nearby, or
+    \item conventional/common in the domain, or
+    \item explained in a suitable Context node.
+  \end{itemize}
+  \item Tools should emit \textbf{warnings} when:
+  \begin{itemize}[leftmargin=1.5em]
+    \item placeholders appear that are never defined or are obviously inconsistent.
+  \end{itemize}
+\end{itemize}
+
+\subsection{Naming Rules}
+
+\begin{itemize}[leftmargin=2em]
+  \item IDs (when used) must be \textbf{unique} within a single outline.
+  \begin{itemize}[leftmargin=1.5em]
+    \item Recommended: prefix by type (e.g.\ \texttt{G0}, \texttt{G1}, \texttt{C0}, \texttt{M2}, etc.).
+  \end{itemize}
+
+  \item \texttt{shortLabel} should:
+  \begin{itemize}[leftmargin=1.5em]
+    \item contain no spaces,
+    \item preferably use camelCase or snake\_case.
+  \end{itemize}
+
+  \item The combination of Type, optional ID, and label should make each node uniquely identifiable.
+\end{itemize}
+
+\textcolor{blue}{Although authors are free to choose IDs, it is often convenient to follow a dotted, outline-style convention that mirrors the indentation tree, e.g.\ \texttt{G1.}, \texttt{G1.1}, \texttt{G1.1.2}. The reference front-end can compute such hierarchical IDs automatically from the indentation structure and compare them with author-supplied IDs, issuing diagnostic messages if an explicit dotted ID does not match the structure implied by indentation.}
+
+\subsection{Text Blocks}
+
+\begin{itemize}[leftmargin=2em]
+  \item All node body text must be indented beneath the header (one indent level greater), for example:
+\end{itemize}
+
+\begin{verbatim}
+Goal G1 componentBehaviour:
+  This is body text for G1.
+  It may span multiple lines.
+
+Module M1 component:
+  Behaviour of the {component} meets its local policy.
+\end{verbatim}
+
+\begin{itemize}[leftmargin=2em]
+  \item Blank lines may be inserted for clarity, as long as they do not break the logical grouping of body text with its header.
+\end{itemize}
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Error, Warning, and Undeveloped Checks (Front-End)}
+\label{sec:errors}
+
+A front-end processor parses ACO into the Node Model and performs consistency checks.
+As a result of these checks the processor can issue messages.
+
+\subsection{Errors (Parsing / Structural)}
+
+The following conditions are treated as \textbf{errors}:
+
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{Duplicate node IDs}:
+  \begin{itemize}[leftmargin=1.5em]
+    \item The same ID used in more than one header line.
+  \end{itemize}
+
+  \item \textbf{Dangling references}:
+  \begin{itemize}[leftmargin=1.5em]
+    \item IDs used in explicit relation sentences that do not correspond to any declared node.
+  \end{itemize}
+
+  \item \textbf{Indentation jumps}:
+  \begin{itemize}[leftmargin=1.5em]
+    \item For example, going from level 0 directly to level 3 with no node at level 1 or 2.
+  \end{itemize}
+
+  \item \textbf{Unknown node types}:
+  \begin{itemize}[leftmargin=1.5em]
+    \item A header whose first token is not a recognised Type (Goal, Strategy, Context, Assumption, Justification, Evidence, or Module).
+  \end{itemize}
+
+  \item \textbf{Malformed headers}:
+  \begin{itemize}[leftmargin=1.5em]
+    \item Header lines missing the trailing colon (\texttt{:}),
+    \item or with an ambiguous token sequence that cannot be parsed according to the rules in Section~2.2.
+  \end{itemize}
+\end{itemize}
+
+Such errors should prevent further processing until fixed.
+
+\subsection{Warnings and Undeveloped Nodes}
+
+The following conditions may trigger \textbf{warnings}:
+
+\begin{itemize}[leftmargin=2em]
+  \item Ambiguous wording in Goal/Module bodies (use of ``may'', ``etc.'', etc.).
+  \item Undefined placeholders in braces \texttt{\{\dots\}}.
+  \item Goals that:
+  \begin{itemize}[leftmargin=1.5em]
+    \item have neither supporting children (by indentation) \textbf{nor}
+    \item explicit supporting evidence or modules.
+  \end{itemize}
+\end{itemize}
+
+Goals with no supporting structure are considered \textbf{Undeveloped}.
+
+Handling of Undeveloped Goals:
+
+\begin{itemize}[leftmargin=2em]
+  \item Tools should:
+  \begin{itemize}[leftmargin=1.5em]
+    \item treat these as a distinct category (``Undeveloped goals/modules''), and
+    \item optionally also report them as warnings.
+  \end{itemize}
+  \item A report may, for example:
+  \begin{itemize}[leftmargin=1.5em]
+    \item print a dedicated \textbf{Undeveloped} list for fast review, and
+    \item also include them in the warnings list.
+  \end{itemize}
+\end{itemize}
+
+\textcolor{blue}{The reference front-end also computes simple statistics such as:
+\begin{itemize}[leftmargin=2em]
+  \item total number of nodes and numbers by type (goals, strategies, contexts, assumptions, justifications, evidences, modules),
+  \item numbers of \texttt{supported\_by} and \texttt{in\_context\_of} edges arising from indentation vs.\ explicit relation sentences,
+  \item counts of ``cross-branch'' relations where an explicit relation connects nodes that are not in an ancestor/descendant relationship in the indentation tree.
+\end{itemize}
+These statistics are intended for authors and reviewers, not as part of the formal ACO language itself.}
+
+\textcolor{blue}{In addition, the front-end can emit \emph{hierarchical ID diagnostics} for each node, indicating the canonical hierarchical ID derived from indentation and flagging any author-supplied dotted IDs that do not agree with that structure. Such diagnostics are warnings unless the user chooses to treat them as stricter constraints in a particular workflow.}
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Worked Example --- Operational Plane Pattern}
+
+Below is a conformant example using only indentation-defined structure, plus some optional explicit relation sentences.
+
+\subsection{Outline Example}
+
+\begin{verbatim}
+Goal G0 operationalPlane:
+  The operational plane guarantees the {local policy} is met.
+
+  Context C0 planeDefinition:
+    The system model describes the plane and its {properties}.
+
+  Goal G1 componentBehaviour:
+    Compositional behaviour of separate components ensures the local policy is met.
+
+    Module M1 component:
+      Behaviour of the {component} meets its local policy.
+
+  Goal G2 compositionBehaviour:
+    Compositional behaviour of compositions ensures the local policy is met.
+
+    Module M2 composition:
+      Behaviour of the {composition} meets the local policy.
+
+  Module M0 interface:
+    Interaction between components and compositions is as defined by the security
+    architecture interface.
+
+G0 is supported by G1, G2, M0.
+G0 is in context of C0.
+G1 is supported by M1.
+G2 is supported by M2.
+\end{verbatim}
+
+\subsection{Derived Node Model (Semantic Graph)}
+
+From this outline, the Node Model contains:
+
+\textbf{Nodes} (with type, ID, and label):
+\begin{verbatim}
+(G0, goal,    operationalPlane)
+(C0, context, planeDefinition)
+(G1, goal,    componentBehaviour)
+(G2, goal,    compositionBehaviour)
+(M1, module,  component)
+(M2, module,  composition)
+(M0, module,  interface)
+\end{verbatim}
+
+\textbf{Relationships} (edges):
+\begin{verbatim}
+supported_by(G0, G1)
+supported_by(G0, G2)
+supported_by(G0, M0)
+in_context_of(G0, C0)
+supported_by(G1, M1)
+supported_by(G2, M2)
+\end{verbatim}
+
+The Node Model is \textbf{the internal semantic representation} on which all further transformations (APL, diagrams, analysis) are based.
+
+\textcolor{blue}{A canonicalisation tool, given this outline, can derive a hierarchical ID for each node from the indentation structure (e.g.\ \texttt{G1.}, \texttt{G1.1}, \texttt{M1.1.1}) and produce a canonical ACO file in which all node IDs follow that scheme and are consistent with their position in the tree. Authors may then adopt that canonicalised ACO as the new baseline, discarding earlier ad hoc IDs.}
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Mapping to APL}
+
+The ACO notation itself is platform-neutral, but it is designed to be systematically mapped to an APL-style representation used by tooling such as O-ETB.
+
+\subsection{General Mapping Principles}
+
+From the Node Model:
+\begin{itemize}[leftmargin=2em]
+  \item Each node becomes an APL \textbf{block} with:
+  \begin{itemize}[leftmargin=1.5em]
+    \item a block identifier (derived from the ID or a canonicalised label),
+    \item a block type (goal, strategy, context, assumption, justification, evidence, module),
+    \item a label and body text.
+  \end{itemize}
+
+  \item Each \texttt{supported\_by} edge becomes a corresponding \textbf{support} relation between blocks.
+
+  \item Each \texttt{in\_context\_of} edge becomes a corresponding \textbf{context} relation between blocks.
+\end{itemize}
+
+The precise surface syntax of APL is left to the implementation, but the mapping must be:
+\begin{itemize}[leftmargin=2em]
+  \item Deterministic: the same ACO outline always yields the same APL representation.
+  \item Information-preserving: all node text and relations present in ACO must be recoverable from APL.
+\end{itemize}
+
+\subsection{Example (Notional)}
+
+Using a Prolog-like notation for illustration (not a normative APL definition), the example in Section~7.1 could be represented conceptually as:
+
+\begin{verbatim}
+block(g0, goal,    operationalPlane,
+      "The operational plane guarantees the {local policy} is met.").
+block(c0, context, planeDefinition,
+      "The system model describes the plane and its {properties}.").
+block(g1, goal,    componentBehaviour,
+      "Compositional behaviour of separate components ensures the local
+       policy is met.").
+block(g2, goal,    compositionBehaviour,
+      "Compositional behaviour of compositions ensures the local policy
+       is met.").
+block(m1, module,  component,
+      "Behaviour of the {component} meets its local policy.").
+block(m2, module,  composition,
+      "Behaviour of the {composition} meets the local policy.").
+block(m0, module,  interface,
+      "Interaction between components and compositions is as defined by
+       the security architecture interface.").
+
+supported_by(g0, g1).
+supported_by(g0, g2).
+supported_by(g0, m0).
+in_context_of(g0, c0).
+supported_by(g1, m1).
+supported_by(g2, m2).
+\end{verbatim}
+
+Implementations are free to use different concrete syntax for APL blocks, as long as this information is faithfully represented.
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Mapping to DOT (Graphviz)}
+
+The Node Model also maps naturally to DOT/Graphviz for visualisation.
+
+\subsection{Example DOT Rendering}
+
+For the example in Section~7.1, a DOT rendering might be:
+
+\begin{verbatim}
+digraph OperationalPlane {
+  node [shape=box, style=rounded];
+
+  G0 [label="Goal G0: operationalPlane"];
+  C0 [label="Context C0: planeDefinition",
+      shape=note, style="rounded,dashed"];
+  G1 [label="Goal G1: componentBehaviour"];
+  G2 [label="Goal G2: compositionBehaviour"];
+  M1 [label="Module M1: component"];
+  M2 [label="Module M2: composition"];
+  M0 [label="Module M0: interface"];
+
+  G0 -> G1;
+  G0 -> G2;
+  G0 -> M0;
+  G0 -> C0 [style=dashed];
+  G1 -> M1;
+  G2 -> M2;
+}
+\end{verbatim}
+
+Styling (shapes, colours, fonts) is not part of the ACO spec, but visual conventions can help distinguish types (e.g.\ dashed edges for context).
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Future Extensions}
+
+Potential future extensions to this specification include:
+
+\begin{itemize}[leftmargin=2em]
+  \item Pattern roles (meta / property / domain / compliance patterns).
+  \item Parameterised modules and reusable pattern libraries.
+  \item More explicit evidence attachment constructs.
+  \item Optional, richer Strategy nodes (e.g.\ AND/OR decomposition annotations).
+  \item Additional relation types (e.g.\ conflict, refinement, equivalence).
+  \item Structural abstractions identified in the GSN Community Standard.
+\end{itemize}
+
+These extensions should preserve:
+\begin{itemize}[leftmargin=2em]
+  \item the basic indentation-driven structure,
+  \item the simple header syntax of \texttt{\textless Type\textgreater{} [ID] \textless shortLabel\textgreater:},
+  \item and the centrality of the Node Model as the semantic representation.
+\end{itemize}
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Summary}
+
+This ACO v1.x specification establishes:
+
+\begin{itemize}[leftmargin=2em]
+  \item A simple, readable indentation-based outline format for assurance cases.
+  \item A consistent header syntax that merges type, optional ID, and label.
+  \item Optional natural-language relation statements for non-hierarchical links.
+  \item Automated parsing from ACO into an internal Node Model.
+  \item Systematic mappings from the Node Model to:
+  \begin{itemize}[leftmargin=1.5em]
+    \item APL-style assurance case blocks, and
+    \item graphical representations such as DOT/Graphviz.
+  \end{itemize}
+  \item Direct generation of APL and graphical representations from a single textual source.
+\end{itemize}
+
+\textcolor{blue}{Version 1.1 additionally documents:
+\begin{itemize}[leftmargin=2em]
+  \item optional case headers for naming and scoping an outline,
+  \item the use of hierarchical identifiers aligned with indentation structure,
+  \item the behaviour of a reference front-end (diagnostics, statistics, undeveloped checks),
+  \item canonicalisation of ACO files to produce structurally consistent, baseline-ready outlines, and
+  \item an ASCII tree view for enhanced visualization of the assurance case.
+\end{itemize}
+These features are intended to make ACO more usable in practice without changing the underlying language or the mapping to APL and graphs.}
+
+\bigskip
+\hrule
+\bigskip
+
+\section{\textcolor{blue}{Reference Implementation and Tool Features}}
+
+\begingroup
+\color{blue}
+This section is informative rather than normative. It summarises the behaviour of a reference front-end implementation used in MedSecurance and related work. The ACO language itself remains independent of any particular tool, but the existence of such a front-end strongly influences how ACO is used in practice.
+
+\subsection*{Parsing and Node Model Construction}
+
+The tool:
+\begin{itemize}[leftmargin=2em]
+  \item reads an ACO file (including an optional case header),
+  \item strips comments and normalises indentation,
+  \item identifies headers, bodies, and natural-language relation sentences,
+  \item constructs a flat list of nodes of the form
+    \texttt{node(Id, Type, Label, Body, Level, Line)}, and
+  \item builds the default tree edges from indentation, plus any additional edges from explicit relation sentences.
+\end{itemize}
+
+The resulting Node Model is then available to downstream components (APL generation, DOT export, analysis).
+
+\subsection*{Canonicalisation and Baseline ACO Files}
+
+The front-end can be invoked in a \emph{canonicalisation mode} that:
+\begin{itemize}[leftmargin=2em]
+  \item computes a hierarchical path for each node from the indentation tree (e.g.\ \([1]\), \([1,1]\), \([1,1,2]\)),
+  \item maps each path to a canonical ID using a type-specific prefix:
+    \begin{itemize}[leftmargin=1.5em]
+      \item \texttt{G} for goals,
+      \item \texttt{S} for strategies,
+      \item \texttt{C} for contexts,
+      \item \texttt{A} for assumptions,
+      \item \texttt{J} for justifications,
+      \item \texttt{E} for evidences,
+      \item \texttt{M} for modules,
+    \end{itemize}
+  \item rewrites all node headers to use these canonical IDs, and
+  \item rewrites all relation sentences so that they refer to the canonical IDs.
+\end{itemize}
+
+The output is a \emph{canonical ACO file} that:
+\begin{itemize}[leftmargin=2em]
+  \item remains valid ACO and is structurally equivalent to the original outline,
+  \item has IDs that are consistent with indentation and unique by construction, and
+  \item is suitable for adoption as a \emph{baseline} version of the outline going forward.
+\end{itemize}
+
+This makes it possible for authors to begin with ad hoc or ``flat'' IDs and then transition to a stable, canonical numbering scheme once the structure has settled.
+
+\subsection*{Diagnostics, Statistics, and Hierarchical IDs}
+
+When parsing or canonicalising an ACO file, the tool can emit:
+\begin{itemize}[leftmargin=2em]
+  \item error messages for structural problems (as in Section~6),
+  \item warnings about undeveloped goals/modules and other quality issues,
+  \item a compact statistical summary (counts by node type, edge breakdowns, cross-branch relations), and
+  \item per-node hierarchical ID information, including:
+    \begin{itemize}[leftmargin=1.5em]
+      \item the canonical hierarchical ID inferred from indentation, and
+      \item a note if an author-supplied dotted ID does not match the canonical one.
+    \end{itemize}
+\end{itemize}
+
+These messages are intended to guide authors during iterative development of patterns and assurance cases.
+
+\subsection*{ASCII Tree View}
+
+For quick inspection at the command line, the front-end can generate an ASCII tree view of the parsed outline. A typical rendering might show:
+
+\begin{itemize}[leftmargin=2em]
+  \item one line per node,
+  \item indentation using spaces to reflect the structure,
+  \item a single-letter type code (\texttt{G}, \texttt{S}, \texttt{C}, \texttt{A}, \texttt{J}, \texttt{E}, \texttt{M}),
+  \item the canonical hierarchical ID, and
+  \item optionally, any author-supplied alias ID in angle brackets (e.g.\ \texttt{<G1>}) when it differs from the canonical ID.
+\end{itemize}
+
+Body text can also be shown, indented one level further than the header line. The ASCII tree view is not part of the ACO language, but it greatly improves usability when working with outlines in a terminal environment.
+
+\subsection*{\textcolor{blue}{Tree Verbosity Levels}}
+
+\begingroup
+\color{blue}
+The ASCII tree view can be rendered at three verbosity levels. Conceptually these form a scale:
+
+\begin{center}
+\begin{tabular}{llp{0.55\linewidth}}
+\textbf{Level} & \textbf{Name}     & \textbf{Body treatment} \\
+\hline
+0 & Skeleton  & no body text; only the structural outline (type code, ID, label) is shown. \\
+1 & Structure & body snippet only (space permitting); one short line of body text summarising each node. \\
+2 & Full      & full body text for each node, potentially spanning multiple lines. \\
+\end{tabular}
+\end{center}
+
+Level~2 (\emph{Full}) is the default for interactive use. The CLI may expose these levels via flags such as:
+
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{--tree-skeleton} (verbosity 0),
+  \item \texttt{--tree-structure} (verbosity 1),
+  \item \texttt{--tree-full} (verbosity 2, default).
+\end{itemize}
+
+The structural part of each line (tree glyphs, type code, canonical hierarchical ID, optional alias ID, label) is the same at all verbosity levels; only the amount of body text differs.
+\endgroup
+
+\subsection*{\textcolor{blue}{Command-Line Interface (CLI)}}
+
+\begingroup
+\color{blue}
+The reference implementation is designed to play the role of a front-end in a toolchain, exposed as a command-line tool that we will refer to here as \texttt{aco}. The concrete executable name is not normative, but the following structure and options are.
+
+\subsubsection*{Subcommands (Informative)}
+
+Typical subcommands are:
+
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{aco parse} \\
+        Parse an ACO file, build the Node Model, and report errors, warnings, and statistics. This is the basic ``sanity check'' command.
+  \item \texttt{aco apl} \\
+        Translate an ACO file into the corresponding APL-style block representation.
+  \item \texttt{aco canon} \\
+        Canonicalise an ACO file: compute hierarchical IDs from indentation, rewrite all node headers and relation sentences to use the canonical IDs, and emit a canonical ACO file.
+  \item \texttt{aco tree} \\
+        Produce an ASCII tree view of the outline, with configurable verbosity for body text.
+  \item \texttt{aco dot} \\
+        Export the Node Model as a DOT/Graphviz graph for visualisation.
+\end{itemize}
+
+A typical synopsis (informative) is:
+
+\begin{verbatim}
+aco parse [OPTIONS] FILE.aco
+aco apl   [OPTIONS] FILE.aco
+aco canon [OPTIONS] FILE.aco > FILE.canon.aco
+aco tree  [OPTIONS] FILE.aco
+aco dot   [OPTIONS] FILE.aco > FILE.dot
+\end{verbatim}
+
+\subsubsection*{General Options}
+
+Common options shared by several subcommands are:
+
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{-o PATH}, \texttt{--output=PATH} \\
+        Write output to \texttt{PATH} instead of standard output (where applicable).
+  \item \texttt{--quiet} \\
+        Suppress non-essential informational messages (statistics, summaries, etc.) while still reporting errors.
+  \item \texttt{--no-stats} \\
+        Disable printing of the statistics summary even when parsing succeeds.
+  \item \texttt{--no-hier-ids} \\
+        Disable printing of per-node hierarchical ID diagnostics (where such diagnostics would otherwise be shown).
+\end{itemize}
+
+Not all options are meaningful for all subcommands; the implementation should reject or ignore clearly inapplicable combinations with an explanatory message.
+
+\subsubsection*{ASCII Tree Verbosity Levels}
+
+For the \texttt{aco tree} subcommand, the tool supports three verbosity levels for showing node bodies in the ASCII tree view. These correspond to a simple ``verbosity scale'':
+
+\begin{center}
+\begin{tabular}{lll}
+\hline
+\textbf{Level} & \textbf{Flag}        & \textbf{Body shown in tree} \\
+\hline
+2 (default)    & \texttt{--full}      & full body (all body lines) \\
+1              & \texttt{--structure} & body snippet only (space permitting) \\
+0              & \texttt{--skeleton}  & no body (headers only) \\
+\hline
+\end{tabular}
+\end{center}
+
+The default behaviour corresponds to level 2 (\texttt{--full}). The other flags select progressively sparser output:
+
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{Skeleton} (\texttt{--skeleton}, level 0): \\
+        Only the structural outline is shown. Each node appears as a single tree line containing:
+        \begin{itemize}[leftmargin=1.5em]
+          \item the ASCII tree connector (branching characters),
+          \item the one-letter type code (\texttt{G}, \texttt{S}, \texttt{C}, \texttt{A}, \texttt{J}, \texttt{E}, \texttt{M}),
+          \item the canonical hierarchical ID, and
+          \item the short label.
+        \end{itemize}
+        No body lines are printed.
+
+  \item \textbf{Structure} (\texttt{--structure}, level 1): \\
+        Each node line is as above, and the tool may print a short, single-line \emph{snippet} of the body text when there is room (e.g.\ the first sentence or a truncated excerpt). This level is intended for quick navigation and structural review while still giving some hint of the content of each node.
+
+  \item \textbf{Full} (\texttt{--full}, level 2): \\
+        Each node line is followed by all of its body lines, indented one level further than the header in the ASCII tree. This level shows the complete text of the outline in tree form and is the default.
+\end{itemize}
+
+These verbosity flags apply only to the \texttt{aco tree} subcommand; other subcommands (such as \texttt{aco canon} or \texttt{aco apl}) are concerned with full-text transformations and do not use this particular notion of verbosity.
+
+\subsubsection*{Relation to Other Features}
+
+The CLI flags described above are intentionally lightweight and orthogonal to the core ACO language:
+
+\begin{itemize}[leftmargin=2em]
+  \item They do not change the semantics of ACO or the Node Model, only how information is presented in the ASCII tree or reports.
+  \item They are compatible with canonicalisation: for example, \texttt{aco canon} can be used first to normalise IDs, after which \texttt{aco tree} (with any verbosity setting) can be applied to the canonical file.
+  \item They are also compatible with the error and warning checks described earlier; verbosity levels control how much body text is shown, not whether problems are detected.
+\end{itemize}
+
+Integrating these subcommands and options into project-specific workflows (e.g.\ build scripts, continuous integration, documentation generation) is left to the surrounding toolchain, but the ACO language and behaviours described here are intended to make such integration straightforward.
+\endgroup
+
+\end{document}
