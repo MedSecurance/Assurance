@@ -1,0 +1,1 @@
+swipl -q -s aco_cli.pl -g main -- $@
