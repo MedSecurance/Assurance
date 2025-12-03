@@ -30,7 +30,7 @@ ACO is intended to improve usability without weakening the rigor of O-ETB’s un
 
 ---
 
-## 📂 Typical Contents
+## 📂 Contents
 
 | File | Role |
 |----|----|
@@ -42,7 +42,7 @@ ACO is intended to improve usability without weakening the rigor of O-ETB’s un
 | `aco.sh` | Shell wrapper |
 | `test_aco_*.sh` | Regression and feature tests |
 
-(Exact file names may evolve as refactoring continues.)
+(Exact file names may evolve as development continues.)
 
 ---
 
@@ -51,7 +51,7 @@ ACO is intended to improve usability without weakening the rigor of O-ETB’s un
 The ACO processor may be used in two ways:
 
 1. **Standalone CLI tool** for authors working on `.aco` files
-2. **Integrated O-ETB command** for importing outlines into an assurance workflow
+2. **Integrated O-ETB command** for importing outlines into an assurance case development workflow
 
 In both cases, the end result is **APL**, not an internal ACO structure.
 
@@ -60,7 +60,7 @@ In both cases, the end result is **APL**, not an internal ACO structure.
 ## 🚧 Status
 
 This directory is under active development.
-Expect refactoring, new node types (e.g. Evidence), and tighter integration with O-ETB internals.
+Expect changes such as new node types (e.g. Evidence), new evidence categories, and tighter integration with O-ETB internals.
 
 ---
 

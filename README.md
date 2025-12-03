@@ -145,3 +145,4 @@ Licensing and contribution guidelines will be published as the repository mature
 
 ---
 ** The initial commit to this repo included content from the CITADEL Adaptive MILS Evidential Tool Bus (AM-ETB), implemented by Marius Bozga of Université Grenoble Alpes. It was reorganized by Rance DeLong of The Open Group who is responsible for its continuing development.
+
