@@ -38,13 +38,13 @@ remaining arguments are options and input/output files.
 
 ### Commands
 
-tree — ASCII Tree View
+#### tree — ASCII Tree View
 
 Render an assurance case outline as an ASCII tree.
 
 	aco tree [OPTIONS] FILE.aco
 
-Tree rendering options
+Tree rendering options:
 
 --full
 Full tree with complete node bodies (default).
@@ -63,7 +63,7 @@ Show user-provided IDs as aliases of canonical IDs (default).
 --no-aliases
 Suppress alias display; only canonical hierarchical IDs are shown.
 
-### Examples
+Examples
 
 aco tree min_test.aco
 aco tree --structure min_test.aco
