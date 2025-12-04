@@ -65,9 +65,9 @@ Suppress alias display; only canonical hierarchical IDs are shown.
 
 Examples
 
-aco tree min_test.aco
-aco tree --structure min_test.aco
-aco tree --skeleton --no-aliases min_test.aco
+	aco tree min_test.aco
+	aco tree --structure min_test.aco
+	aco tree --skeleton --no-aliases min_test.aco
 
 #### canon — Canonicalize IDs
 
