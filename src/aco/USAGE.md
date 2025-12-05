@@ -92,6 +92,15 @@ flat internal representation.
 Intended as the bridge from .aco outlines to the O-ETB instantiation
 pipeline (instantiate.pl).
 
+#### aplc — Translate to APL with Canonicalization
+
+Translate an ACO file into Argument Pattern Language (APL) with canonicalization
+suitable for consumption by O-ETB.
+
+	acoc apl INPUT.aco OUTPUT.pl
+
+Produces output as in apl command but with ID canonicalization.
+
 #### stats — Structural Statistics
 
 Report structural statistics and diagnostics about an ACO file.
