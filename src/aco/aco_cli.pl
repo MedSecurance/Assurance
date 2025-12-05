@@ -45,6 +45,11 @@ dispatch(apl, [In, Out]) :-
     strip_cr_atom(Out,CleanOut),
     aco_file_to_apl_file(In,CleanOut).
 
+dispatch(aplc, [In, Out]) :-
+    !,
+    strip_cr_atom(Out,CleanOut),
+    aco_file_to_apl_file_canon(In,CleanOut).
+
 dispatch(stats, [In]) :-
     !,
     strip_cr_atom(In, CleanIn),

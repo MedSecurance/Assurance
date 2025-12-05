@@ -2,7 +2,8 @@
     [
         aco_string_to_apl_pattern/4,   % +SourceName,+String,-Pattern,-Messages
         aco_file_to_apl_pattern/3,     % +ACOFile,-Pattern,-Messages
-        aco_file_to_apl_file/2         % +ACOFile,+APLFile
+        aco_file_to_apl_file/2,        % +ACOFile,+APLFile
+        aco_file_to_apl_file_canon/2   % +ACOFile,+APLFile
     ]).
 
 /*  ACO → APL translation
@@ -43,7 +44,6 @@
 % Public API
 % ----------------------------------------------------------------------
 
-/*
 %% aco_file_to_apl_pattern(+ACOFile,-Pattern,-Messages)
 %
 %  Read an .aco file and translate to a single ac_pattern/3 term.
@@ -51,14 +51,13 @@
 aco_file_to_apl_pattern(ACOFile, Pattern, Messages) :-
     read_file_to_string(ACOFile, Raw, [newline(detect)]),
     aco_string_to_apl_pattern(ACOFile, Raw, Pattern, Messages).
-*/
 
-%% aco_file_to_apl_pattern(+ACOFile,-Pattern,-Messages)
+%% aco_file_to_apl_pattern_canon(+ACOFile,-Pattern,-Messages)
 %
 %  Read an .aco file, canonicalise it, and translate the canonical
-%  version to a single ac_pattern/3 term.
+%  version to a single ac_pattern/3 term. Not exported.
 
-aco_file_to_apl_pattern(ACOFile, Pattern, Messages) :-
+aco_file_to_apl_pattern_canon(ACOFile, Pattern, Messages) :-
     read_file_to_string(ACOFile, Raw, [newline(detect)]),
     % Step 1: canonicalise the ACO (IDs, ordering, relations)
     canonicalize_aco_string(ACOFile, Raw, CanonRaw, CanonMsgs),
@@ -98,6 +97,19 @@ aco_file_to_apl_file(ACOFile, APLFile) :-
 
 aco_file_to_apl_file(ACOFile, APLFile) :-
     aco_file_to_apl_pattern(ACOFile, Pattern, Messages),
+    print_apl_messages(Messages),
+    setup_call_cleanup(
+        open(APLFile, write, Out),
+        print_apl_pattern(Out, Pattern),
+        close(Out)
+    ).
+
+%% aco_file_to_apl_file_canon(+ACOFile,+APLFile)
+%
+%  Convenience wrapper: read ACO, canonicalize, translate to APL, pretty-print to file.
+
+aco_file_to_apl_file_canon(ACOFile, APLFile) :-
+    aco_file_to_apl_pattern_canon(ACOFile, Pattern, Messages),
     print_apl_messages(Messages),
     setup_call_cleanup(
         open(APLFile, write, Out),
