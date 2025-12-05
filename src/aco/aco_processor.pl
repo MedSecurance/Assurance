@@ -7,12 +7,15 @@
 
     aco_ascii_tree_from_file/2,    % +ACOFile, -TreeString
     aco_ascii_tree_from_string/3,  % +SourceName, +String, -TreeString
-    aco_ascii_tree_from_string/4   % +SourceName, +String, -TreeString, +Options
+    aco_ascii_tree_from_string/4,  % +SourceName, +String, -TreeString, +Options
+
+    print_messages/1
 ]).
 
 :- use_module(library(readutil)).
 :- use_module(aco_core).
 :- use_module(aco_ascii_tree).
+:- use_module(aco_apl).
 
 % ----------------------------------------------------------------------
 % File-level wrappers

@@ -1,10 +1,16 @@
 :- module(aco_cli, [main/0]).
 
-:- use_module(aco_processor).
 :- use_module(library(readutil)).
+
+:- use_module(aco_processor).
+:- use_module(aco_ascii_tree).
+:- use_module(aco_apl).
 
 main :-
     current_prolog_flag(argv, Argv),
+    main1(Argv).
+
+main1(Argv) :-
     (   Argv = []
     ->  usage
     ;   Argv = [Cmd|Rest],
@@ -31,16 +37,19 @@ dispatch(tree, Args) :-
 
 dispatch(canon, [In, Out]) :-
     !,
-    canonicalize_aco_file(In, Out).
+    strip_cr_atom(Out,CleanOut),
+    canonicalize_aco_file(In, CleanOut).
 
 dispatch(apl, [In, Out]) :-
     !,
-    translate_aco_file(In, Out).
+    strip_cr_atom(Out,CleanOut),
+    aco_file_to_apl_file(In,CleanOut).
 
 dispatch(stats, [In]) :-
     !,
-    read_file_to_string(In, Raw, [newline(detect)]),
-    aco_processor:translate_aco_string(In, Raw, _Terms, Messages),
+    strip_cr_atom(In, CleanIn),
+    read_file_to_string(CleanIn, Raw, [newline(detect)]),
+    aco_processor:translate_aco_string(CleanIn, Raw, _Terms, Messages),
     print_messages(Messages).
 
 dispatch(_, _) :-
@@ -161,10 +170,9 @@ mode_tag_to_ascii_mode(skeleton,  no_body).
 alias_flag(on,  aliases(on)).
 alias_flag(off, aliases(off)).
 
-% Reuse the aco_processor message printer
-
-print_messages(Messages) :-
-    maplist(print_message(informational), Messages).
+% Reuse the aco_processor messages printer not system print_message
+% print_messages(Messages) :-
+%    maplist(print_message(informational), Messages).
 
 % utility strip CR
 strip_cr_atom(AtomIn, AtomOut) :-
