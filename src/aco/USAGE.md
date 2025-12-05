@@ -97,7 +97,7 @@ pipeline (instantiate.pl).
 Translate an ACO file into Argument Pattern Language (APL) with canonicalization
 suitable for consumption by O-ETB.
 
-	acoc apl INPUT.aco OUTPUT.pl
+	aco aplc INPUT.aco OUTPUT.pl
 
 Produces output as in apl command but with ID canonicalization.
 
