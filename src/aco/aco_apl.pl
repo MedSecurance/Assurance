@@ -594,6 +594,38 @@ trim_edge_underscores(List, Cleaned) :-
     ;   Cleaned = List
     ).
 
+% ----------------------------------------------------------------------
+% Strip relation lines from evidence bodies (defensive)
+% ----------------------------------------------------------------------
+
+clean_evidence_body(Body0, BodyClean) :-
+    % Treat empty / blank-ish bodies as empty
+    ( Body0 == '' ; Body0 == "" ; Body0 == ' ' ; Body0 == " " ),
+    !,
+    BodyClean = "".
+
+clean_evidence_body(Body0, BodyClean) :-
+    % Normalise to a string
+    ( string(Body0) -> S0 = Body0
+    ; atom_string(Body0, S0)
+    ),
+    aco_core:string_trim(S0, S),
+    ( S == ""
+    ->  BodyClean = ""
+    ;   % Split into lines, trim, drop empty and relation lines
+        split_string(S, "\n", "\r", RawLines),
+        findall(LineTrim,
+            (   member(Line0, RawLines),
+                aco_core:string_trim(Line0, LineTrim),
+                LineTrim \= "",
+                \+ aco_core:is_relation_text(LineTrim)
+            ),
+            KeptLines),
+        (   KeptLines == []
+        ->  BodyClean = ""
+        ;   atomic_list_concat(KeptLines, '\n', BodyClean)
+        )
+    ).
 
 % ----------------------------------------------------------------------
 % Building the nested Goal tree
@@ -645,7 +677,6 @@ claim_text_from_body_or_id(Body, Id, ClaimText) :-
     ; atom_string(Id, IdStr),
       ClaimText = IdStr
     ).
-
 
 % build_children_terms(+ChildIds,...,-Terms,-VisitedOut)
 
@@ -728,7 +759,6 @@ build_strategy_tree(Id, Body, NodesById, ChildMap, CtxMap,
         Strategy = strategy(ClaimText, Ctx, BodyTerms)
     ).
 
-
 % build_evidence_term(+Id,+Label,+Body,+NodesById,+ChildMap,+CtxMap,-Evidence)
 %
 % Category := Label (ACO label atom).
@@ -736,14 +766,13 @@ build_strategy_tree(Id, Body, NodesById, ChildMap, CtxMap,
 % Contexts from in_context_of/2 edges.
 
 build_evidence_term(Id, LabelAtom, Body, NodesById, ChildMap, CtxMap, Evidence) :-
-    % Category := Label atom
     Category = LabelAtom,
-    % Description text: prefer Body, else label
-    ( Body \= '',
-      Body \= ""
-    -> Desc = Body
-    ;  atom_string(LabelAtom, Desc)
+    clean_evidence_body(Body, BodyClean),
+    ( BodyClean \= '', BodyClean \= ""
+    -> Desc0 = BodyClean
+    ;  atom_string(LabelAtom, Desc0)
     ),
+    Desc = Desc0,
     contexts_for_node(Id, NodesById, ChildMap, CtxMap, Ctx),
     Evidence = evidence(Category, Desc, Ctx).
 

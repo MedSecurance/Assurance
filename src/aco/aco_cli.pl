@@ -65,6 +65,7 @@ usage :-
     format("  aco tree [--verbosity N | --full | --structure | --skeleton] [--no-aliases] FILE~n", []),
     format("  aco canon IN_OUTLINE OUT_CANONICAL~n", []),
     format("  aco apl   IN_OUTLINE OUT_APL_PL~n", []),
+    format("  aco aplc  IN_OUTLINE OUT_APL_PL~n", []),
     format("  aco stats IN_OUTLINE~n", []),
     halt(1).
 

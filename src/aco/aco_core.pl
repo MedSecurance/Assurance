@@ -11,7 +11,8 @@
     nodes_to_apl/3,
 
     % Utilities used by other modules
-    string_trim/2
+    string_trim/2,
+    is_relation_text/1
 ]).
 
 :- use_module(library(lists)).
@@ -554,12 +555,13 @@ parse_relation_line(cl_relation(N, S), EdgesOrErr) :-
     ;   EdgesOrErr = relation_parse_error(N, S)
     ).
 
-parse_supported_by(S, Edges) :-
-    (   sub_string(S, _, _, _, " supported by ")
-    ;   sub_string(S, _, _, _, " supported by")
+parse_supported_by(S0, Edges) :-
+    string_trim(S0, S1),
+    (   sub_string(S1, _, _, _, " supported by ")
+    ;   sub_string(S1, _, _, _, " supported by")
     ),
     !,
-    split_string(S, ".", ".", [NoDot|_]),
+    strip_final_dot(S1, NoDot),
     split_string(NoDot, " ", " ", Tokens0),
     exclude(=(""), Tokens0, Tokens),
     (   append(LHSTokens, ["is","supported","by"|RHSTokens], Tokens)
@@ -574,12 +576,13 @@ parse_supported_by(S, Edges) :-
             ),
             Edges).
 
-parse_supports(S, Edges) :-
-    (   sub_string(S, _, _, _, " support ")
-    ;   sub_string(S, _, _, _, " supports ")
+parse_supports(S0, Edges) :-
+    string_trim(S0, S1),
+    (   sub_string(S1, _, _, _, " support ")
+    ;   sub_string(S1, _, _, _, " supports ")
     ),
     !,
-    split_string(S, ".", ".", [NoDot|_]),
+    strip_final_dot(S1, NoDot),
     split_string(NoDot, " ", " ", Tokens0),
     exclude(=(""), Tokens0, Tokens),
     (   append(LHSTokens, ["support"|RHSTokens],  Tokens)
@@ -594,10 +597,11 @@ parse_supports(S, Edges) :-
             ),
             Edges).
 
-parse_in_context(S, Edges) :-
-    sub_string(S, _, _, _, "in context of"),
+parse_in_context(S0, Edges) :-
+    string_trim(S0, S1),
+    sub_string(S1, _, _, _, "in context of"),
     !,
-    split_string(S, ".", ".", [NoDot|_]),
+    strip_final_dot(S1, NoDot),
     split_string(NoDot, " ", " ", Tokens0),
     exclude(=(""), Tokens0, Tokens),
     (   append(LHSTokens, ["is","in","context","of"|RHSTokens],  Tokens)
@@ -612,10 +616,11 @@ parse_in_context(S, Edges) :-
             ),
             Edges).
 
-parse_context_for(S, Edges) :-
-    sub_string(S, _, _, _, "context for"),
+parse_context_for(S0, Edges) :-
+    string_trim(S0, S1),
+    sub_string(S1, _, _, _, "context for"),
     !,
-    split_string(S, ".", ".", [NoDot|_]),
+    strip_final_dot(S1, NoDot),
     split_string(NoDot, " ", " ", Tokens0),
     exclude(=(""), Tokens0, Tokens),
     (   append(LHSTokens, ["provides","context","for"|RHSTokens], Tokens)
@@ -723,77 +728,6 @@ compute_undeveloped_and_stats(
                    NumCrossRelations
                ).
 
-/*
-compute_undeveloped_and_stats(
-    Nodes, TreeEdges, RelEdges, AllEdges,
-    UndevelopedMsgs, StatsMsg
-) :-
-    length(Nodes, TotalNodes),
-    count_nodes_of_type(goal,        Nodes, NumGoals),
-    count_nodes_of_type(strategy,    Nodes, NumStrategies),
-    count_nodes_of_type(context,     Nodes, NumContexts),
-    count_nodes_of_type(assumption,  Nodes, NumAssumptions),
-    count_nodes_of_type(justification, Nodes, NumJustifications),
-    count_nodes_of_type(evidence,    Nodes, NumEvidence),
-    count_nodes_of_type(module,      Nodes, NumModules),
-
-    findall(undeveloped_goal(Id, Label, Line),
-        ( member(node(Id, goal, Label, _Bodyg, _Levg, Line), Nodes),
-          \+ member(supported_by(Id, _), AllEdges)
-        ),
-        UndevGoals),
-    findall(undeveloped_module(Id, Label, Line),
-        ( member(node(Id, module, Label, _Bodym, _Levm, Line), Nodes),
-          \+ member(supported_by(Id, _), AllEdges)
-        ),
-        UndevModules),
-
-    length(UndevGoals,   NumUndevGoals),
-    length(UndevModules, NumUndevModules),
-
-    findall(1, member(supported_by(_, _), TreeEdges), LTreeSB),
-    length(LTreeSB, NumTreeSupported),
-
-    findall(1, member(supported_by(_, _), RelEdges), LRelSB),
-    length(LRelSB, NumRelSupported),
-
-    findall(1, member(in_context_of(_, _), TreeEdges), LTreeCtx),
-    length(LTreeCtx, NumTreeContexts),
-
-    findall(1, member(in_context_of(_, _), RelEdges), LRelCtx),
-    length(LRelCtx, NumRelContexts),
-
-    findall(E,
-        ( member(E, RelEdges),
-          ( E = supported_by(P, C)
-          ; E = in_context_of(P, C)
-          ),
-          \+ descendant(P, C, TreeEdges)
-        ),
-        CrossEdges),
-    length(CrossEdges, NumCrossRelations),
-
-    append(UndevGoals, UndevModules, UndevelopedMsgs),
-
-    StatsMsg = stats_summary(
-                   TotalNodes,
-                   NumGoals,
-                   NumStrategies,
-                   NumContexts,
-                   NumAssumptions,
-                   NumJustifications,
-                   NumEvidence,
-                   NumModules,
-                   NumUndevGoals,
-                   NumUndevModules,
-                   NumTreeSupported,
-                   NumRelSupported,
-                   NumTreeContexts,
-                   NumRelContexts,
-                   NumCrossRelations
-               ).
-*/
-
 count_nodes_of_type(Type, Nodes, Count) :-
     include(node_of_type(Type), Nodes, Filtered),
     length(Filtered, Count).
@@ -877,6 +811,14 @@ prefix_n(N, [X|Xs], Acc, Prefix) :-
     N > 0,
     N1 is N - 1,
     prefix_n(N1, Xs, [X|Acc], Prefix).
+
+% Remove a final '.' if present (sentence terminator), but leave
+% internal dots in IDs like "G1." or "A1.1".
+strip_final_dot(S0, S) :-
+    ( sub_string(S0, _, 1, 0, ".")
+    -> sub_string(S0, 0, _, 1, S)
+    ;  S = S0
+    ).
 
 % ----------------------------------------------------------------------
 % Canonical ID mapping helpers (incl. Evidence)
