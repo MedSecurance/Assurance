@@ -189,9 +189,9 @@ ac_format_dot_goal(_Output, null, _Depth, null_goal(_Id)) :-
 
 ac_format_dot_goal(Output, ParentId, Depth, goal(Id, Claim, Context, Subgoals)) :-
 	ac_format_dot_label_br_ify(Claim, ClaimBr),
-	format(Output, "~a [shape=rectangle label=<<b>goal</b><br/>~a>]~n",
+	format(Output, "\"~a\" [shape=rectangle label=<<b>goal</b><br/>~a>]~n", % HERE
 	       [Id, ClaimBr]),
-	( ParentId \= null -> format(Output, "~a -> ~a~n", [ParentId, Id]) ; true),
+	( ParentId \= null -> format(Output, "\"~a\" -> \"~a\"~n", [ParentId, Id]) ; true), % HERE
 	maplist( ac_format_dot_context(Output, Id, Depth), Context),
 	NextDepth is Depth + 1,
 	maplist( ac_format_dot_goal(Output, Id, NextDepth), Subgoals).
@@ -200,15 +200,15 @@ ac_format_dot_goal(Output, ParentId, Depth, strategy(Claim, Context, Subgoals) )
 	ac_format_dot_counter_next(C),
 	atomic_concat('strategy_', C, Id),
 	ac_format_dot_label_br_ify(Claim, ClaimBr),
-	format(Output, "~a [shape=parallelogram margin=0 label=<<b>strategy</b><br/>~a>]~n", [Id, ClaimBr]),
-	format(Output, "~a -> ~a~n", [ParentId, Id]),
+	format(Output, "\"~a\" [shape=parallelogram margin=0 label=<<b>strategy</b><br/>~a>]~n", [Id, ClaimBr]), % HERE
+	format(Output, "\"~a\" -> \"~a\"~n", [ParentId, Id]), % HERE
 	maplist( ac_format_dot_context(Output, Id, Depth), Context),
 	NextDepth is Depth + 1,
 	maplist( ac_format_dot_goal(Output, Id, NextDepth), Subgoals).
 
 
 ac_format_dot_goal(Output, ParentId, _Depth, goal_ref(Id) ) :-
-	format(Output, "~a -> ~a~n", [ParentId, Id]).
+	format(Output, "\"~a\" -> \"~a\"~n", [ParentId, Id]). % HERE
 
 ac_format_dot_goal(Output, ParentId, _Depth, away_goal_ref(AwayId) ) :-
 				% lookup the referred ac instance
@@ -216,21 +216,21 @@ ac_format_dot_goal(Output, ParentId, _Depth, away_goal_ref(AwayId) ) :-
 	ac_format_dot_counter_next(C),
 	atomic_concat('away_goal_', C, Id),
 	ac_format_dot_label_br_ify(AwayClaim, AwayClaimBr),
-	format(Output, "~a [shape=rectangle label=<<b>away goal</b><br/>~a<br/>[ ~a_~a ]> color=blue]~n",
+	format(Output, "\"~a\" [shape=rectangle label=<<b>away goal</b><br/>~a<br/>[ \"~a\"_\"~a\" ]> color=blue]~n", % HERE
 	       [Id, AwayClaimBr, PatternId, AwayId]),
-	format(Output, "~a -> ~a~n", [ParentId, Id]), !.
+	format(Output, "\"~a\" -> \"~a\"~n", [ParentId, Id]), !. % HERE
 
 ac_format_dot_goal(Output, ParentId, _Depth, away_goal_ref(AwayId) ) :-
 	ac_format_dot_counter_next(C),
 	atomic_concat('away_goal_', C, Id),
-	format(Output, "~a [shape=rectangle label=<<b>away goal</b><br/>~a> color=red]~n", [Id, AwayId]),
-	format(Output, "~a -> ~a~n", [ParentId, Id]).
+	format(Output, "\"~a\" [shape=rectangle label=<<b>away goal</b><br/>~a> color=red]~n", [Id, AwayId]), % HERE
+	format(Output, "\"~a\" -> \"~a\"~n", [ParentId, Id]). % HERE
 
 ac_format_dot_goal(Output, ParentId, _Depth, missing_goal ) :-
 	ac_format_dot_counter_next(C),
 	atomic_concat('missing_goal_',C,Id),
-	format(Output, "~a [shape=rectangle label=<<b>missing goal</b>> color=red]~n", Id),
-	format(Output, "~a -> ~a~n", [ParentId, Id]).
+	format(Output, "\"~a\" [shape=rectangle label=<<b>missing goal</b>> color=red]~n", Id), % HERE
+	format(Output, "\"~a\" -> \"~a\"~n", [ParentId, Id]). % HERE
 
 ac_format_dot_goal(Output, ParentId, Depth, evidence(Category, Claim, Context, XRef) ) :-
 	ac_format_dot_evidence(Output, ParentId, Depth, evidence(Category, Claim, Context, XRef)).
@@ -269,7 +269,7 @@ ac_format_dot_context_aux(Output, ParentId, _Depth, Category, Text) :-
 	atomic_concat(Category_, Index, Id),
 	ac_format_dot_label_br_ify(Text, TextBr),
 	format(Output, "~a [shape=rectangle style=rounded label=<<b>~a</b><br/>~a>]~n", [Id, Category, TextBr]),
-	format(Output, "{ rank=same; ~a -> ~a [style=dashed]; }~n", [ParentId, Id]).
+	format(Output, "{ rank=same; \"~a\" -> \"~a\" [style=dashed]; }~n", [ParentId, Id]).
 
 				% ac_format_dot_counter_init, ac_format_dot_counter_next(-X)
 
@@ -291,15 +291,16 @@ ac_format_dot_label_br_ify(Text, TextWithBr) :-
 	split_string(Text, WordList), % split_string(Text, ' ', ' ', WordList),
 	ac_format_dot_label_br_ify_aux('', 0, WordList, TextWithBr).
 
+ac_format_dot_label_br_ify_aux(IText, _Count, [], IText) :- !.
+
 ac_format_dot_label_br_ify_aux(IText, Count, WordList, OText) :-
-	Count > 15, atomic_concat(IText, '<br/>', ITextBr),
+	Count > 18, !, atomic_concat(IText, '<br/>', ITextBr),
 	ac_format_dot_label_br_ify_aux(ITextBr, 0, WordList, OText).
 
-ac_format_dot_label_br_ify_aux(IText, _Count, [], IText).
-
 ac_format_dot_label_br_ify_aux(IText, Count, [Word | WordList], OText) :-
-	atomic_concat(IText, ' ', IText_), atomic_concat(IText_, Word, IText_Word),
-	string_length(Word, WordLength), NewCount is Count + WordLength,
+	( Count == 0 -> IText_ = IText, SpaceLen = 0 ; atomic_concat(IText, ' ', IText_), SpaceLen = 1),
+        atomic_concat(IText_, Word, IText_Word),
+	string_length(Word, WordLength), NewCount is Count + WordLength + SpaceLen,
 	ac_format_dot_label_br_ify_aux(IText_Word, NewCount, WordList, OText).
 
 				%
