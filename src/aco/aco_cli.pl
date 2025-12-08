@@ -1,4 +1,4 @@
-:- module(aco_cli, [main/0]).
+:- module(aco_cli, [main/0, main1/1, dispatch/2]).
 
 :- use_module(library(readutil)).
 

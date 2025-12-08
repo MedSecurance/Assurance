@@ -2,6 +2,7 @@
 
 :- use_module('etb').
 :- use_module('patterns').
+:- use_module('aco/aco_cli').
 
 commands_defined(etb).
 
@@ -9,6 +10,13 @@ commands_defined(etb).
 % definition of the ETB tool interactive commands syntax
 % syntax( Signature, CommandSet ).
 %
+syntax(aco,                                                     etb).
+syntax(aco_apl(in_outline, out_apl_pl),                         etb).
+syntax(aco_aplc(in_outline, out_aplc_pl),                       etb).
+syntax(aco_canon(in_outline, out_canonical),                     etb).
+syntax(aco_stats(in_outline),                                   etb).
+syntax(aco_tree(in_outline),                                    etb).
+syntax(aco_tree(in_outline, arglist),                           etb).
 syntax(attach_case(case_id),                                     etb).
 syntax(attach_evidence,                                     	etb).
 syntax(detach_case,                                              etb).
@@ -65,6 +73,13 @@ syntax(update,                                                   etb).
 % distinct from syntax so syntax can be called separately
 %
 
+semantics(aco_apl(Aco, Apl)) :- atom(Aco), atom(Apl), exists_file(Aco).
+semantics(aco_aplc(Aco, AplC)) :- atom(Aco), atom(AplC), Aco \== AplC, exists_file(Aco).
+semantics(aco_canon(Aco, AcoC)) :- atom(Aco), atom(AcoC), Aco \== AcoC, exists_file(Aco).
+semantics(aco_stats(Aco)) :- atom(Aco), exists_file(Aco).
+semantics(aco_tree(Aco)) :- atom(Aco), exists_file(Aco).
+semantics(aco_tree(Aco, Arglist)) :- atom(Aco), exists_file(Aco), is_list(Arglist).
+
 semantics(attach_case(Case)) :- !, atom(Case).
 
 semantics(etb_reset(D)) :- !, (D == cap ; D == repos ; D == all).
@@ -102,6 +117,15 @@ semantics(show_patterns(M)) :- !, atom(M), member(M,[text,header,pp]).
 %   all strings for a given key are displayed when key is given as an
 %   argument to the help command, e.g., "help(etb_server)"
 %
+help(aco, 'Assurance Case Outline commands: aco_apl, aco_aplc, aco_canon, aco_state, aco_tree').
+help(aco_apl, 'Translate ACO to APL.').
+help(aco_aplc, 'Translate ACO to APL with canonicalisation.').
+help(aco_canon, 'Translate ACO to ACO with canonicalisation.').
+help(aco_stats, 'List statistics on ACO file.').
+help(aco_tree, 'Show ASCII tree for ACO file.').
+help(aco_tree, '  Arg1 is ACO file.').
+help(aco_tree, '  Arg2 is list of options from {full,structure,skeleton,no_aliases}.').
+
 help(attach_case, 'Attach the identified assurance case in the repository.').
 help(attach_case, 'Arg is an assurance case identifier.').
 
@@ -171,6 +195,27 @@ help(update,	'Update assurance cases and evidence.').
 % do the command, should be one for every implemented valid command form
 % known broken or unimplemented commands should just "fail." straightaway
 %
+
+do(aco) :- do(help(aco_apl)), do(help(aco_aplc)), do(help(apl_canon)), do(help(aco_stats)), do(help(aco_tree)).
+
+do(aco_apl(Aco, Apl)) :- !, Aco \== Apl, dispatch(apl,[Aco,Apl]).
+
+do(aco_aplc(Aco, AplC)) :- !, Aco \== AplC, dispatch(apl,[Aco,AplC]).
+
+do(aco_canon(Aco, AcoC)) :- !, Aco \== AcoC, dispatch(canon,[Aco,AcoC]).
+
+do(aco_stats(Aco)) :- !, Aco \== '', dispatch(stats,[Aco]).
+
+do(aco_tree(Aco)) :- !, Aco \== '', dispatch(tree,[Aco]).
+
+do(aco_tree(Aco, Args0)) :- !, Aco \== '', preprocess_treeargs(Aco,Args0,Arglist), dispatch(tree,Arglist).
+
+    preprocess_treeargs(F,[],[F]).
+    preprocess_treeargs(F, [A|As], DArgs) :- preprocess_treeargs(F,As,DAs),
+        (   member( A:DA, [full:'--full',structure:'--structure',skeleton:'--skeleton',no_aliases:'--no-aliases'] )
+        ->  DArgs = [DA|DAs]
+        ;   DArgs = DAs
+        ).	      
 
 do(attach_case(Case)) :- !, assurance:attach_assurance_repository(Case).
 
