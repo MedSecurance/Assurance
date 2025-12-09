@@ -59,36 +59,9 @@ aco_file_to_apl_pattern(ACOFile, Pattern, Messages) :-
 
 aco_file_to_apl_pattern_canon(ACOFile, Pattern, Messages) :-
     read_file_to_string(ACOFile, Raw, [newline(detect)]),
-    % Step 1: canonicalise the ACO (IDs, ordering, relations)
     canonicalize_aco_string(ACOFile, Raw, CanonRaw, CanonMsgs),
-    % Step 2: run the APL translation on the canonical text
     aco_string_to_apl_pattern(ACOFile, CanonRaw, Pattern, AplMsgs),
-    % Step 3: combine messages (canonicalisation + APL layer)
     append(CanonMsgs, AplMsgs, Messages).
-
-/*
-%% aco_file_to_apl_file(+ACOFile,+APLFile)
-%
-%  Convenience wrapper: read ACO, translate to APL, pretty-print to file.
-
-aco_file_to_apl_file(ACOFile, APLFile) :-
-    aco_file_to_apl_pattern(ACOFile, Pattern, Messages),
-    print_apl_messages(Messages),
-    setup_call_cleanup(
-        open(APLFile, write, Out),
-        portray_clause(Out, Patter),
-        close(Out)
-    ).
-
-aco_file_to_apl_file(ACOFile, APLFile) :-
-    aco_file_to_apl_pattern(ACOFile, Pattern, Messages),
-    print_apl_messages(Messages),
-    setup_call_cleanup(
-        open(APLFile, write, Out),
-        print_apl_pattern(Out, Pattern),
-        close(Out)
-    ).
-*/
 
 %% aco_file_to_apl_file(+ACOFile,+APLFile)
 %

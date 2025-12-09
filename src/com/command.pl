@@ -230,7 +230,7 @@ help(regtest, 'Run regression tests.').
 help(reinit,	'Re-initialize.').
 
 help(reset,  	'Reset databases.').
-help(reset,	'Arg 1 is the domain to be reset.').
+help(reset,	'Arg 1 is the domain to be reset {cap,cases,evidence,repos,all}.').
 %help(reset,  	'Arg 2 is the name of the group to be reset.').
 
 help(script,	'Run a command script from a named file.').

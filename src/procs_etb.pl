@@ -1,6 +1,54 @@
 % ETB-specific command procedures
 
 %%%%%%%%%%
+% Demonstration of ACO capabilities
+%   run these in ETB command interpreter by typing, e.g.:  proc(op_plane_ACO, step). (step through with Return key)
+%   only canonicalization is not demonstrated in these examples
+% It is suggested to reset the REPOSITORY and CAP when repeating these examples. in ETB command mode type: reset.
+
+proc(op_plane_ACO, [
+	 aco_tree('../TEST/aco/tiny_test.aco'),
+	 aco_stats('../TEST/aco/tiny_test.aco'),
+
+	 aco_tree('../TEST/aco/op_plane.aco'),
+	 aco_stats('../TEST/aco/op_plane.aco'),
+	 aco_tree('../TEST/aco/op_plane.aco', [skeleton]),
+	 aco_apl('../TEST/aco/op_plane.aco', '../TEST/aco/op_plane.apl'),
+	 load_patterns('../TEST/aco/op_plane.apl'),
+	 show_pattern('Op_Plane'),
+	 instantiate_pattern('Op_Plane', [ ], op_plane),
+	 export_case(op_plane, txt),
+	 export_case(op_plane, html),
+	echo('DONE! Browse result in CAP/op_plane/index.html')
+     ]).
+
+proc(hgo_ACO, [
+	 aco_tree('../TEST/aco/hgo_v2.aco'),
+	 aco_stats('../TEST/aco/hgo_v2.aco'),
+	 aco_tree('../TEST/aco/hgo_v2.aco', [skeleton]),
+	 aco_apl('../TEST/aco/hgo_v2.aco', '../TEST/aco/hgo_v2.apl'),
+	 load_patterns('../TEST/aco/hgo_v2.apl'),
+	 show_pattern('HGO_StabVida_Assurance_Case'),
+	 instantiate_pattern('HGO_StabVida_Assurance_Case', [ ], hgo),
+	 export_case(hgo, txt),
+	 export_case(hgo, html),
+	echo('DONE! Browse result in CAP/hgo/index.html')
+     ]).
+
+proc(bio_ACO, [
+	 aco_tree('../TEST/aco/bio_v4.aco'),
+	 aco_stats('../TEST/aco/bio_v4.aco'),
+	 aco_tree('../TEST/aco/bio_v4.aco', [skeleton]),
+	 aco_apl('../TEST/aco/bio_v4.aco', '../TEST/aco/bio_v4.apl'),
+	 load_patterns('../TEST/aco/bio_v4.apl'),
+	 show_pattern('BioAssist'),
+	 instantiate_pattern('BioAssist', [ ], bio),
+	 export_case(bio, txt),
+	 export_case(bio, html),
+	echo('DONE! Browse result in CAP/bio/index.html')
+     ]).
+
+%%%%%%%%%%
 % The procedures IoMT_system_inst and ISO_case_inst 
 % generate the correspoding text and htmp exports to CAP that are maintained
 % as examples. The procs can be re-run to regenerate the example outputs.

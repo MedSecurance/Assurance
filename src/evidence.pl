@@ -63,8 +63,12 @@ insert_ac_evidence(Category, Claim, Context, AArgs, XRef, 'pending') :-
 	evidence_categories(Categories), union(Categories,[unknown],CategoriesWithUnk),
 	(	member(Category,CategoriesWithUnk)
 	->	true
-	;	!, fail % Category not a KB defined evidence category - see KB/EVIDENCE/categories.pl
-	),
+	;       % Category not a KB defined evidence category - see KB/EVIDENCE/categories.pl
+		CategoryP = provisional(Category),
+		member(CategoryP,Categories)
+        ),
+%	;	!, fail % Category not a KB defined evidence category - see KB/EVIDENCE/categories.pl
+%	),
 	with_mutex( evidence,
 		    ( ac_evidence_counter(LastXRef),
 		      retractall_ac_evidence_counter(_),

@@ -216,7 +216,7 @@ ac_format_dot_goal(Output, ParentId, _Depth, away_goal_ref(AwayId) ) :-
 	ac_format_dot_counter_next(C),
 	atomic_concat('away_goal_', C, Id),
 	ac_format_dot_label_br_ify(AwayClaim, AwayClaimBr),
-	format(Output, "\"~a\" [shape=rectangle label=<<b>away goal</b><br/>~a<br/>[ \"~a\"_\"~a\" ]> color=blue]~n", % HERE
+	format(Output, "\"~a\" [shape=rectangle label=<<b>away goal</b><br/>~a<br/>[~a_~a]> color=blue]~n", % HERE
 	       [Id, AwayClaimBr, PatternId, AwayId]),
 	format(Output, "\"~a\" -> \"~a\"~n", [ParentId, Id]), !. % HERE
 

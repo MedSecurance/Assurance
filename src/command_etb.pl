@@ -200,7 +200,7 @@ do(aco) :- do(help(aco_apl)), do(help(aco_aplc)), do(help(apl_canon)), do(help(a
 
 do(aco_apl(Aco, Apl)) :- !, Aco \== Apl, dispatch(apl,[Aco,Apl]).
 
-do(aco_aplc(Aco, AplC)) :- !, Aco \== AplC, dispatch(apl,[Aco,AplC]).
+do(aco_aplc(Aco, AplC)) :- !, Aco \== AplC, dispatch(aplc,[Aco,AplC]).
 
 do(aco_canon(Aco, AcoC)) :- !, Aco \== AcoC, dispatch(canon,[Aco,AcoC]).
 

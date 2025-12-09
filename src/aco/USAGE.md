@@ -155,13 +155,14 @@ docs/User-Manual/ — O-ETB User Manual
 
 KB/EVIDENCE/ — Evidence categories and validation agents
 
-## Using ACO commands from O-ETB command line
+## Using ACO commands from O-ETB command interpreter
 
 The ACO commands are also accessible from the O-ETB interactive command interpreter
 with slight syntactical changes:
 
 	aco_apl(in_outline,out_apl_pl) ---  Translate ACO to APL.
   	aco_aplc(in_outline,out_aplc_pl) --- Translate ACO to APL with canonicalisation.
+      aco_canon(in_outline,out_outline) --- Perform canonicalization ACO to ACO
   	aco_stats(in_outline) ---  List statistics on ACO file.
   	aco_tree(in_outline), aco_tree(in_outline,arglist) ---  Show ASCII tree for ACO file.
 		Arg1 is ACO file.
