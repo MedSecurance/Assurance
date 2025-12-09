@@ -1,0 +1,32 @@
+indent(2,space)
+Case: Op Plane - component architecture assurance
+/*
+  This is a simple example
+  Assurance Case Outline
+*/
+Goal G0 operationalPlane:
+  The operational plane guarantees the {local policy} is met. % policy defined by model
+
+  Context C0 planeDefinition:
+    The system model describes the plane and its {properties}. % component architecture
+
+  Goal G1 componentBehaviour:
+    Compositional behaviour of separate components ensures the local policy is met.
+
+    % here we use a module to encapsulate the assurance case for the component
+    Module M1 component:
+      Behaviour of the {component} meets its local policy.
+
+  Goal G2 compositionBehaviour:
+    Compositional behaviour of compositions ensures the local policy is met.
+
+    Module M2 composition:
+      Behaviour of the {composition} meets the local policy.
+
+  Module M0 interface:
+    Interaction between components and compositions is as defined by the security architecture interface.
+
+G0 is supported by G1, G2, M0.
+G0 is in context of C0.
+G1 is supported by M1.
+G2 is supported by M2.
