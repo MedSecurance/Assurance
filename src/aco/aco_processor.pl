@@ -40,7 +40,7 @@ canonicalize_aco_file(ACOFile, CanonFile) :-
     print_messages(Messages),
     setup_call_cleanup(
         open(CanonFile, write, Out),
-        format(Out, "~s", [CanonRaw]),
+        ( format(Out, "~s", [CanonRaw]), flush_output(Out), ! ),
         close(Out)
     ).
 

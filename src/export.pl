@@ -19,7 +19,7 @@ reset_CAP :-
 % ac_export(Filename, Format)
 %
 
-ac_export(FileBasename, 'txt') :- atom(FileBasename),
+ac_export(FileBasename, 'txt') :- atom(FileBasename), !,
 	param:cap_dir(CapDir),
 	atomic_list_concat([CapDir,'/',FileBasename,'.txt'],FullFilename),
 	open(FullFilename, write, Output),
@@ -27,7 +27,7 @@ ac_export(FileBasename, 'txt') :- atom(FileBasename),
 	       ac_format(Output, 'txt', ac_instance(PatternId, AArgs, Goal, Log))),
 	close(Output), !.
 
-ac_export(Dirname, 'html') :-
+ac_export(Dirname, Format) :- member(Format,['html', 'html90']), !,
 	param:cap_dir(CapDir),
 	atomic_list_concat([CapDir,'/',Dirname],FullDirname),
 	make_directory_path(FullDirname),
@@ -42,18 +42,19 @@ ac_export(Dirname, 'html') :-
 	open(List_Html, write, List_Output),
 	format(List_Output, '<h2>~a</h2>~n', [Dirname]),
 	forall( ac_instance(PatternId, AArgs, Goal, Log),
-		( ac_export_html_instance( ac_instance(PatternId, AArgs, Goal, Log), FullDirname, Basename),
+		( ac_export_html_instance(Format, ac_instance(PatternId, AArgs, Goal, Log), FullDirname, Basename),
 		  format(List_Output, '<p><a href="~a.html" target=layout>~a</a>~n', [Basename, Basename]) ) ),
 	close(List_Output).
 
-				% ac_export_html_instance(+ACInstance, +Dirname, -Basename)
+				% ac_export_html_instance(+Format, +ACInstance, +Dirname, -Basename)
 
-ac_export_html_instance( ac_instance(PatternId, AArgs, Goal, Log), Dirname, Basename ) :-
+ac_export_html_instance(Format, ac_instance(PatternId, AArgs, Goal, Log), Dirname, Basename ) :-
 	ac_instance_basename(ac_instance(PatternId, AArgs, Goal, Log), Basename),
 				% create dot file
 	atomic_list_concat([ Dirname, '/', Basename, '.dot'], Filename_Dot),
 	open(Filename_Dot, write, Output_Dot),
-	ac_format(Output_Dot, 'dot', ac_instance(PatternId, AArgs, Goal, Log)),
+	( Format==html90 -> DotFmt = dot90 ; DotFmt = dot ),
+	ac_format(Output_Dot, DotFmt, ac_instance(PatternId, AArgs, Goal, Log)),
 	close(Output_Dot),
 				% convert dot into svg
 	atomic_list_concat(['-o', Dirname, '/', Basename, '.svg'], OFilename_Svg),
@@ -88,11 +89,14 @@ ac_string(_).
 ac_format(Output, 'txt', ACInstance) :-
 	ac_format_txt(Output, ACInstance).
 
-ac_format(Output, 'dot', ACInstance) :-
-	ac_format_dot(Output, ACInstance).
-
 ac_format(Output, 'html', ACInstance) :-
 	ac_format_html(Output, ACInstance).
+
+ac_format(Output, 'dot', ACInstance) :-
+	ac_format_dot(Output, dot, ACInstance).
+
+ac_format(Output, 'dot90', ACInstance) :-
+	ac_format_dot(Output, dot90, ACInstance).
 
 
 				%
@@ -170,14 +174,15 @@ ac_format_txt_context(Output, [assumption(X) | C], Indent) :-
 
 				%
 				%
-				% ac_format_dot(+Output, +ACInstance)
+				% ac_format_dot(+Output, +DotFmt, ACInstance)
 				%
 
 :- dynamic ac_format_dot_counter/1.
 
-ac_format_dot(Output, ac_instance( PatternId, _AArgs, Goal, _Log) ) :-
+ac_format_dot(Output, DotFmt, ac_instance( PatternId, _AArgs, Goal, _Log) ) :-
 	ac_format_dot_counter_init,
 	format(Output, "digraph ~a {~n", PatternId),
+	( DotFmt == dot90 -> format(Output, "  rotate=90~n", []) ; true ),
 	format(Output, "  node [fontsize=10]~n", []),
 	ac_format_dot_goal( Output, null, 1, Goal),
 	format(Output, "}~n", []).

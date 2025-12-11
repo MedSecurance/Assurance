@@ -89,7 +89,7 @@ semantics(etb_reset(D)) :- !, (D == cap ; D == repos ; D == all).
 semantics(etbt(T)) :- !, atom(T).
 semantics(etbt(T,E)) :- !, atom(T), atom(E).
 
-semantics(export_case(Name,Format)) :- !, atom(Name), atom(Format), (Format==txt;Format==html).
+semantics(export_case(Name,Format)) :- !, atom(Name), atom(Format), member(Format,[txt,html,html90]).
 
 semantics(import(T,F,Id)) :- !, atom(T), atom(F), atom(Id).
 
@@ -146,7 +146,8 @@ help(etbt,      'Arg2 (opt) is etb mode.').
 
 help(export_case,	'Export the current assurance case to the CAP.').
 help(export_case,	'Arg1 is a name in the CAP directory for the export.').
-help(export_case, 'Arg2 is the format (currently either txt or html).').
+help(export_case,   'Arg2 is the format (currently txt, html or html90).').
+help(export_case,   '  (html90 rotates rendered GSN graphics 90 degrees.').
 
 help(import,    'Import a specification of type (model, property, ...).').
 help(import,    'Arg1 is a specification type.').
@@ -246,7 +247,8 @@ do(etbt(e2e)) :- !, etbt(e2e).
 do(etbt(T,Mode)) :- !, etbt(T,Mode).
 do(etbtests) :- !, load_test_files([]), run_tests. % .plt tests
 
-do(export_case(Name,Format)) :- !, export:ac_export(Name,Format).
+do(export_case(Name,Format)) :- !, % Format pre-checked by semantics/2
+	export:ac_export(Name,Format).
 
 do(import(T,F,Sid)) :- !,
     kb:load_specification_from_file(T,F,Sid).

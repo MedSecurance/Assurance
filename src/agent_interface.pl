@@ -36,10 +36,12 @@ evidence_validate(Category, Claim, Context, AArgs, XRef) :-
 	update_evidence_status(Category, Claim, Context, AArgs, XRef, Status),
         !.
 
-evidence_validate(Category, _Claim, _Context, _AArgs, _XRef) :-
+evidence_validate(Category, Claim, Context, AArgs, XRef) :-
 				% undefined evidence category or other error handling here
 				% perhaps a log entry
-        format('Warning: unknown category ~q in evidence_validate/5~n',Category),
+        % format('Warning: unknown category ~q in evidence_validate/5~n',Category),
+        % ValidationResult = provisional
+	update_evidence_status(Category, Claim, Context, AArgs, XRef, provisional),
 	true.
 
 				% update_evidence_status(+Category, +Claim, +Context, +AArgs, +XRef, +Status)

@@ -19,7 +19,7 @@
 			  context:list(text),
 			  aargs:list(acyclic),
 			  xref:positive_integer,
-			  status:oneof([pending,ongoing,valid,invalid])).
+			  status:oneof([provisional,pending,ongoing,valid,invalid])).
 
 :- persistent ac_evidence_counter(value:positive_integer).
 
@@ -56,7 +56,6 @@ detach_evidence_repository :- db_detach.
 
 				% insert_ac_evidence(+Category, -NewCat, +Claim, +Context, +AArgs, +XRef, +Status)
 				% status must be 'pending'
-			    %%% CLEAN THIS HERE
 
 insert_ac_evidence(Category, Claim, Context, AArgs, XRef, 'pending') :-
 	ac_evidence(Category, Claim, Context, AArgs, XRef, _),
