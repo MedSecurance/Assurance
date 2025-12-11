@@ -521,24 +521,6 @@ syntax_chk(C,CSets) :-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % command scripts
 %
-/* previous version doesn't work with scripts with variables
-run_command_script(Mode,F,Opt) :-
-	(   access_file(F,read)
-	->  (
-	        read_file_to_terms(F,Commands,[]),
-	        (   Opt == verbose
-	        ->  param:verbose(SaveVerboseParam), param:setparam(verbose, on),
-		    param:msg_script_read(Mread), writeln(Mread),
-		    ui:display_list(Commands,1),
-	            param:msg_running_script(Mrun), writeln(Mrun)
-	        ;   true
-	        ),
-	        run_commands(Mode,Commands,Opt)
-	    )
-	;
-	    format('can''t find file "~a"~n', F)
-	), !.
-*/
 
 run_command_script(Mode,F,Opt) :-
 	(   access_file(F,read)

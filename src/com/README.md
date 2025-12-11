@@ -1,6 +1,6 @@
 # Common support functions
 
-Command Line Interpreter
-Command procedures
-TOG-ETB Parameters
-miscellaneous support functions
+command.pl - Command Line Interpreter
+procs.pl - Command procedures
+param.pl - TOG-ETB Parameters
+test.pl, ui.pl - miscellaneous support functions

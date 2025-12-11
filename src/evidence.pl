@@ -1,7 +1,7 @@
 :- module(evidence,
           [ er_write_status/0,
 		  	reset_evidence_repository/0,
-	    	attach_evidence_repository/0,
+	    	attach_evidence_repository/0, detach_evidence_repository/0,
 	    	ac_evidence/6, % -Category, -Claim, -Context, -AArgs, -XRef, -Status
             insert_ac_evidence/6, % +Category, +Claim, +Context, +AArgs, -XRef, 'pending'
             update_ac_evidence/6, % +Category, +Claim, +Context, +AArgs, +XRef, +Status
@@ -9,6 +9,7 @@
           ]).
 
 :- use_module(library(persistency)).
+:- use_module(library(filesex)).
 :- use_module(category).
 :- use_module('com/param').
 
@@ -53,22 +54,27 @@ attach_evidence_repository :-
 
 detach_evidence_repository :- db_detach.
 
-				% insert_ac_evidence(+Category, +Claim, +Context, +AArgs, +XRef, +Status)
+				% insert_ac_evidence(+Category, -NewCat, +Claim, +Context, +AArgs, +XRef, +Status)
 				% status must be 'pending'
+			    %%% CLEAN THIS HERE
 
 insert_ac_evidence(Category, Claim, Context, AArgs, XRef, 'pending') :-
-	ac_evidence(Category, Claim, Context, AArgs, XRef, _), !.
+	ac_evidence(Category, Claim, Context, AArgs, XRef, _),
+        !.
 
 insert_ac_evidence(Category, Claim, Context, AArgs, XRef, 'pending') :-
 	evidence_categories(Categories), union(Categories,[unknown],CategoriesWithUnk),
 	(	member(Category,CategoriesWithUnk)
 	->	true
 	;       % Category not a KB defined evidence category - see KB/EVIDENCE/categories.pl
-		CategoryP = provisional(Category),
-		member(CategoryP,Categories)
+                (       evidence_category(provisional, _, _, _)
+                ->      % provisional permitted
+		        log_provisional_category(Category, Claim, Context, AArgs)
+
+		;       !, fail % category not a KB defined evidence category nor is provisional allowed
+                )
         ),
-%	;	!, fail % Category not a KB defined evidence category - see KB/EVIDENCE/categories.pl
-%	),
+        % KB/EVIDENCE/categories.pl either defines Category or permits provisional categories
 	with_mutex( evidence,
 		    ( ac_evidence_counter(LastXRef),
 		      retractall_ac_evidence_counter(_),
@@ -83,6 +89,7 @@ insert_ac_evidence(Category, Claim, Context, AArgs, XRef, 'pending') :-
 	write_term(Output, pending, [fullstop(true)]),
 	close(Output).
 
+
 				% update ac_evidence claims (repository status only)
 
 update_ac_evidence(Category, Claim, Context, AArgs, XRef, Status) :-
@@ -92,6 +99,21 @@ update_ac_evidence(Category, Claim, Context, AArgs, XRef, Status) :-
         with_mutex(evidence,
                    ( retractall_ac_evidence(Category, Claim, Context, AArgs, XRef, _),
 		     assert_ac_evidence(Category, Claim, Context, AArgs, XRef, Status))).
+
+
+			        % log_provisional_category(+CatName, +Claim, +Context, +AArgs)
+			        % log use of an undefined evidence category that was
+			        % mapped to provisional(CatName)
+
+log_provisional_category(CatName, Claim, Context, AArgs) :-
+	param:log_directory(LogDir0), atom_concat('../', LogDir0, LogDir), make_directory_path(LogDir),
+	atomic_list_concat([LogDir, '/provisional_evidence.log'], LogFile),
+        open(LogFile, append, S), % was append
+        write_term(S,
+		   provisional_evidence(CatName, Claim, Context, AArgs),
+		   [fullstop(true), nl(true)]
+		   ),
+	close(S).
 
 
 				% update_ongoing

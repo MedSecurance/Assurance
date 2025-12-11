@@ -2,6 +2,7 @@
 
 :- use_module(evidence).
 :- use_module(category).
+:- use_module(com/param).
 
 init :-
 	validation_agents(Agents), param:kb_agents_dir(KBAdir),
@@ -15,21 +16,30 @@ init :-
 		).
 
 				% evidence_validate(+Category, +Claim, +Context, +AArgs, +XRef)
+evidence_validate(unknown, _, _, _, _) :- !, true. % do nothing for 'unknown'
+
 evidence_validate(Category, Claim, Context, AArgs, XRef) :-
-	atom(Category), evidence_categories(Categories), member(Category, Categories), !,
+	atom(Category), evidence_categories(Categories), member(Category, Categories),
+        !,
 	evidence_category(Category, _CatDesc, _CatType, CatValidationMethod),
 	validation_method(CatValidationMethod, _ValDesc, CatAgent), % lookup agent for category
 	param:ev_validate_extension(Validate), % convention is '_validate'
 	atomic_concat(Category, Validate, CatValidate), % form validate pred name
 	ValidateGoal =.. [CatValidate,Claim,Context,AArgs,XRef,Status],
 	% calling CatAgent:CatValidate(+Claim, +Context, +AArgs, +XRef, -Status)
-	call(CatAgent:ValidateGoal),
-	update_evidence_status(Category, Claim, Context, AArgs, XRef, Status), !.
+	(       call(CatAgent:ValidateGoal)
+	->      true
+	;       % issue a warning for failed agent call
+		format('Warning: validation for category ~q failed in agent ~q~n', [Category, CatAgent]),
+		Status = pending
+	),
+	update_evidence_status(Category, Claim, Context, AArgs, XRef, Status),
+        !.
 
-evidence_validate(unknown, _, _, _, _) :- !, true. % do nothing for 'unknown'
-
-evidence_validate(_Category, _Claim, _Context, _AArgs, _XRef) :-
+evidence_validate(Category, _Claim, _Context, _AArgs, _XRef) :-
 				% undefined evidence category or other error handling here
+				% perhaps a log entry
+        format('Warning: unknown category ~q in evidence_validate/5~n',Category),
 	true.
 
 				% update_evidence_status(+Category, +Claim, +Context, +AArgs, +XRef, +Status)

@@ -22,7 +22,6 @@
 % :- use_module(agents/certificate_agent).
 % :- use_module(agents/ocra_agent).
 % :- use_module(agents/ichecker_agent).
-% :- use_module(agent).  % obsolete, now using agent_interface
 :- use_module(agent_interface).
 
 :- use_module(instantiate).

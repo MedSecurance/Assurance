@@ -73,7 +73,7 @@ aco_file_to_apl_file(ACOFile, APLFile) :-
     print_apl_messages(Messages),
     setup_call_cleanup(
         open(APLFile, write, Out),
-        print_apl_pattern(Out, Pattern),
+        ( print_apl_pattern(Out, Pattern), flush_output(Out) ),
         close(Out)
     ).
 
@@ -86,7 +86,7 @@ aco_file_to_apl_file_canon(ACOFile, APLFile) :-
     print_apl_messages(Messages),
     setup_call_cleanup(
         open(APLFile, write, Out),
-        print_apl_pattern(Out, Pattern),
+        ( print_apl_pattern(Out, Pattern), flush_output(Out) ),
         close(Out)
     ).
 

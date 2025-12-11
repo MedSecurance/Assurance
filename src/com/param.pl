@@ -17,7 +17,7 @@
 		  test_directory/1, patterns_directory/1, models_directory/1, log_directory/1,
 		  cases_repo_dir/1, evidence_repo_dir/1, cap_dir/1,
 		  prettyprint_tab/1,
-		  host_os/1, local_pdf_viewer/2,
+		  host_os/1,
                   server_port/1, etb_port/1, etb_api_port/1, erepo_api_port/1, arepo_api_port/1,
                   server_sleeptime/1, kb_token/1, repo_token/1, audit_token/1,
                   audit_logging/1, audit_stream/1, audit_record/1,
@@ -203,6 +203,7 @@ server_version('0.1').
 
 ac_repo_file('repository.pl').
 ev_repo_file('repository.pl').
+ou_repo_file('repository.pl').
 ev_status_file('status').
 ev_validate_extension('_validate').
 mod_policy_file('policy.pl').
@@ -210,6 +211,7 @@ mod_platform_file('platform.pl').
 mod_configuration_file('configuration.pl').
 mod_properties_dir('properties').
 kb_evidence_category_file('categories.pl').
+etb_log_file('etb_log.pl').
 
 % Key pathname components
 %
@@ -229,6 +231,7 @@ categories('CATEGORIES').	% Evidence Categories dir name
 repository('REPOSITORY').	% Base of the Repositories
 cases('CASES').			% Assurance Case Repository name
 evidence('EVIDENCE').		% Evidence Repository and Evidence KB dir name
+outlines('OUTLINES').           % Outlines Repository
 
 test_directory('TEST').
 patterns_directory('KB/PATTERNS').
@@ -237,12 +240,11 @@ workflows_directory('KB/WORKFLOWS').
 categories_directory('KB/CATEGORIES').
 evidence_directory('KB/EVIDENCE').
 agents_directory('KB/AGENTS').
-
 log_directory('RUNTIME/LOG').
 
 pattern_files( [ 'patterns_IoMT', 'patterns_ISO_81001', 'patterns_MILS' ] ).
 
-% Constructors for the primary runtime, KB and persistent storage area dir names
+% Constructors for the primary runtime, KB and persistent storage area dir and file names
 %
 cases_repo_dir(CasesDir) :- % used in assurance module
 	path_prefix(Pre), repository(Repository), cases(Cases),
@@ -251,6 +253,10 @@ cases_repo_dir(CasesDir) :- % used in assurance module
 evidence_repo_dir(EvidenceDir) :- % used in evidence module
 	path_prefix(Pre), repository(Repository), evidence(Evidence),
 	atomic_list_concat([Pre,Repository,Evidence],'/',EvidenceDir).
+
+outlines_repo_dir(OutlinesDir) :- % used in aco_processor module
+	path_prefix(Pre), repository(Repository), outlines(Outlines),
+	atomic_list_concat([Pre,Repository,Outlines],'/',OutlinesDir).
 
 cap_dir(CAPdir) :- % used in export module
 	path_prefix(Pre), cap(Cap),
@@ -271,6 +277,10 @@ kb_agents_dir(KBAdir) :-
 kb_evidence_dir(KBEdir) :-
 	path_prefix(Pre), kb(KB), evidence(Evidence),
 	atomic_list_concat([Pre,KB,Evidence],'/',KBEdir).
+
+log_file_name(LogFile) :-
+        path_prefix(Pre), log_directory(RUNTIME), etb_log_file(ETBlog),
+        atomic_list_concat([Pre,RUNTIME,ETBlog],'/',LogFile).
 
 % Misc values
 %
