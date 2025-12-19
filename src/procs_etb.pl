@@ -1,5 +1,32 @@
 % ETB-specific command procedures
 
+proc(show_aco_tests, [
+	shell('cat ../TEST/ACO/tiny_test.aco'),
+	echo('--------------------------------'),
+	aco_tree('../TEST/ACO/tiny_test.aco'),
+	echo('================================'),
+
+	shell('cat ../TEST/ACO/tiny_multi.aco'),
+	echo('--------------------------------'),
+	aco_tree('../TEST/ACO/tiny_multi.aco'),
+	echo('================================'),
+
+	shell('cat ../TEST/ACO/tiny_multi3.aco'),
+	echo('--------------------------------'),
+	aco_tree('../TEST/ACO/tiny_multi3.aco'),
+	echo('================================'),
+
+	shell('cat ../TEST/ACO/tiny_multi5.aco'),
+	echo('--------------------------------'),
+	aco_tree('../TEST/ACO/tiny_multi5.aco'),
+	echo('================================'),
+
+	shell('cat ../TEST/ACO/op_plane.aco'),
+	echo('--------------------------------'),
+	aco_tree('../TEST/ACO/op_plane.aco'),
+	echo('================================')
+	]).
+
 %%%%%%%%%%
 % Demonstration of ACO capabilities
 %   run these in ETB command interpreter by typing, e.g.:  proc(op_plane_ACO, step). (step through with Return key)

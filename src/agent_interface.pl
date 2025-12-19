@@ -52,9 +52,9 @@ evidence_validate(Category, Claim, Context, AArgs, XRef) :-
         unknown_category(Category),
         _{claim:Claim, context:Context, aargs:AArgs, xref:XRef}
     ),
-    % explicitly set provisional
+    % explicitly set status to provisional if provisional categories permitted
     (   evidence_category(provisional, _, _, _)
-    ->  update_evidence_status(provisional, Claim, Context, AArgs, XRef, provisional)
+    ->  update_evidence_status(Category, Claim, Context, AArgs, XRef, provisional)
     ;   true
     ).
 
@@ -89,7 +89,9 @@ evidence_validate(Category, Claim, Context, AArgs, XRef) :-
 update_evidence_status(Category, Claim, Context, AArgs, XRef, Status) :-
 	update_ac_evidence(Category, Claim, Context, AArgs, XRef, Status), % update evidence DB
 	param:evidence_repo_dir(RepoDir), param:ev_status_file(StatusFile),
-	atomic_list_concat([RepoDir, Category, XRef , StatusFile], '/', Filename),
+	atomic_list_concat([RepoDir, Category, XRef], '/', Dirname),
+	make_directory_path(Dirname),
+	atomic_list_concat([Dirname, StatusFile], '/', Filename),
 	open(Filename, write, Output),
 	write_term(Output, Status, [fullstop(true)]), % update status file
 	close(Output).
