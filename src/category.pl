@@ -18,7 +18,7 @@
 :- include('../KB/EVIDENCE/categories.pl').
 
 evidence_categories(Categories) :- var(Categories), !,
-	findall(Category, ( evidence_category(Category,_,_,_), Category \== provisional ), Categories).
+	findall(Category, evidence_category(Category,_,_,_), Categories).
 
 validation_agents(Agents) :- var(Agents), !,
 	findall(Agent, ( validation_agent(Agent,_,_), Agent \== undefined_agent ), Agents).

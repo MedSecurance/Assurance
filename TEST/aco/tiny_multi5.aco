@@ -1,0 +1,60 @@
+Case: Main — Demo
+
+Goal G0 Main:
+  Context C0 "Tiny multi-unit demo":
+    modules have top goals; evidence is leaf-only.
+  Strategy S0 "Decompose into security and operations":
+    Goal G1 "System preserves confidentiality and integrity":
+      Strategy S1 "Establish secure transport plus strong identity and access control":
+        Module M1 [secure_channel({Client},{Cloud})]:
+        Module M2 [authn_authz({User},{Service})]:
+    Goal G2 "System has basic operational readiness":
+      Strategy S2 "Ensure logging, backups, patching, and incident response":
+        Module M3 [ops_controls()]:
+
+Module: secure_channel(Client,Cloud)
+
+Goal G10 "Secure channel is established between Client and Cloud":
+  Strategy S10 "Use modern TLS and good certificate hygiene; observe anomalies":
+    Goal G11 "TLS configuration is strong and up to date":
+      Evidence E10 tlsPolicy: Enforce TLS 1.2+ (prefer 1.3), disable legacy ciphers, no downgrade.
+    Goal G12 "Certificates are valid and protected":
+      Evidence E11 certInventory: Inventory certificates, verify expiry, validate CA chain, protect private keys.
+    Goal G13 "Channel monitoring detects anomalies":
+      Strategy S13 "Use centralized logging and alerting":
+        Module M10 [logging()]:
+
+Module: authn_authz(User,Service)
+
+Goal G20 "Users are authenticated and authorized to use Service":
+  Strategy S20 "Strong authn plus least privilege with auditing":
+    Goal G21 "Authentication is robust against common attacks":
+      Evidence E20 authnMechanism: MFA for clinicians; secure tokens for apps; defend against replay and session fixation.
+    Goal G22 "Least privilege access control is applied":
+      Evidence E21 accessControl: Role- and attribute-based checks; deny by default; audit privileged actions.
+    Goal G23 "Authn/authz events are recorded":
+      Module M20 [logging()]:
+
+Module: logging()
+
+Goal G30 "Security-relevant events are logged and monitored":
+  Strategy S30 "Collect, protect, and review logs; generate alerts":
+    Goal G31 "Required events are captured":
+      Evidence E30 logEvents: Log auth attempts, authz decisions, config changes, admin actions, and key security events.
+    Goal G32 "Logs are protected from tampering":
+      Evidence E31 logIntegrity: Append-only storage, restricted access, retention policy, integrity checks.
+    Goal G33 "Alerts exist for suspicious patterns":
+      Evidence E32 alerting: Alert on repeated failures, unusual geo, privilege escalation, cert anomalies.
+
+Module: ops_controls()
+
+Goal G40 "Operational controls support secure, reliable service":
+  Strategy S40 "Backups, patching, and incident response with observability":
+    Goal G41 "Backups and restore readiness exist":
+      Evidence E40 backups: Periodic backups, restore drills, documented RTO/RPO targets.
+    Goal G42 "Security updates are managed":
+      Evidence E41 patching: Vulnerability monitoring, patch cadence, tracked remediation.
+    Goal G43 "Incident response process exists":
+      Evidence E42 incidentResponse: Runbooks, roles, escalation paths, post-incident review.
+    Goal G44 "Operational events are observable":
+      Module M40 [logging()]:

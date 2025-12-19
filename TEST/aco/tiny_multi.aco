@@ -1,0 +1,9 @@
+Case: Main — Demo
+
+Goal G0 Main:
+  Module M1 [foo({X},{Y})]:
+
+Module: foo(X,Y)
+Goal G1 FooBody:
+  Evidence E1 someEvidence:
+    something

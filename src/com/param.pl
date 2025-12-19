@@ -151,7 +151,7 @@ audit_token('audit_token').
 % (user_error by default). If audit_logging is 'file' then a file will
 % be opened and audit_stream set to the open file stream.
 
-audit_logging(file). % 'file' or 'on' or 'off'
+audit_logging(off). % 'file' or 'on' or 'off'
 audit_stream(user_error). % default stream for audit log (standard error)
 audit_selection([]). % currently selected set of events for audit generation
 audit_record('audit_log(~w, ~q, ~q, ~q).~n'). % format of the audit record [TS,Source,Event,EventData]

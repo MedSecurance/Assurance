@@ -11,7 +11,8 @@
 :- use_module(library(persistency)).
 :- use_module(library(filesex)).
 :- use_module(category).
-:- use_module('com/param').
+:- use_module(logging).
+:- use_module(com/param).
 
 % :- persistent ac_evidence(category:oneof([axiom,certificate,ichecker,ocra,hazard_log,risk_acceptance,unknown]),
 :- persistent ac_evidence(category:atom,
@@ -104,6 +105,24 @@ update_ac_evidence(Category, Claim, Context, AArgs, XRef, Status) :-
 			        % log use of an undefined evidence category that was
 			        % mapped to provisional(CatName)
 
+
+% enabling/disabling:
+% log_provisional_category(_, _, _, _) :- param:audit_logging(off), !.
+% log_provisional_category(CatName, Claim, Context, AArgs) :-
+%	logging:log_event(Level, Source, Event, Data).
+
+log_provisional_category(CatName, Claim, Context, AArgs) :-
+	logging:log_event(
+		warn,
+		evidence,
+		provisional_category_used(CatName),
+		_{
+			claim:   Claim,
+			context: Context,
+			aargs:   AArgs
+		}).
+					
+/*
 log_provisional_category(CatName, Claim, Context, AArgs) :-
 	param:log_directory(LogDir0), atom_concat('../', LogDir0, LogDir), make_directory_path(LogDir),
 	atomic_list_concat([LogDir, '/provisional_evidence.log'], LogFile),
@@ -113,6 +132,7 @@ log_provisional_category(CatName, Claim, Context, AArgs) :-
 		   [fullstop(true), nl(true)]
 		   ),
 	close(S).
+*/
 
 
 				% update_ongoing

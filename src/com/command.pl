@@ -7,6 +7,7 @@
 :- use_module(ui).
 :- use_module('../assurance').
 :- use_module(procs).
+:- use_module(logging).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % ETB, AC and EV tool modes of operation and available commands
@@ -142,6 +143,8 @@ syntax(set,						                      advanced).
 syntax(set(name),				                      advanced).
 syntax(set(name,value),				                  advanced).
 syntax(set_v(var,expr),					     basic).
+syntax(show_log,                        basic).
+syntax(show_log(filter),                basic).
 syntax(show_proc(proc_id),              basic).
 %syntax(show_proc(proc_id,mode),              basic).
 syntax(show_procs,                      basic).
@@ -180,6 +183,7 @@ semantics(script(F,Opt)) :- !, atom(F), atom(Opt),
 semantics(set(N)) :- !, atom(N).
 semantics(set(N,V)) :- !, atom(N), ground(V).
 semantics(set_v(V,E)) :- !, ground(E), var(V).
+semantics(show_log(F)) :- !, nonvar(F).
 semantics(show_proc(P)) :- !, atom(P).
 %semantics(show_proc(P,M)) :- !, atom(P), atom(M), member(M,[pp]).
 %semantics(show_procs(M)) :- !, atom(M), member(M,[pp]).
@@ -247,6 +251,13 @@ help(set, 'Settable: cache, debug, initialize, statusprt, self_test, regression_
 help(set_v, 'Set variable to expression.').
 help(set_v, 'Arg 1 is a logical variable.').
 help(set_v, 'Arg 2 is a ground expression.').
+
+help(show_log, 'With no argument show the full top-level ETB log.').
+help(show_log, 'Arg1 is one of: N (last N entries), provisional, LogTypess.').
+help(show_log, '  N: integer, show the last N entries.').
+help(show_log, '  provisional: show provisional evidence log entries.').
+help(show_log, '  name: log type identifier.').
+
 
 help(show_proc, 'Show a predefined command procedure.').
 help(show_proc, 'Arg1 is the id of the procedure.').
@@ -355,6 +366,10 @@ do(set(verbose,V)) :- (V == on ; V == off), !, param:setparam(verbose,V).
 do(set(P,V)) :- atom(P), ground(V), param:setparam(P,V), !.
 do(set(_,_)) :- !,
 	writeln('Unknown parameter name or illegal parameter value').
+
+do(show_log) :- !, logging:show_log.
+do(show_log(T)) :- !, logging:show_log(T).
+
 do(show_proc(P)) :- !, listing(proc(P,_)).
 do(show_procs) :- !,
 	procs:defined_procs(ProcSets),

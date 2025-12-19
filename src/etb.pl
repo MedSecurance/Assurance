@@ -28,7 +28,8 @@
 :- use_module(export).
 % :- use_module(etb_server).
 
-:- use_module('com/test').
+:- use_module(com/test).
+:- use_module(logging).
 
 :- include(etb_test).
 

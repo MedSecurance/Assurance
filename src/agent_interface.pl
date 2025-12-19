@@ -1,7 +1,9 @@
 :- module(agent_interface, [evidence_validate/5]).
 
+:- use_module(library(filesex)). % for make_directory_path/1
 :- use_module(evidence).
 :- use_module(category).
+:- use_module(logging).
 :- use_module(com/param).
 
 init :-
@@ -15,9 +17,48 @@ init :-
 			)
 		).
 
+
 				% evidence_validate(+Category, +Claim, +Context, +AArgs, +XRef)
+
 evidence_validate(unknown, _, _, _, _) :- !, true. % do nothing for 'unknown'
 
+evidence_validate(Category, Claim, Context, AArgs, XRef) :-
+    atom(Category), evidence_categories(Categories), member(Category, Categories),
+    !,
+    evidence_category(Category, _CatDesc, _CatType, CatValidationMethod),
+    validation_method(CatValidationMethod, _ValDesc, CatAgent), % lookup agent for category
+    param:ev_validate_extension(Validate), % convention is '_validate'
+    atomic_concat(Category, Validate, CatValidate), % form validate pred name
+    ValidateGoal =.. [CatValidate,Claim,Context,AArgs,XRef,Status],
+	% calling CatAgent:CatValidate(+Claim, +Context, +AArgs, +XRef, -Status)
+(   call(CatAgent:ValidateGoal)
+    ->  logging:log_event(info, evidence,
+                          validation_succeeded(Category),
+                          _{xref:XRef,status:Status})
+    ;   logging:log_event(warn, evidence,
+                          validation_failed(Category),
+                          _{xref:XRef}),
+        Status = pending
+    ),
+    update_evidence_status(Category, Claim, Context, AArgs, XRef, Status),
+    !.
+
+% Catch-all: unknown category / other cases
+evidence_validate(Category, Claim, Context, AArgs, XRef) :-
+    % Let insert_ac_evidence etc map this to provisional if allowed
+    logging:log_event(
+        warn,
+        evidence,
+        unknown_category(Category),
+        _{claim:Claim, context:Context, aargs:AArgs, xref:XRef}
+    ),
+    % explicitly set provisional
+    (   evidence_category(provisional, _, _, _)
+    ->  update_evidence_status(provisional, Claim, Context, AArgs, XRef, provisional)
+    ;   true
+    ).
+
+/*
 evidence_validate(Category, Claim, Context, AArgs, XRef) :-
 	atom(Category), evidence_categories(Categories), member(Category, Categories),
         !,
@@ -34,17 +75,16 @@ evidence_validate(Category, Claim, Context, AArgs, XRef) :-
 		Status = pending
 	),
 	update_evidence_status(Category, Claim, Context, AArgs, XRef, Status),
-        !.
+    !.
 
 evidence_validate(Category, Claim, Context, AArgs, XRef) :-
-				% undefined evidence category or other error handling here
-				% perhaps a log entry
-        % format('Warning: unknown category ~q in evidence_validate/5~n',Category),
-        % ValidationResult = provisional
+	% undefined evidence category or other error handling here
+	log_unknown_category(Category, Claim, Context, AArgs, XRef),
 	update_evidence_status(Category, Claim, Context, AArgs, XRef, provisional),
-	true.
+	!.
 
 				% update_evidence_status(+Category, +Claim, +Context, +AArgs, +XRef, +Status)
+*/
 
 update_evidence_status(Category, Claim, Context, AArgs, XRef, Status) :-
 	update_ac_evidence(Category, Claim, Context, AArgs, XRef, Status), % update evidence DB
@@ -60,3 +100,15 @@ load_agent(AgentFile) :-
 		format('Agent file ~q loaded~n',AgentFile)
 	;	format('Agent file ~q does not exist~n',AgentFile)
 	).
+
+log_unknown_category(Category, Claim, Context, AArgs, XRef) :-
+	param:log_directory(LogDir0),
+	% match the "../RUNTIME/LOG" convention used in evidence.pl
+	atom_concat('../', LogDir0, LogDir),
+	make_directory_path(LogDir),
+	atomic_list_concat([LogDir, '/unknown_evidence_category.log'], LogFile),
+	open(LogFile, append, S),
+	write_term(S,
+				unknown_evidence_category(Category, Claim, Context, AArgs, XRef),
+				[fullstop(true), nl(true)]),
+	close(S).
