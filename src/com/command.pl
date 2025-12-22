@@ -143,6 +143,7 @@ syntax(set,						                      advanced).
 syntax(set(name),				                      advanced).
 syntax(set(name,value),				                  advanced).
 syntax(set_v(var,expr),					     basic).
+syntax(shell(command),                 basic).
 syntax(show_log,                        basic).
 syntax(show_log(filter),                basic).
 syntax(show_proc(proc_id),              basic).
@@ -183,6 +184,7 @@ semantics(script(F,Opt)) :- !, atom(F), atom(Opt),
 semantics(set(N)) :- !, atom(N).
 semantics(set(N,V)) :- !, atom(N), ground(V).
 semantics(set_v(V,E)) :- !, ground(E), var(V).
+semantics(shell(Cmd)) :- !, atom(Cmd).
 semantics(show_log(F)) :- !, nonvar(F).
 semantics(show_proc(P)) :- !, atom(P).
 %semantics(show_proc(P,M)) :- !, atom(P), atom(M), member(M,[pp]).
@@ -251,6 +253,8 @@ help(set, 'Settable: cache, debug, initialize, statusprt, self_test, regression_
 help(set_v, 'Set variable to expression.').
 help(set_v, 'Arg 1 is a logical variable.').
 help(set_v, 'Arg 2 is a ground expression.').
+
+help(shell, 'Run a Unix shell command.').
 
 help(show_log, 'With no argument show the full top-level ETB log.').
 help(show_log, 'Arg1 is one of: N (last N entries), provisional, LogTypess.').
@@ -369,6 +373,8 @@ do(set(_,_)) :- !,
 
 do(show_log) :- !, logging:show_log.
 do(show_log(T)) :- !, logging:show_log(T).
+
+do(shell(Cmd)) :- !, shell(Cmd).
 
 do(show_proc(P)) :- !, listing(proc(P,_)).
 do(show_procs) :- !,
@@ -494,7 +500,7 @@ unimplemented_command :- param:msg_unimplemented_command(M), writeln(M).
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % read and validate a command:
 % execute a Prolog goal preceded by :- or ?-
-% or check whether a valid NGAC command
+% or check whether a valid command
 % return invalid if not found or fails checks
 %
 rd(Prompt,C) :-

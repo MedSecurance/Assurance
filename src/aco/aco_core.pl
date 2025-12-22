@@ -49,18 +49,25 @@ aco_core_parse(_SourceName, Raw,
     strip_shebang(RawLines, _ShebangInfo, Lines1),
     strip_line_comments(Lines1, Lines2),
     detect_indent_spec(Lines2, _DefaultIndentSpec, IndentSpec, Lines3, IndentMsg),
-    classify_lines(IndentSpec, Lines3, Classified0),
+    rewrite_inline_after_colon(IndentSpec, Lines3, Lines3b, RewriteMsgs),
+    classify_lines(IndentSpec, Lines3b, Classified0),
     extract_case_header(Classified0, CaseHeaderOpt, ClassifiedLines),
-    partition(class_is_relation, ClassifiedLines, RelLines, NonRelLines),
-    collect_headers_and_bodies(NonRelLines, Headers, BodyMsgs),
+
+    % NL relations are unit-scoped trailers. We first split out the relation section
+    % (if any) using *strict* syntactic recognition (no substring heuristics).
+    split_unit_relations(ClassifiedLines, NonRelLines, RelLines, RelMsgs1),
+
+    collect_headers_and_bodies(NonRelLines, Headers, BodyMsgs0),
+    append(RewriteMsgs, BodyMsgs0, BodyMsgs),
     build_nodes(Headers, Nodes0, NodeMsgs),
     build_edges_from_indent(Nodes0, TreeEdges, IndentMsgs),
 
-    % relation parsing returns edges directly
-    parse_relation_lines(RelLines, RelEdges, RelMsgs0),
-    RelMsgs1 = [],
+    % relation parsing is strict and requires that all referenced IDs are defined in this unit
+    known_ids_in_unit(Nodes0, KnownIds),
+    parse_relation_lines(RelLines, KnownIds, RelEdges, RelMsgs0),
 
-    append(TreeEdges, RelEdges, AllEdges).
+    append(TreeEdges, RelEdges, AllEdges),
+    !.
 
 % ----------------------------------------------------------------------
 % Public API (string -> APL terms + messages)
@@ -266,12 +273,100 @@ remove_trailing_dot(Line, Clean) :-
 
 class_is_relation(cl_relation(_, _)).
 
+
+% ----------------------------------------------------------------------
+% Canonicaliser convenience: rewrite header lines that have inline text
+% after the trailing ':' into the 2-line form required by the v1.2 spec.
+%
+% Example:
+%   Evidence E10 tlsPolicy: Enforce TLS 1.2+ ...
+% becomes:
+%   Evidence E10 tlsPolicy:
+%     Enforce TLS 1.2+ ...
+% ----------------------------------------------------------------------
+
+rewrite_inline_after_colon(IndentSpec, LinesIn, LinesOut, Messages) :-
+    indent_unit_string(IndentSpec, Unit),
+    rewrite_inline_after_colon_1(Unit, LinesIn, [], RevLines, [], RevMsgs),
+    reverse(RevLines, LinesOut),
+    reverse(RevMsgs, Messages).
+
+rewrite_inline_after_colon_1(_Unit, [], LinesAcc, LinesAcc, MsgsAcc, MsgsAcc).
+rewrite_inline_after_colon_1(Unit, [line(N,S0)|Rest], LinesAcc0, LinesAcc, MsgsAcc0, MsgsAcc) :-
+    (   rewrite_inline_after_colon_line(Unit, S0, S1, S2, TypeWord, InlineText)
+    ->  LinesAcc1 = [line(N,S2), line(N,S1)|LinesAcc0],
+        MsgsAcc1  = [rewrote_inline_after_colon(N, TypeWord, InlineText)|MsgsAcc0]
+    ;   LinesAcc1 = [line(N,S0)|LinesAcc0],
+        MsgsAcc1  = MsgsAcc0
+    ),
+    rewrite_inline_after_colon_1(Unit, Rest, LinesAcc1, LinesAcc, MsgsAcc1, MsgsAcc).
+
+% S0 is rewritten into S1 (header-only, ends with ':') and S2 (body line).
+rewrite_inline_after_colon_line(Unit, S0, S1, S2, TypeWord, InlineText) :-
+    string_codes(S0, Codes),
+    % Split into leading whitespace WS and the remainder Rest0.
+    % We must use phrase/3 here so Rest0 is returned as the remaining input;
+    % a DCG that "returns" the rest as a nonterminal will raise instantiation
+    % errors when Rest is a variable.
+    phrase(leading_ws(WS), Codes, Rest0),
+    string_codes(RestStr0, Rest0),
+    string_trim(RestStr0, RestTrim),
+    % do not touch explicit relation lines
+    \+ is_relation_text(RestTrim),
+    starts_with_node_type(RestTrim, TypeWord),
+    % split on the first ':' (outside of any attempt to parse quoted labels)
+    sub_string(RestTrim, BeforeLen, 1, AfterLen, ":"),
+    AfterLen > 0,
+    sub_string(RestTrim, 0, BeforeLen, _, Left0),
+    sub_string(RestTrim, _, AfterLen, 0, Right0),
+    string_trim(Right0, RightTrim),
+    RightTrim \= "",
+    string_trim(Left0, LeftTrim),
+    % rebuild: header-only line, plus an indented body line
+    format(string(S1), "~s~s:", [WS, LeftTrim]),
+    format(string(S2), "~s~s~s", [WS, Unit, RightTrim]),
+    InlineText = RightTrim.
+
+% leading whitespace (spaces or tabs) as codes
+leading_ws([C|Ws]) -->
+    [C],
+    { (code_type(C, space) ; C =:= 0'\t) },
+    !,
+    leading_ws(Ws).
+leading_ws([]) -->
+    [].
+
+starts_with_node_type(S, TypeWord) :-
+    (   sub_string(S, 0, _, _, "Goal ")          -> TypeWord = 'Goal'
+    ;   sub_string(S, 0, _, _, "Strategy ")      -> TypeWord = 'Strategy'
+    ;   sub_string(S, 0, _, _, "Context ")       -> TypeWord = 'Context'
+    ;   sub_string(S, 0, _, _, "Assumption ")    -> TypeWord = 'Assumption'
+    ;   sub_string(S, 0, _, _, "Justification ") -> TypeWord = 'Justification'
+    ;   sub_string(S, 0, _, _, "Evidence ")      -> TypeWord = 'Evidence'
+    ;   sub_string(S, 0, _, _, "Module ")        -> TypeWord = 'Module'
+    ),
+    !.
+
+indent_unit_string(indent_spec(N, space), Unit) :-
+    N > 0, !,
+    length(Chars, N),
+    maplist(=(' '), Chars),
+    string_chars(Unit, Chars).
+indent_unit_string(indent_spec(N, tab), Unit) :-
+    N > 0, !,
+    length(Codes, N),
+    maplist(=(0'	), Codes),
+    string_codes(Unit, Codes).
+indent_unit_string(_Other, "  ").  % fallback (should not happen)
+
+
 classify_lines(IndentSpec, Lines, Classified) :-
     maplist(classify_line(IndentSpec), Lines, Classified).
 
 classify_line(_IndentSpec, line(N, S), cl_blank(N)) :-
     ( S = "" ; S = " " ; S = "\t" ),
     !.
+
 classify_line(IndentSpec, line(N, S0), Class) :-
     string_codes(S0, Codes0),
     count_indent(IndentSpec, Codes0, Level, RestCodes),
@@ -282,8 +377,6 @@ classify_line(IndentSpec, line(N, S0), Class) :-
     ->  Class = cl_case(N, Title, Scope)
     ;   maybe_header(S, TypeAtom, IdOpt, LabelAtom)
     ->  Class = cl_header(N, Level, TypeAtom, IdOpt, LabelAtom)
-    ;   is_relation_text(S)
-    ->  Class = cl_relation(N, S)
     ;   Class = cl_body(N, Level, S)
     ).
 
@@ -359,23 +452,85 @@ split_title_scope(Content, Title, '') :-
    Label  = single token (no spaces)
 */
 
+
 maybe_header(S, TypeAtom, IdOpt, LabelAtom) :-
+    % Accept headers with possibly-quoted multi-word labels, e.g.:
+    %   Context C0 "Tiny multi-unit demo":
+    %   Strategy S0 "Decompose the top claim into security and operations":
+    % Also accept (robustly) unquoted multi-word labels by joining tokens,
+    % but canonicalisation should rewrite those into conformant quoted form.
     strip_trailing_spaces(S, S1),
     sub_string(S1, 0, _, After, Prefix),
     sub_string(S1, _, After, 0, ":"),
     !,
-    atom_string(Atom, Prefix),
-    atomic_list_concat(Tokens, ' ', Atom),
-    Tokens = [TypeToken|Rest],
+    tokenize_header_prefix(Prefix, Tokens),
+    Tokens = [TypeToken|Rest0],
     header_type(TypeToken, TypeAtom),
-    (   Rest = [IdToken0, LabelToken]
+    (   Rest0 = []
+    ->  % ill-formed; treat as not-a-header by failing
+        fail
+    ;   Rest0 = [Only]
+    ->  % No explicit ID
+        IdOpt = none,
+        LabelAtom = Only
+    ;   Rest0 = [IdToken0|LabelTokens]
     ->  strip_trailing_comma(IdToken0, IdClean),
-        IdOpt     = some(IdClean),
-        LabelAtom = LabelToken
-    ;   Rest = [LabelToken]
-    ->  IdOpt     = none,
-        LabelAtom = LabelToken
+        (   valid_id_token(IdClean)
+        ->  IdOpt = some(IdClean),
+            join_tokens_as_label(LabelTokens, LabelAtom)
+        ;   % No ID; label is everything after the type
+            IdOpt = none,
+            join_tokens_as_label(Rest0, LabelAtom)
+        )
     ).
+
+% Tokenize the part before the ':' in a header line.
+% - Splits on whitespace unless inside double quotes.
+% - Supports simple escapes inside quotes: \" and \\.
+% - Removes surrounding quotes from quoted tokens.
+tokenize_header_prefix(Prefix0, Tokens) :-
+    string_trim(Prefix0, Prefix),
+    string_codes(Prefix, Codes),
+    tokenize_codes(Codes, outside, [], [], Rev),
+    reverse(Rev, Tokens).
+
+tokenize_codes([], _State, Curr, Acc, Out) :-
+    flush_token(Curr, Acc, Out).
+tokenize_codes([C|Rest], State, Curr, Acc, Out) :-
+    (   State = outside,
+        char_type(C, space)
+    ->  flush_token(Curr, Acc, Acc1),
+        tokenize_codes(Rest, outside, [], Acc1, Out)
+    ;   State = outside,
+        C == 0'"             % begin quote
+    ->  tokenize_codes(Rest, inside, Curr, Acc, Out)
+    ;   State = inside,
+        C == 0'\\,            % escape - added second backslash
+        Rest = [Next|Rest2],
+        ( Next == 0'" ; Next == 0'\\)
+    ->  tokenize_codes(Rest2, inside, [Next|Curr], Acc, Out)
+    ;   State = inside,
+        C == 0'"             % end quote
+    ->  tokenize_codes(Rest, outside, Curr, Acc, Out)
+    ;   % ordinary char
+        tokenize_codes(Rest, State, [C|Curr], Acc, Out)
+    ).
+
+flush_token([], Acc, Acc) :- !.
+flush_token(CurrRev, Acc, [Atom|Acc]) :-
+    reverse(CurrRev, Codes),
+    Codes \= [],
+    string_codes(S, Codes),
+    atom_string(Atom, S).
+
+join_tokens_as_label([], '').
+join_tokens_as_label([One], One) :- !.
+join_tokens_as_label(Toks, LabelAtom) :-
+    maplist(atom_string, Toks, Strs),
+    atomic_list_concat(Strs, " ", LabelStr),
+    atom_string(LabelAtom, LabelStr).
+
+
 
 header_type('Goal',          goal).
 header_type('Strategy',      strategy).
@@ -384,13 +539,6 @@ header_type('Assumption',    assumption).
 header_type('Justification', justification).
 header_type('Evidence',      evidence).
 header_type('Module',        module).
-
-is_relation_text(S) :-
-    (   parse_supported_by(S, _)
-    ;   parse_supports(S, _)
-    ;   parse_in_context(S, _)
-    ;   parse_context_for(S, _)
-    ).
 
 % ----------------------------------------------------------------------
 % Collect headers and their bodies
@@ -535,120 +683,359 @@ edge_for_type(Type, ParentId, Id, _Line, supported_by(ParentId, Id)) :-
    C0 provides context for G0.
 */
 
-parse_relation_lines(RelLines, Edges, Messages) :-
-    maplist(parse_relation_line, RelLines, Results),
+
+% ----------------------------------------------------------------------
+% Unit-scoped NL relation section handling
+% ----------------------------------------------------------------------
+
+% split_unit_relations(+ClassifiedLines, -NonRelLines, -RelLines, -Messages)
+%
+% Relation sentences (if present) form a trailer section for the unit.
+% Once the first relation sentence is encountered, subsequent non-blank
+% lines are expected to be relation sentences as well; anything else is
+% reported and ignored.
+%
+% NOTE: We do not attempt semantic checks here (defined IDs). Those occur
+% later in parse_relation_lines/4 once Nodes are available.
+split_unit_relations(ClassifiedLines, NonRelLines, RelLines, Messages) :-
+    split_unit_relations(ClassifiedLines, before, [], NonRelRev, [], RelRev, [], MsgRev),
+    reverse(NonRelRev, NonRelLines),
+    reverse(RelRev, RelLines),
+    reverse(MsgRev, Messages).
+
+split_unit_relations([], _State, NonRelAcc, NonRelAcc, RelAcc, RelAcc, MsgAcc, MsgAcc) :- !.
+split_unit_relations([CL|Rest], State, NonRelAcc0, NonRelAcc, RelAcc0, RelAcc, MsgAcc0, MsgAcc) :-
+    (   State == before
+    ->  (   is_relation_candidate(CL, Rel)
+        ->  split_unit_relations(Rest, in_rel, NonRelAcc0, NonRelAcc, [Rel|RelAcc0], RelAcc, MsgAcc0, MsgAcc)
+        ;   split_unit_relations(Rest, before, [CL|NonRelAcc0], NonRelAcc, RelAcc0, RelAcc, MsgAcc0, MsgAcc)
+        )
+    ;   % State == in_rel
+        (   CL = cl_blank(_)
+        ->  split_unit_relations(Rest, in_rel, NonRelAcc0, NonRelAcc, RelAcc0, RelAcc, MsgAcc0, MsgAcc)
+        ;   is_relation_candidate(CL, Rel)
+        ->  split_unit_relations(Rest, in_rel, NonRelAcc0, NonRelAcc, [Rel|RelAcc0], RelAcc, MsgAcc0, MsgAcc)
+        ;   relation_section_unexpected_line(CL, Msg),
+            split_unit_relations(Rest, in_rel, NonRelAcc0, NonRelAcc, RelAcc0, RelAcc, [Msg|MsgAcc0], MsgAcc)
+        )
+    ).
+
+% A relation candidate must be a level-0 body line that matches a strict relation form.
+is_relation_candidate(cl_body(N, 0, S0), cl_relation(N, S)) :-
+    string_trim(S0, S),
+    S \= "",
+    is_relation_text(S),
+    !.
+is_relation_candidate(_, _) :- fail.
+
+relation_section_unexpected_line(cl_header(N, _Level, Type, _IdOpt, _Label), relation_unexpected_header_in_relation_section(N, Type)).
+relation_section_unexpected_line(cl_body(N, Level, S0), relation_unexpected_nonrelation_in_relation_section(N, Level, S)) :-
+    string_trim(S0, S).
+relation_section_unexpected_line(Other, relation_unexpected_line_in_relation_section(Other)).
+
+known_ids_in_unit(Nodes, KnownIds) :-
+    findall(Id, member(node(Id, _Type, _Label, _Body, _Level, _Line), Nodes), Ids0),
+    sort(Ids0, KnownIds).
+
+
+parse_relation_lines(RelLines, KnownIds, Edges, Messages) :-
+    maplist(parse_relation_line(KnownIds), RelLines, Results),
     partition(is_relation_error, Results, ErrorTerms, EdgeLists),
     Messages = ErrorTerms,
     flatten(EdgeLists, Edges).
 
 is_relation_error(relation_parse_error(_, _)).
+is_relation_error(relation_undefined_ids(_, _, _)).
 
-parse_relation_line(cl_relation(N, S), EdgesOrErr) :-
-    (   parse_supported_by(S, Es)
-    ->  EdgesOrErr = Es
-    ;   parse_supports(S, Es)
-    ->  EdgesOrErr = Es
-    ;   parse_in_context(S, Es)
-    ->  EdgesOrErr = Es
-    ;   parse_context_for(S, Es)
-    ->  EdgesOrErr = Es
+parse_relation_line(KnownIds, cl_relation(N, S0), EdgesOrErr) :-
+    string_trim(S0, S),
+    (   relation_supported_by_checked(KnownIds, S, GoalIds, SupporterIds, Undef)
+    ->  (   Undef == [],
+            GoalIds \= [],
+            SupporterIds \= []
+        ->  findall(supported_by(Goal, Supporter),
+                    ( member(Goal, GoalIds),
+                      member(Supporter, SupporterIds)
+                    ),
+                    Edges),
+            EdgesOrErr = Edges
+        ;   sort(Undef, UndefSorted),
+            EdgesOrErr = relation_undefined_ids(N, UndefSorted, S)
+        )
+    ;   relation_supports_checked(KnownIds, S, SupporterIds, GoalIds, Undef)
+    ->  (   Undef == [],
+            GoalIds \= [],
+            SupporterIds \= []
+        ->  findall(supported_by(Goal, Supporter),
+                    ( member(Goal, GoalIds),
+                      member(Supporter, SupporterIds)
+                    ),
+                    Edges),
+            EdgesOrErr = Edges
+        ;   sort(Undef, UndefSorted),
+            EdgesOrErr = relation_undefined_ids(N, UndefSorted, S)
+        )
+    ;   relation_in_context_checked(KnownIds, S, GoalIds, CtxIds, Undef)
+    ->  (   Undef == [],
+            GoalIds \= [],
+            CtxIds \= []
+        ->  findall(in_context_of(Goal, Ctx),
+                    ( member(Goal, GoalIds),
+                      member(Ctx, CtxIds)
+                    ),
+                    Edges),
+            EdgesOrErr = Edges
+        ;   sort(Undef, UndefSorted),
+            EdgesOrErr = relation_undefined_ids(N, UndefSorted, S)
+        )
+    ;   relation_context_for_checked(KnownIds, S, CtxIds, GoalIds, Undef)
+    ->  (   Undef == [],
+            GoalIds \= [],
+            CtxIds \= []
+        ->  findall(in_context_of(Goal, Ctx),
+                    ( member(Goal, GoalIds),
+                      member(Ctx, CtxIds)
+                    ),
+                    Edges),
+            EdgesOrErr = Edges
+        ;   sort(Undef, UndefSorted),
+            EdgesOrErr = relation_undefined_ids(N, UndefSorted, S)
+        )
     ;   EdgesOrErr = relation_parse_error(N, S)
     ).
 
-parse_supported_by(S0, Edges) :-
+% Checked relation parsers
+%
+% These parsers avoid constructing bogus edges by:
+%   (1) only operating on strict relation sentence templates, and
+%   (2) extracting IDs by intersecting tokens with KnownIds.
+%
+% They return:
+%   - Parsed IDs (GoalIds / SupporterIds / CtxIds)
+%   - Undef: any non-separator tokens that were *not* found in KnownIds
+
+relation_supported_by_checked(KnownIds, S0, GoalIds, SupporterIds, Undef) :-
     string_trim(S0, S1),
-    (   sub_string(S1, _, _, _, " supported by ")
-    ;   sub_string(S1, _, _, _, " supported by")
-    ),
-    !,
     strip_final_dot(S1, NoDot),
     split_string(NoDot, " ", " ", Tokens0),
     exclude(=(""), Tokens0, Tokens),
     (   append(LHSTokens, ["is","supported","by"|RHSTokens], Tokens)
     ;   append(LHSTokens, ["are","supported","by"|RHSTokens], Tokens)
     ),
-    ids_from_list(LHSTokens, LHSIds),
-    ids_from_list(RHSTokens, RHSIds),
-    LHSIds \= [], RHSIds \= [],
-    findall(supported_by(Goal, Support),
-            ( member(Goal,   LHSIds),
-              member(Support, RHSIds)
-            ),
-            Edges).
+    parse_id_tokens(KnownIds, LHSTokens, GoalIds, Undef0),
+    parse_id_tokens(KnownIds, RHSTokens, SupporterIds, Undef1),
+    append(Undef0, Undef1, Undef),
+    (GoalIds \= [] ; SupporterIds \= []),
+    !.
 
-parse_supports(S0, Edges) :-
+relation_supports_checked(KnownIds, S0, SupporterIds, GoalIds, Undef) :-
     string_trim(S0, S1),
-    (   sub_string(S1, _, _, _, " support ")
-    ;   sub_string(S1, _, _, _, " supports ")
-    ),
-    !,
     strip_final_dot(S1, NoDot),
     split_string(NoDot, " ", " ", Tokens0),
     exclude(=(""), Tokens0, Tokens),
     (   append(LHSTokens, ["support"|RHSTokens],  Tokens)
     ;   append(LHSTokens, ["supports"|RHSTokens], Tokens)
     ),
-    ids_from_list(LHSTokens, SupporterIds),
-    ids_from_list(RHSTokens, GoalIds),
-    SupporterIds \= [], GoalIds \= [],
-    findall(supported_by(Goal, Supporter),
-            ( member(Goal,     GoalIds),
-              member(Supporter, SupporterIds)
-            ),
-            Edges).
+    parse_id_tokens(KnownIds, LHSTokens, SupporterIds, Undef0),
+    parse_id_tokens(KnownIds, RHSTokens, GoalIds, Undef1),
+    append(Undef0, Undef1, Undef),
+    (SupporterIds \= [] ; GoalIds \= []),
+    !.
 
-parse_in_context(S0, Edges) :-
+relation_in_context_checked(KnownIds, S0, GoalIds, CtxIds, Undef) :-
     string_trim(S0, S1),
-    sub_string(S1, _, _, _, "in context of"),
-    !,
     strip_final_dot(S1, NoDot),
     split_string(NoDot, " ", " ", Tokens0),
     exclude(=(""), Tokens0, Tokens),
-    (   append(LHSTokens, ["is","in","context","of"|RHSTokens],  Tokens)
+    (   append(LHSTokens, ["is","in","context","of"|RHSTokens], Tokens)
     ;   append(LHSTokens, ["are","in","context","of"|RHSTokens], Tokens)
     ),
-    ids_from_list(LHSTokens, GoalIds),
-    ids_from_list(RHSTokens, CtxIds),
-    GoalIds \= [], CtxIds \= [],
-    findall(in_context_of(Goal, Ctx),
-            ( member(Goal, GoalIds),
-              member(Ctx,  CtxIds)
-            ),
-            Edges).
+    parse_id_tokens(KnownIds, LHSTokens, GoalIds, Undef0),
+    parse_id_tokens(KnownIds, RHSTokens, CtxIds, Undef1),
+    append(Undef0, Undef1, Undef),
+    (GoalIds \= [] ; CtxIds \= []),
+    !.
 
-parse_context_for(S0, Edges) :-
+relation_context_for_checked(KnownIds, S0, CtxIds, GoalIds, Undef) :-
     string_trim(S0, S1),
-    sub_string(S1, _, _, _, "context for"),
-    !,
+    strip_final_dot(S1, NoDot),
+    split_string(NoDot, " ", " ", Tokens0),
+    exclude(=(""), Tokens0, Tokens),
+    (   append(LHSTokens, ["is","context","for"|RHSTokens], Tokens)
+    ;   append(LHSTokens, ["are","context","for"|RHSTokens], Tokens)
+    ),
+    parse_id_tokens(KnownIds, LHSTokens, CtxIds, Undef0),
+    parse_id_tokens(KnownIds, RHSTokens, GoalIds, Undef1),
+    append(Undef0, Undef1, Undef),
+    (CtxIds \= [] ; GoalIds \= []),
+    !.
+
+parse_id_tokens(KnownIds, Tokens, Ids, Unknowns) :-
+    findall(Id,
+        ( member(T0, Tokens),
+          normalize_relation_token(T0, T),
+          T \= "",
+          atom_string(Id, T),
+          memberchk(Id, KnownIds)
+        ),
+        Ids0),
+    findall(Unknown,
+        ( member(T0, Tokens),
+          normalize_relation_token(T0, T),
+          T \= "",
+          atom_string(Unknown, T),
+          \+ memberchk(Unknown, KnownIds)
+        ),
+        Unknowns0),
+    sort(Ids0, Ids),
+    sort(Unknowns0, Unknowns).
+
+
+% ----------------------------------------------------------------------
+% Strict relation syntax recognition (no substring heuristics)
+% ----------------------------------------------------------------------
+
+is_relation_text(S0) :-
+    string_trim(S0, S),
+    (   relation_supported_by_raw(S, _GoalIds, _SupporterIds)
+    ;   relation_supports_raw(S, _SupporterIds, _GoalIds)
+    ;   relation_in_context_raw(S, _GoalIds, _CtxIds)
+    ;   relation_context_for_raw(S, _CtxIds, _GoalIds)
+    ),
+    !.
+
+relation_supported_by_raw(S0, GoalIds, SupporterIds) :-
+    string_trim(S0, S1),
+    strip_final_dot(S1, NoDot),
+    split_string(NoDot, " ", " ", Tokens0),
+    exclude(=(""), Tokens0, Tokens),
+    (   append(LHSTokens, ["is","supported","by"|RHSTokens], Tokens)
+    ;   append(LHSTokens, ["are","supported","by"|RHSTokens], Tokens)
+    ),
+    ids_from_tokens(LHSTokens, GoalIds),
+    ids_from_tokens(RHSTokens, SupporterIds),
+    GoalIds \= [],
+    SupporterIds \= [].
+
+% Interprets “X supports Y” as: Y is supported by X (i.e., supported_by(Y, X)).
+relation_supports_raw(S0, SupporterIds, GoalIds) :-
+    string_trim(S0, S1),
+    strip_final_dot(S1, NoDot),
+    split_string(NoDot, " ", " ", Tokens0),
+    exclude(=(""), Tokens0, Tokens),
+    (   append(LHSTokens, ["support"|RHSTokens],  Tokens)
+    ;   append(LHSTokens, ["supports"|RHSTokens], Tokens)
+    ),
+    ids_from_tokens(LHSTokens, SupporterIds),
+    ids_from_tokens(RHSTokens, GoalIds),
+    GoalIds \= [],
+    SupporterIds \= [].
+
+relation_in_context_raw(S0, GoalIds, CtxIds) :-
+    string_trim(S0, S1),
+    strip_final_dot(S1, NoDot),
+    split_string(NoDot, " ", " ", Tokens0),
+    exclude(=(""), Tokens0, Tokens),
+    append(LHSTokens, ["is","in","context","of"|RHSTokens], Tokens),
+    ids_from_tokens(LHSTokens, GoalIds),
+    ids_from_tokens(RHSTokens, CtxIds),
+    GoalIds \= [],
+    CtxIds \= [].
+
+relation_context_for_raw(S0, CtxIds, GoalIds) :-
+    string_trim(S0, S1),
     strip_final_dot(S1, NoDot),
     split_string(NoDot, " ", " ", Tokens0),
     exclude(=(""), Tokens0, Tokens),
     (   append(LHSTokens, ["provides","context","for"|RHSTokens], Tokens)
     ;   append(LHSTokens, ["provide","context","for"|RHSTokens],  Tokens)
     ),
-    ids_from_list(LHSTokens, CtxIds),
-    ids_from_list(RHSTokens, GoalIds),
-    CtxIds \= [], GoalIds \= [],
-    findall(in_context_of(Goal, Ctx),
-            ( member(Goal, GoalIds),
-              member(Ctx,  CtxIds)
-            ),
-            Edges).
+    ids_from_tokens(LHSTokens, CtxIds),
+    ids_from_tokens(RHSTokens, GoalIds),
+    CtxIds \= [],
+    GoalIds \= [].
 
-ids_from_list(Tokens, Ids) :-
-    include(valid_id_token, Tokens, CleanTokens),
-    maplist(strip_trailing_comma, CleanTokens, Ids).
+% ----------------------------------------------------------------------
+% Token → ID extraction and defined-ID checking
+% ----------------------------------------------------------------------
 
-valid_id_token(Token) :-
-    Token \= "and",
-    sub_string(Token, 0, 1, _, First),
-    char_type(First, alpha).
+ids_from_tokens(Tokens, Ids) :-
+    findall(Id,
+        ( member(T0, Tokens),
+          normalize_relation_token(T0, T),
+          T \= "",
+          atom_string(Id, T)
+        ),
+        Ids0),
+    sort(Ids0, Ids).
 
-strip_trailing_comma(Token, Clean) :-
-    ( sub_string(Token, _, 1, 0, ",")
-    -> sub_string(Token, 0, _, 1, Clean)
-    ;  Clean = Token
+normalize_relation_token(T0, T) :-
+    strip_trailing_punct(T0, T1),
+    string_trim(T1, T2),
+    (   T2 == ""
+    ->  T = ""
+    ;   T2 == "and"
+    ->  T = ""
+    ;   T = T2
     ).
+
+strip_trailing_punct(Token0, Clean) :-
+    % remove trailing commas/colons (final dot is handled earlier)
+    ( sub_string(Token0, _, 1, 0, ",")
+    -> sub_string(Token0, 0, _, 1, T1)
+    ;  T1 = Token0
+    ),
+    ( sub_string(T1, _, 1, 0, ":")
+    -> sub_string(T1, 0, _, 1, Clean)
+    ;  Clean = T1
+    ).
+
+
+
+% strip_trailing_comma(+Token0, -Clean)
+strip_trailing_comma(Token0, Clean) :-
+    ( sub_string(Token0, _, 1, 0, ",")
+    -> sub_string(Token0, 0, _, 1, Clean)
+    ;  Clean = Token0
+    ).
+
+% valid_id_token(+TokenString)
+%
+% This is a *lexical* check used only to disambiguate node headers of the form:
+%   "Goal <Id> <Label>:"
+% from:
+%   "Goal <Label>:"
+%
+% It is intentionally permissive: it accepts common ID forms including dotted
+% canonical IDs, underscores, and hyphens, but rejects tokens that clearly
+% cannot be IDs in this grammar (empty tokens or tokens containing whitespace).
+valid_id_token(S) :-
+    % Accept either a string or an atom token.
+    (   string(S)
+    ->  T = S
+    ;   atom(S)
+    ->  atom_string(S, T)
+    ),
+    T \= "",
+    \+ sub_string(T, _, 1, _, " "),
+    \+ sub_string(T, _, 1, _, "\t"),
+    % Disallow obvious header terminators inside the token.
+    \+ sub_string(T, _, 1, _, ":"),
+    % Disallow a trailing ':' (already handled by strip_trailing_punct/2 in other contexts).
+    \+ sub_string(T, _, 1, 0, ":"),
+    % Require at least one alphanumeric character.
+    string_codes(T, Codes),
+    member(C, Codes),
+    code_type(C, alnum),
+    !.
+
+check_defined_ids(_Known, [], [], []) :- !.
+check_defined_ids(KnownIds, [Id|Rest], [Id|Keep], Undef) :-
+    memberchk(Id, KnownIds),
+    !,
+    check_defined_ids(KnownIds, Rest, Keep, Undef).
+check_defined_ids(KnownIds, [Id|Rest], Keep, [Id|Undef]) :-
+    check_defined_ids(KnownIds, Rest, Keep, Undef).
 
 % ----------------------------------------------------------------------
 % undeveloped nodes + statistics (with Evidence)
@@ -696,15 +1083,20 @@ compute_undeveloped_and_stats(
     findall(1, member(in_context_of(_, _), RelEdges), LRelCtx),
     length(LRelCtx, NumRelContexts),
 
-    % Cross-branch edges (explicit relations that don't follow the tree)
+    % Cross-branch edges (explicit relations not already implied by indentation):
+    %   Count only *explicit* relation edges that are not already implied by
+    %   indentation (TreeEdges). This prevents structural supported_by /
+    %   in_context_of edges (from indentation) from being double-counted.
+    exclude({TreeEdges}/[E]>>memberchk(E, TreeEdges), RelEdges, RelOnlyEdges),
     findall(E,
-        ( member(E, RelEdges),
+        ( member(E, RelOnlyEdges),
           ( E = supported_by(P, C)
           ; E = in_context_of(P, C)
           ),
-          \+ descendant(P, C, TreeEdges)
+          \+ reachable_in_tree(P, C, TreeEdges)
         ),
-        CrossEdges),
+        CrossEdges0),
+    sort(CrossEdges0, CrossEdges),
     length(CrossEdges, NumCrossRelations),
 
     append(UndevGoals, UndevModules, UndevelopedMsgs),
@@ -734,16 +1126,26 @@ count_nodes_of_type(Type, Nodes, Count) :-
 
 node_of_type(Type, node(_, Type, _, _, _, _)).
 
-descendant(Parent, Child, TreeEdges) :-
-    descendant(Parent, Child, TreeEdges, []).
+% reachable_in_tree(+Parent, +Child, +TreeEdges)
+% True if Child is reachable from Parent following indentation-derived tree edges.
+reachable_in_tree(Parent, Child, TreeEdges) :-
+    reachable_in_tree_(Parent, Child, TreeEdges, [Parent]).
 
-descendant(Parent, Child, Edges, _Visited) :-
-    member(supported_by(Parent, Child), Edges),
+reachable_in_tree_(Parent, Child, TreeEdges, _Visited) :-
+    tree_edge(Parent, Child, TreeEdges),
     !.
-descendant(Parent, Child, Edges, Visited) :-
-    member(supported_by(Parent, Mid), Edges),
-    \+ member(Mid, Visited),
-    descendant(Mid, Child, Edges, [Mid|Visited]).
+reachable_in_tree_(Parent, Child, TreeEdges, Visited) :-
+    tree_edge(Parent, Mid, TreeEdges),
+    \+ memberchk(Mid, Visited),
+    reachable_in_tree_(Mid, Child, TreeEdges, [Mid|Visited]).
+
+tree_edge(P, C, TreeEdges) :-
+    (   memberchk(supported_by(P, C), TreeEdges)
+    ;   memberchk(in_context_of(P, C), TreeEdges)
+    ).
+
+cycle_detected(P, C, TreeEdges) :-
+    reachable_in_tree(C, P, TreeEdges).
 
 % ----------------------------------------------------------------------
 % hierarchical ID analysis and consistency checks
@@ -867,7 +1269,7 @@ map_id(Id, IdMap, CanonId) :-
 indent_prefix(indent_spec(Width, space), Level, Prefix) :-
     Count is Width * Level,
     length(Codes, Count),
-    maplist(=(0' ), Codes),
+    maplist(=(0' ), Codes), % all spaces
     string_codes(Prefix, Codes).
 indent_prefix(indent_spec(_Width, tab), Level, Prefix) :-
     length(Codes, Level),
@@ -964,3 +1366,44 @@ nodes_to_apl(Nodes, Edges, AplTerms) :-
             member(node(Id, Type, Label, Body, _Lev, _Line), Nodes),
             BlockTerms),
     append(BlockTerms, Edges, AplTerms).
+
+%------------------------- DIAGNOSTICS
+diag0 :-
+    read_file_to_string('../TEST/ACO/bio_v4.aco', S, []),
+    once( aco_core:aco_core_parse('bio_v4.aco', S,
+        _IndentSpec, _CaseHeaderOpt,
+        _Headers, _Nodes,
+        TreeEdges, RelEdges, AllEdges,
+        _IndentMsg, _BodyMsgs, _NodeMsgs,
+        _IndentMsgs, RelMsgs0, RelMsgs1)
+        ),
+
+    length(TreeEdges, NT),
+    length(RelEdges, NR),
+    length(AllEdges, NA),
+    length(RelMsgs0, NRM0),
+    length(RelMsgs1, NRM1),
+
+    format("TreeEdges=~w  RelEdges=~w  AllEdges=~w~n", [NT,NR,NA]),
+    format("RelMsgs0=~w  RelMsgs1=~w~n", [NRM0,NRM1]),
+
+    % show a few sample relation edges
+    %take(20, RelEdges, SampleRel),
+    %writeln(sample_rel_edges=SampleRel).
+    forall((nth1(I,RelEdges,E), I =< 20), writeln(E)).
+
+%------------------------- DIAGNOSTICS
+% diag1: op_plane edge breakdown (TreeEdges vs RelEdges vs RelOnly)
+diag1 :-
+    read_file_to_string('../TEST/ACO/op_plane.aco', S, []),
+    once( aco_core:aco_core_parse('op_plane.aco', S,
+        _IndentSpec, _CaseHeaderOpt,
+        _Headers, _Nodes,
+        TreeEdges, RelEdges, _AllEdges,
+        _IndentMsg, _BodyMsgs, _NodeMsgs,
+        _IndentMsgs, _RelMsgs0, _RelMsgs1)
+    ),
+    exclude({TreeEdges}/[E]>>memberchk(E, TreeEdges), RelEdges, RelOnlyEdges),
+    format('tree_edges=~w~n', [TreeEdges]),
+    format('rel_edges=~w~n', [RelEdges]),
+    format('rel_only=~w~n', [RelOnlyEdges]).

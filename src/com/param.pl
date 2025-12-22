@@ -57,24 +57,27 @@ build_version(etb,'1.1.2', 'integration and use case testing; new ACO subsystem 
 
 build_version(etb,'1.1.3' /* ongoing development */ ).
 
-build_current_version_description(etb,'dev with UC tests, provisional evidence categories and ACO capabilities').
+build_current_version_description(etb,'dev with UC tests, provisional evidence categories and enhanced ACO capabilities').
 %
 
 % Used by the command interpreter
 %
 prompt_string('').
 prompt_string(etb,'etb').
+prompt_string(aco,'aco').
 prompt_string(kb,'kb').
 prompt_string(arepo,'arepo').
 prompt_string(erepo,'erepo').
 
 build_name(etb,'O-ETB','o-etb').
+build_name(aco,'O-ACO','o-aco').
 build_name(kb,'O-KB','o-kb').
 build_name(arepo,'O-AREPO','o-arepo').
 build_name(erepo,'O-EREPO','o-erepo').
 
 name_string('').
 name_string(etb,'Open Evidential Tool Bus').
+name_string(aco,'Assurance Case Outline Workbench').
 name_string(kb,'O-ETB Knowledge Base').
 name_string(arepo,'O-ETB Assurance CASES Repository').
 name_string(erepo,'O-ETB EVIDENCE Repository').
@@ -106,7 +109,7 @@ setparam(_,_).
 
 % command_mode establishes the default mode of the top-level command
 % interpreter when it is started without an argument.
-% Its values can be e.g. etb | kb | repo
+% Its values can be e.g. etb | aco | kb | repo
 % user_level is related to user_mode/1 and user_lev/1 in command.pl
 % Its values can be e.g. basic | advanced | developer
 command_mode(etb).

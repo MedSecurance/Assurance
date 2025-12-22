@@ -4,26 +4,31 @@ proc(show_aco_tests, [
 	shell('cat ../TEST/ACO/tiny_test.aco'),
 	echo('--------------------------------'),
 	aco_tree('../TEST/ACO/tiny_test.aco'),
+	aco_stats('../TEST/ACO/tiny_test.aco'),
 	echo('================================'),
 
 	shell('cat ../TEST/ACO/tiny_multi.aco'),
 	echo('--------------------------------'),
 	aco_tree('../TEST/ACO/tiny_multi.aco'),
+	aco_stats('../TEST/ACO/tiny_multi.aco'),
 	echo('================================'),
 
 	shell('cat ../TEST/ACO/tiny_multi3.aco'),
 	echo('--------------------------------'),
 	aco_tree('../TEST/ACO/tiny_multi3.aco'),
+	aco_stats('../TEST/ACO/tiny_multi3.aco'),
 	echo('================================'),
 
 	shell('cat ../TEST/ACO/tiny_multi5.aco'),
 	echo('--------------------------------'),
 	aco_tree('../TEST/ACO/tiny_multi5.aco'),
+	aco_stats('../TEST/ACO/tiny_multi5.aco'),
 	echo('================================'),
 
 	shell('cat ../TEST/ACO/op_plane.aco'),
 	echo('--------------------------------'),
 	aco_tree('../TEST/ACO/op_plane.aco'),
+	aco_stats('../TEST/ACO/op_plane.aco'),
 	echo('================================')
 	]).
 

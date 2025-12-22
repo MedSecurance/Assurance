@@ -72,8 +72,18 @@ print_messages([Msg|Rest]) :-
     !,
     print_stats_summary(Msg),
     print_messages(Rest).
+
 print_messages([Msg|Rest]) :-
+    (Msg = apl_error(_) ; Msg = apl_warning(_) ),
+    !,
     format('informational: ~w~n', [Msg]),
+    print_messages(Rest).
+
+print_messages([Msg|Rest]) :-
+    ( param:debug(on)
+    -> format('informational: ~w~n', [Msg])
+    ;   true
+    ),
     print_messages(Rest).
 
 print_stats_summary(

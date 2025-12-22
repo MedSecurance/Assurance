@@ -197,7 +197,12 @@ help(update,	'Update assurance cases and evidence.').
 % known broken or unimplemented commands should just "fail." straightaway
 %
 
-do(aco) :- do(help(aco_apl)), do(help(aco_aplc)), do(help(apl_canon)), do(help(aco_stats)), do(help(aco_tree)).
+% do(aco) :- !, do(help(aco_apl)), do(help(aco_aplc)), do(help(apl_canon)), do(help(aco_stats)), do(help(aco_tree)).
+
+do(aco) :- user_mode(aco), !, writeln('Already in aco mode').
+do(aco) :- !, user_mode(M), retractall(user_mode(_)), assert(user_mode(aco)),
+	param:prompt_string(aco,Prompt), param:setparam(prompt_string,Prompt),
+	rem_commands(M), add_commands(aco), banner(aco).
 
 do(aco_apl(Aco, Apl)) :- !, Aco \== Apl, dispatch(apl,[Aco,Apl]).
 
