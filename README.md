@@ -37,7 +37,7 @@ To lower the entry barrier for assurance case authors, O-ETB introduces the **As
 ACO is a lightweight, text-based outlining language designed to:
 - feel natural to assurance engineers,
 - support incremental development,
-- and be readable without deep knowledge of APL or Prolog.
+- and be readable without knowledge of APL or Prolog.
 
 An **ACO processor** translates ACO documents into proper **APL**, which is then handled by O-ETB exactly like hand-written APL.
 
@@ -48,7 +48,7 @@ Key features of ACO:
 - ASCII tree rendering for visualization,
 - command-line tooling for checking and translation.
 
-The ACO specification is maintained under: docs/ACO_spec.
+The ACO specification and a Quick Reference Card are maintained under: docs/ACO_spec.
 
 ---
 
@@ -67,16 +67,16 @@ This repository contains the complete O-ETB implementation, documentation, and s
 
 - `KB/`  
   O-ETB knowledge bases:
-  - evidence categories and validation agents,
+  - evidence categories and validation methods,
   - models,
   - patterns,
-  - workflows.
+  - tool agents.
 
 - `REPOSITORY/`  
-  Persistent storage of instantiated assurance cases and evidence records.
+  Persistent storage of assurance cae outlines, instantiated assurance cases and evidence records.
 
 - `docs/`  
-  Specifications, user manuals, design notes, diagrams, and glossaries.
+  Specifications, user manual, quick reference, design notes, diagrams, and glossary.
 
 - `Tools/`  
   Standalone utilities such as:
@@ -106,11 +106,17 @@ This repository contains the complete O-ETB implementation, documentation, and s
 - **ACO Specification:**  
   See `docs/ACO_spec/`
 
+- **ACO Quick Reference Card:**  
+  See `docs/ACO_spec/`
+
 - **Design Notes and Diagrams:**  
   See `docs/Design/`
 
 - **Glossary:**  
   See `docs/Glossary/`
+
+- **Patterns:**  
+  See `docs/Patterns/`
 
 ---
 
@@ -120,6 +126,7 @@ Active development priorities include:
 
 - Finalizing the ACO → APL translation pipeline
 - Tight integration of ACO tooling into interactive O-ETB workflows
+- ACO Workbench to provide suggestions and transformations for developing assurance case outlines
 - Evidence category definition and agent interoperability
 - Improved visualization of assurance cases
 - Public release stabilization and documentation clarity
@@ -130,7 +137,7 @@ Active development priorities include:
 
 - **Project:** MedSecurance (EC Project No. 101095448)
 - **Consortium Partners:**  
-  University of Warwick, CEA, BioAssist, University of Birmingham, European University of Cyprus, UPC, and others.
+  University of Warwick, CEA, BioAssist, StabVida, University of Birmingham, European University of Cyprus, UPC, and others.
 
 ---
 
