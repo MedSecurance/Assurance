@@ -16,17 +16,23 @@ O-ETB is being developed within the **MedSecurance** European Commission project
 
 ## Conceptual Model
 
-At a high level, O-ETB works with three core concepts:
+At a high level, O-ETB works with five core concepts:
 
-1. **Argument Patterns**  
+1. **Assurance Case Outlines**  
+   Intuitive text-based outlining language for defining assurance cases and reusable parameterized assurance case modules.
+
+2. **Argument Patterns**  
    Reusable assurance structures expressed in **Argument Pattern Language (APL)**, capturing common reasoning templates (e.g., MILS security patterns, operational safety arguments).
 
-2. **Assurance Case Instances**  
+3. **Assurance Case Instances**  
    Concrete instantiations of argument patterns into executable assurance cases for a specific system or scenario.
 
-3. **Evidence and Agents**  
+4. **Evidence and Agents**  
    Evidence nodes represent required evidence of a given category (e.g., certificate, model checking results).  
    Evidence production and validation are performed by **agents**, which may invoke external tools, workflows, or human interaction.
+
+5. **Certification Assurance Package**  
+   Artefacts exported by O-ETB for consumption by users, evaluators and certifiers.
 
 ---
 
@@ -73,10 +79,10 @@ This repository contains the complete O-ETB implementation, documentation, and s
   - tool agents.
 
 - `REPOSITORY/`  
-  Persistent storage of assurance cae outlines, instantiated assurance cases and evidence records.
+  Persistent storage of assurance case outlines, instantiated assurance cases and evidence records.
 
 - `docs/`  
-  Specifications, user manual, quick reference, design notes, diagrams, and glossary.
+  Specifications, user manual, quick reference, argument pattern guidance, design notes, diagrams, and glossary.
 
 - `Tools/`  
   Standalone utilities such as:
@@ -84,8 +90,11 @@ This repository contains the complete O-ETB implementation, documentation, and s
   - visualization helpers,
   - import/export tools.
 
-- `Partners/`  
-  Partner-specific materials, examples, and collaboration artefacts (e.g., BioAssist).
+- `CAP/`  
+  Certification Assurance Package, including:
+  - textual representation of instantiated concrete assurance cases,
+  - browsable HTML representation of modular instantiated assurance cases,
+  - graphical representation of assurance cases or segments in GSN notation.
 
 ---
 
