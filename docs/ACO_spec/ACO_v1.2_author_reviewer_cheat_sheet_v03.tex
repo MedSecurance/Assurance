@@ -1,0 +1,273 @@
+\documentclass[10pt,letterpaper]{article}
+
+% TeXShop / TeX Live 2019-friendly preamble
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+
+\usepackage[margin=0.5in]{geometry}
+\usepackage{multicol}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{1.5pt}
+\setlist[itemize]{leftmargin=*, itemsep=1pt, topsep=1.5pt, parsep=0pt, partopsep=0pt}
+
+\definecolor{Banner}{RGB}{20,20,20}
+\definecolor{LightGray}{gray}{0.92}
+\definecolor{RuleGray}{gray}{0.78}
+
+% Footer (does not affect column flow)
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\footrulewidth}{0.35pt}
+\fancyfoot[C]{\footnotesize ACO v1.2 \hspace{0.6em}\textbullet\hspace{0.6em} MedSecurance / O-ETB \hspace{0.6em}\textbullet\hspace{0.6em} Reference Card}
+\renewcommand{\headrulewidth}{0pt}
+
+\newcommand{\CardTitle}[1]{%
+  \begin{center}
+    {\Large\bfseries #1}\\[-2pt]
+    \rule{0.92\linewidth}{0.6pt}
+  \end{center}
+}
+
+\newcommand{\BannerBox}[1]{%
+  \noindent\colorbox{Banner}{%
+    \parbox{\linewidth}{\color{white}\bfseries\small\hspace{6pt}#1\hspace{6pt}}%
+  }\\[10pt]
+}
+
+% Divider BEFORE header
+\newcommand{\Sec}[1]{%
+  \vspace{5pt}%
+  \noindent{\color{RuleGray}\rule{\linewidth}{0.35pt}}\par
+  \vspace{2pt}%
+  {\bfseries #1}\par
+  \vspace{2pt}%
+}
+
+% Code-style example box with preserved indentation
+\newcommand{\Example}[1]{%
+  \vspace{1pt}%
+  \noindent\colorbox{LightGray}{%
+    \parbox{\linewidth}{\ttfamily\footnotesize\raggedright
+#1
+    }%
+  }%
+  \vspace{2pt}%
+}
+
+\newcommand{\DoDont}[2]{%
+  \vspace{1pt}%
+  \noindent\colorbox{LightGray}{%
+    \parbox{\linewidth}{\small\textbf{DO:}~#1\hfill \textbf{DON'T:}~#2}%
+  }%
+  \vspace{2pt}%
+}
+
+% Reduce overfull boxes
+\sloppy
+
+\begin{document}
+
+% ===================== PAGE 1 =====================
+\CardTitle{Assurance Case Outline (ACO) v1.2 Quick Reference Card}
+\BannerBox{AUTHORS}
+
+\begin{multicols*}{2}
+\raggedcolumns
+
+\Sec{Purpose}
+\begin{itemize}
+  \item Lightweight, indentation-based outline language for assurance cases.
+  \item Primary authoring interface to O-ETB; one source drives APL + downstream artefacts.
+  \item Designed to be readable, unambiguous, and tooling-friendly.
+\end{itemize}
+\Example{Case: Operational Plane --- Policy scope\\
+Goal G0 operationalPlane:\\
+\hspace*{1.5em}The operational plane guarantees the \{local policy\} is met.}
+
+\Sec{Unit Headers}
+\begin{itemize}
+  \item \textbf{Case unit header:} (optional)\\
+  \Example{Case: <Title> - <Scope>}          
+  \item \textbf{Module unit header:}\\
+  \Example{Module: <Name> [ (<formal parameter list>) ]}
+\end{itemize}
+\vspace{-12pt}
+
+\Sec{Node Types}
+\begin{itemize}
+  \item \textbf{Goal} -- claim that must hold.
+  \item \textbf{Strategy} -- explains how children jointly support a claim.
+  \item \textbf{Context} -- facts, definitions, scope/environment.
+  \item \textbf{Assumption} -- condition taken as given.
+  \item \textbf{Justification} -- rationale for acceptability.
+  \item \textbf{Evidence} -- artefact that discharges a claim (leaf).
+  \item \textbf{Module} -- encapsulated/reusable argument fragment (goal-like).
+\end{itemize}
+\vspace{-6pt}
+
+\Sec{Node Header}
+\Example{<Type> [ID] <shortLabel>:}
+\begin{itemize}
+  \item Header lines must end with a colon \texttt{:}.
+  \item \texttt{Type} is one of: Goal, Strategy, Context, Assumption, Justification, Evidence, Module.
+  \item \texttt{ID} is optional (single token; e.g., \texttt{G0}, \texttt{C2}, \texttt{M1}).
+  \item \texttt{shortLabel} is either:
+  \begin{itemize}
+    \item unquoted single token (\texttt{componentBehaviour}), or
+    \item quoted short text (\texttt{"Component Behaviour"}).
+  \end{itemize}
+\end{itemize}
+\Example{Goal G1 componentBehaviour:\\
+Context "Plane Definition":\\
+\hspace*{1.5em}Behaviour of the \{component\} satisfies the local policy.}
+
+\Sec{Node Body Text}
+\begin{itemize}
+  \item One or more natural-language lines indented beneath the header.
+  \item May span multiple lines; blank lines allowed for readability.
+\end{itemize}
+\Example{Goal G1 componentBehaviour:\\
+\hspace*{1.5em}Behaviour of the \{component\} satisfies the local policy.\\
+\hspace*{1.5em}This may be justified by component test evidence.}
+
+\columnbreak
+
+\Sec{Indentation Rules (Structure)}
+\DoDont{Increase indentation by one level at a time.\\}{Jump levels (e.g., level 0 -> level 3).}
+\begin{itemize}
+  \item Recommended: 2 spaces per level; tabs discouraged.
+  \item A node at level \texttt{k} is child of nearest preceding node at level \texttt{k-1}.
+  \item Indentation defines structure and default semantics.
+\end{itemize}
+\vspace{-6pt}
+
+
+\Sec{Default Semantics (Automatic)}
+\begin{itemize}
+  \item Child \textbf{Context} \\
+        \texttt{=> in\_context\_of(parent, child)}.
+  \item Child \textbf{Goal / Strategy / Module / Evidence / Assumption / Justification} \\
+        \texttt{=> supported\_by(parent, child)}.
+\end{itemize}
+\vspace{-6pt}
+
+
+\Sec{Evidence Rules}
+\DoDont{Attach Context/Assumption/Justification related to evidence to the Evidence's parent.\\}{Nest any node under an Evidence node.}
+\begin{itemize}
+  \item Evidence nodes are leaf-level dischargers.
+  \item Provisional evidence is permitted; tools distinguish provisional vs.\ accepted.
+\end{itemize}
+\Example{Goal G2 cryptoCorrectness:\\
+\hspace*{1.5em}Cryptography is correctly implemented.\\
+\hspace*{1.5em}Evidence E0 Planned "Test report":\\
+\hspace*{3.0em}Planned: vendor conformance test results (to be produced).}
+
+\Sec{Modules (Reusable Fragments)}
+\begin{itemize}
+  \item Referenced using standard header syntax: \texttt{Module [ID] label:}
+  \item Behave like specialised Goals: may contain internal sub-goals/strategies/evidence.
+  \item Use for reuse, decomposition by component/subsystem, and scale management.
+\end{itemize}
+\Example{Module M1 component:\\
+\hspace*{1.5em}Behaviour of the \{component\} meets its local policy.}
+
+\Sec{Syntax Notes}
+\begin{itemize}
+  \item \textbf{Explicit node relations (optional):} natural-language relation sentences (see page 2).
+  \item \textbf{Placeholders:} use braces \texttt{\{...\}} and define them nearby or in a Context.
+  \item \textbf{Units:} each \texttt{Case:} or \texttt{Module:} starts a unit; node IDs are unit-scoped.
+\end{itemize}
+
+\end{multicols*}
+
+\clearpage
+
+% ===================== PAGE 2 =====================
+\CardTitle{Assurance Case Outline (ACO) v1.2 Quick Reference Card}
+\BannerBox{REVIEWERS / ASSESSORS}
+
+\noindent\colorbox{LightGray}{%
+\parbox{\linewidth}{\small
+\textbf{Checklist:}\hspace{0.6em}[ ] Top goals supported \hspace{0.6em}\hspace{0.6em}[ ] Evidence closes claims \hspace{0.6em}\hspace{0.6em}[ ] Assumptions justified \hspace{0.6em}\hspace{0.6em}[ ] No structural errors
+}}\\[6pt]
+
+\begin{multicols*}{2}
+\raggedcolumns
+
+\Sec{What Tools Derive Automatically}
+\begin{itemize}
+  \item Node Model (nodes + relations) from headers, bodies, indentation, and explicit relation sentences.
+  \item Canonical hierarchical IDs computed from indentation (for diagnostics/canonicalisation).
+  \item ASCII tree views at multiple verbosity levels; plus summary statistics.
+\end{itemize}
+
+\Sec{Errors (Must Be Fixed)}
+\begin{itemize}
+  \item Duplicate node IDs.
+  \item Dangling references in explicit relation sentences.
+  \item Malformed headers or unknown node types.
+  \item Indentation jumps (skipping levels).
+  \item Evidence nodes with children.
+\end{itemize}
+
+\Sec{Warnings / Quality Signals}
+\begin{itemize}
+  \item \textbf{Undeveloped} goals/modules (insufficient supporting structure).
+  \item Provisional evidence occurrences.
+  \item Undefined or inconsistent placeholders.
+  \item Ambiguous wording in Goal/Module bodies.
+\end{itemize}
+
+\Sec{v1.2 State Distinctions}
+\begin{itemize}
+  \item \textbf{Undeveloped:} concrete node whose argumentation is incomplete.
+  \item \textbf{Uninstantiated:} refers to a future or unresolved entity.
+  \item These states are distinct and may co-occur.
+\end{itemize}
+\Example{Undeveloped: Goal has no sub-goals/evidence.\\
+Uninstantiated: Module reference exists but target module not imported/resolved.}
+
+\Sec{Explicit Natural-Language Relations (Optional)}
+\begin{itemize}
+  \item \textbf{Supported-by:}\\
+  \Example{G0 is supported by G1, G2 and M0.}
+  \item \textbf{In-context-of:} \\
+  \Example{C0 provides context for G0.}
+  \item Explicit relations augment (do not replace or contradict) indentation-derived relations.
+\end{itemize}
+
+\columnbreak
+
+\Sec{ASCII Tree Review}
+\begin{itemize}
+  \item \textbf{Skeleton:} headers only.
+  \item \textbf{Structure:} brief body snippet.
+  \item \textbf{Full:} complete body text.
+\end{itemize}
+
+\Sec{Canonicalisation}
+\begin{itemize}
+  \item Rewrites headers and relation sentences to use canonical hierarchical IDs.
+  \item Recommended once structure settles.
+\end{itemize}
+
+\Sec{Reviewer Heuristics}
+\begin{itemize}
+  \item Every top-level Goal has explicit support?
+  \item Claims closed by accepted evidence?
+  \item Assumptions visible and justified?
+  \item Excessive provisional evidence?
+\end{itemize}
+
+\Sec{Pipeline Context}
+\Example{ACO -> Node Model -> APL -> Instantiate -> Reports/Graphs}
+
+\end{multicols*}
+
+\end{document}
