@@ -66,15 +66,14 @@ insert_ac_evidence(Category, Claim, Context, AArgs, XRef, 'pending') :-
 	evidence_categories(Categories), union(Categories,[unknown],CategoriesWithUnk),
 	(	member(Category,CategoriesWithUnk)
 	->	true
-	;       % Category not a KB defined evidence category - see KB/EVIDENCE/categories.pl
-                (       evidence_category(provisional, _, _, _)
-                ->      % provisional permitted
-		        log_provisional_category(Category, Claim, Context, AArgs)
-
-		;       !, fail % category not a KB defined evidence category nor is provisional allowed
-                )
-        ),
-        % KB/EVIDENCE/categories.pl either defines Category or permits provisional categories
+	;   % Category not a KB defined evidence category - see KB/EVIDENCE/categories.pl
+		(   evidence_category(provisional, _, _, _)
+		->  % provisional permitted
+			log_provisional_category(Category, Claim, Context, AArgs)
+		;   !, fail % category not a KB defined evidence category nor is provisional allowed
+		)
+	),
+	% KB/EVIDENCE/categories.pl either defines Category or permits provisional categories
 	with_mutex( evidence,
 		    ( ac_evidence_counter(LastXRef),
 		      retractall_ac_evidence_counter(_),

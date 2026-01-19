@@ -369,6 +369,22 @@ pp_pattern(Stream, ac_pattern(PId, Args, Goal)) :-
     indent(Stream, 0),
     format(Stream, ")", []).
 
+pp_goal(Stream, Indent, goal(Id, Label, Claim, Contexts, Body)) :-
+	format(Stream, "goal(~q,~n", [Id]),
+	Ind1 is Indent + 4,
+	indent(Stream, Ind1),
+	format(Stream, "~q,~n", [Label]),
+	indent(Stream, Ind1),
+	format(Stream, "~q,~n", [Claim]),
+	indent(Stream, Ind1),
+	pp_list(Stream, Ind1, Contexts),
+	format(Stream, ",~n", []),
+	indent(Stream, Ind1),
+	pp_list(Stream, Ind1, Body),
+	nl(Stream),
+	indent(Stream, Indent),
+	format(Stream, ")", []).
+
 pp_goal(Stream, Indent, goal(Id, Claim, Contexts, Body)) :-
     format(Stream, "goal(~q,~n", [Id]),
     Ind1 is Indent + 4,
@@ -383,6 +399,22 @@ pp_goal(Stream, Indent, goal(Id, Claim, Contexts, Body)) :-
     indent(Stream, Indent),
     format(Stream, ")", []).
 
+pp_strategy(Stream, Indent, strategy(Id, Label, Claim, Contexts, Body)) :-
+	format(Stream, "strategy(~q,~n", [Id]),
+	Ind1 is Indent + 4,
+	indent(Stream, Ind1),
+	format(Stream, "~q,~n", [Label]),
+	indent(Stream, Ind1),
+	format(Stream, "~q,~n", [Claim]),
+	indent(Stream, Ind1),
+	pp_list(Stream, Ind1, Contexts),
+	format(Stream, ",~n", []),
+	indent(Stream, Ind1),
+	pp_list(Stream, Ind1, Body),
+	nl(Stream),
+	indent(Stream, Indent),
+	format(Stream, ")", []).
+
 pp_strategy(Stream, Indent, strategy(Claim, Contexts, Body)) :-
     format(Stream, "strategy(~q,~n", [Claim]),
     Ind1 is Indent + 4,
@@ -394,6 +426,21 @@ pp_strategy(Stream, Indent, strategy(Claim, Contexts, Body)) :-
     nl(Stream),
     indent(Stream, Indent),
     format(Stream, ")", []).
+
+pp_evidence(Stream, Indent, evidence(Id, Label, Category, Desc, Contexts)) :-
+	format(Stream, "evidence(~q,~n", [Id]),
+	Ind1 is Indent + 4,
+	indent(Stream, Ind1),
+	format(Stream, "~q,~n", [Label]),
+	indent(Stream, Ind1),
+	format(Stream, "~q,~n", [Category]),
+	indent(Stream, Ind1),
+	format(Stream, "~q,~n", [Desc]),
+	indent(Stream, Ind1),
+	pp_list(Stream, Ind1, Contexts),
+	nl(Stream),
+	indent(Stream, Indent),
+	format(Stream, ")", []).
 
 pp_evidence(Stream, Indent, evidence(Category, Desc, Contexts)) :-
     format(Stream, "evidence(~q,~n", [Category]),
@@ -424,6 +471,15 @@ pp_list_terms(Stream, Indent, [X|Xs]) :-
     pp_term(Stream, Indent, X),
     format(Stream, ",~n", []),
     pp_list_terms(Stream, Indent, Xs).
+
+pp_term(Stream, Indent, goal(Id, Label, Claim, Ctx, Body)) :-
+	pp_goal(Stream, Indent, goal(Id, Label, Claim, Ctx, Body)).
+pp_term(Stream, Indent, strategy(Id, Label, Claim, Ctx, Body)) :-
+	pp_strategy(Stream, Indent, strategy(Id, Label, Claim, Ctx, Body)).
+pp_term(Stream, Indent, evidence(Id, Label, Cat, Desc, Ctx)) :-
+	pp_evidence(Stream, Indent, evidence(Id, Label, Cat, Desc, Ctx)).
+pp_term(Stream, _Indent, ac_pattern_ref(Id, Label, Callee, Actuals)) :-
+	write_term(Stream, ac_pattern_ref(Id, Label, Callee, Actuals), [quoted(true)]).
 
 pp_term(Stream, Indent, goal(Id, Claim, Ctx, Body)) :-
     pp_goal(Stream, Indent, goal(Id, Claim, Ctx, Body)).
@@ -633,10 +689,10 @@ clean_evidence_body(Body0, BodyClean) :-
 build_goal_tree(Id, NodesById, ChildMap, CtxMap,
                 Visited0, Goal, Visited, ExtraCtx) :-
     (   memberchk(Id, Visited0)
-    ->  Goal = goal(Id, 'Cyclic reference (omitted)', [], []),
+	->  Goal = goal(Id, '', 'Cyclic reference (omitted)', [], []),
         Visited = Visited0
     ;   lookup_node(Id, NodesById,
-                    node(Id, Type, _Label, Body, _Level, _Line)),
+				    node(Id, Type, LabelAtom, Body, _Level, _Line)),
         ( Type = goal ; Type = module ),
         !,
         Visited1 = [Id|Visited0],
@@ -646,15 +702,16 @@ build_goal_tree(Id, NodesById, ChildMap, CtxMap,
         children_of(Id, ChildMap, ChildIds),
         build_children_terms(ChildIds, NodesById, ChildMap, CtxMap,
                              Visited1, BodyTerms, Visited),
-        Goal = goal(Id, ClaimText, CtxAll, BodyTerms)
+		Goal = goal(Id, LabelAtom, ClaimText, CtxAll, BodyTerms)
     ;
         Visited1 = [Id|Visited0],
         claim_text_from_body_or_id('', Id, ClaimText2),
+		lookup_node(Id, NodesById, node(Id, _Type2, LabelAtom, _Body2, _Level2, _Line2)),
         contexts_for_node(Id, NodesById, ChildMap, CtxMap, NodeCtx2),
         children_of(Id, ChildMap, ChildIds2),
         build_children_terms(ChildIds2, NodesById, ChildMap, CtxMap,
                              Visited1, BodyTerms2, Visited),
-        Goal = goal(Id, ClaimText2, NodeCtx2, BodyTerms2)
+		Goal = goal(Id, LabelAtom, ClaimText2, NodeCtx2, BodyTerms2)
     ).
 
 claim_text_from_body_or_id(Body, Id, ClaimText) :-
@@ -678,29 +735,55 @@ build_children_terms([ChildId|Rest], NodesById, ChildMap, CtxMap,
                          Visited1, Terms, VisitedOut).
 
 build_children_terms([ChildId|Rest], NodesById, ChildMap, CtxMap,
-                     Visited0, [Term|Terms], VisitedOut) :-
+                    Visited0, [Term|Terms], VisitedOut) :-
     lookup_node(ChildId, NodesById,
-                node(ChildId, module, LabelAtom, _Body, _Lev, _Line)),
+                node(ChildId, module, LabelAtom, Body, _Lev, _Line)),
     !,
-    % Module node under a goal/module is treated as a module reference if
-    % its label is bracketed: [foo] or [foo({A},{B})]
-    atom_string(LabelAtom, LabelStr),
-    ( parse_module_ref_label(LabelStr, Callee, Actuals)
-    -> Term = ac_pattern_ref(Callee, Actuals),
-       Visited1 = [ChildId|Visited0]
-    ;  % otherwise, treat it like an ordinary goal-ish node (fallback)
-       build_goal_tree(ChildId, NodesById, ChildMap, CtxMap,
-                       Visited0, Term, Visited1, [])
+    % Treat Module nodes as module references (pattern refs).
+    % Accept both bracketed labels "[foo]" and plain labels "foo".
+    atom_string(LabelAtom, LabelStr0),
+    aco_core:string_trim(LabelStr0, LabelStr),
+    ( parse_module_ref_label_any(LabelStr, Callee, Actuals)
+    -> true
+    ;  % If label is somehow empty/garbage, degrade gracefully:
+        Callee = LabelAtom, Actuals = []
     ),
+    % Prefer the indented body text as the visible label for the ref leaf.
+    % If absent, fall back to the label itself.
+    ( Body \= '', Body \= ""
+    -> LabelP = Body
+    ;  LabelP = LabelStr
+    ),
+    Term = ac_pattern_ref(ChildId, LabelP, Callee, Actuals),
+    Visited1 = [ChildId|Visited0],
     build_children_terms(Rest, NodesById, ChildMap, CtxMap,
-                         Visited1, Terms, VisitedOut).
+                        Visited1, Terms, VisitedOut).
+
+
+% build_children_terms([ChildId|Rest], NodesById, ChildMap, CtxMap,
+%                      Visited0, [Term|Terms], VisitedOut) :-
+%     lookup_node(ChildId, NodesById,
+%                 node(ChildId, module, LabelAtom, _Body, _Lev, _Line)),
+%     !,
+%     % Module node under a goal/module is treated as a module reference if
+%     % its label is bracketed: [foo] or [foo({A},{B})]
+%     atom_string(LabelAtom, LabelStr),
+%     ( parse_module_ref_label(LabelStr, Callee, Actuals)
+%     -> Term = ac_pattern_ref(ChildId, LabelAtom, Callee, Actuals),
+%        Visited1 = [ChildId|Visited0]
+%     ;  % otherwise, treat it like an ordinary goal-ish node (fallback)
+%        build_goal_tree(ChildId, NodesById, ChildMap, CtxMap,
+%                        Visited0, Term, Visited1, [])
+%     ),
+%     build_children_terms(Rest, NodesById, ChildMap, CtxMap,
+%                          Visited1, Terms, VisitedOut).
 
 build_children_terms([ChildId|Rest], NodesById, ChildMap, CtxMap,
                      Visited0, [Term|Terms], VisitedOut) :-
     lookup_node(ChildId, NodesById,
-                node(ChildId, strategy, _Label, Body, _Lev, _Line)),
+				node(ChildId, strategy, LabelAtom, Body, _Lev, _Line)),
     !,
-    build_strategy_tree(ChildId, Body, NodesById, ChildMap, CtxMap,
+		build_strategy_tree(ChildId, LabelAtom, Body, NodesById, ChildMap, CtxMap,
                         Visited0, Term, Visited1),
     build_children_terms(Rest, NodesById, ChildMap, CtxMap,
                          Visited1, Terms, VisitedOut).
@@ -758,6 +841,31 @@ parse_module_ref_label(LabelStr0, Callee, Actuals) :-
         Actuals = []
     ).
 
+% Accept either:
+%   "[foo]" / "[foo({A},{B})]"   (existing bracketed syntax)
+% or:
+%   "foo" / "foo({A},{B})"       (plain syntax, used by "Module M1 foo:")
+parse_module_ref_label_any(LabelStr0, Callee, Actuals) :-
+    aco_core:string_trim(LabelStr0, LabelStr),
+    (   parse_module_ref_label(LabelStr, Callee, Actuals)
+    ->  true
+    ;   parse_module_ref_label_plain(LabelStr, Callee, Actuals)
+    ).
+
+parse_module_ref_label_plain(Inner0, Callee, Actuals) :-
+    aco_core:string_trim(Inner0, Inner),
+    Inner \= "",
+    (   sub_string(Inner, P, _, _, "(")
+    ->  sub_string(Inner, 0, P, _, Name0),
+        aco_core:string_trim(Name0, Name),
+        atom_string(Callee, Name),
+        sub_string(Inner, P, _, 0, Tail),
+        parse_paren_list(Tail, Args0),
+        maplist(actual_from_string, Args0, Actuals)
+    ;   atom_string(Callee, Inner),
+        Actuals = []
+    ).
+
 actual_from_string(S0, Atom) :-
     aco_core:string_trim(S0, S1),
     % accept {X} or X
@@ -769,10 +877,10 @@ actual_from_string(S0, Atom) :-
     ; atom_string(Atom, S1)
     ).
 
-build_strategy_tree(Id, Body, NodesById, ChildMap, CtxMap,
+build_strategy_tree(Id, LabelAtom, Body, NodesById, ChildMap, CtxMap,
                     Visited0, Strategy, VisitedOut) :-
     (   memberchk(Id, Visited0)
-    ->  Strategy = strategy('Cyclic strategy (omitted)', [], []),
+    ->  Strategy = strategy(Id, LabelAtom, 'Cyclic strategy (omitted)', [], []),
         VisitedOut = Visited0
     ;   Visited1 = [Id|Visited0],
         claim_text_from_body_or_id(Body, Id, ClaimText),
@@ -780,7 +888,7 @@ build_strategy_tree(Id, Body, NodesById, ChildMap, CtxMap,
         children_of(Id, ChildMap, ChildIds),
         build_children_terms(ChildIds, NodesById, ChildMap, CtxMap,
                              Visited1, BodyTerms, VisitedOut),
-        Strategy = strategy(ClaimText, Ctx, BodyTerms)
+        Strategy = strategy(Id, LabelAtom, ClaimText, Ctx, BodyTerms)
     ).
 
 build_evidence_term(Id, LabelAtom, Body, NodesById, ChildMap, CtxMap, Evidence) :-
@@ -794,7 +902,7 @@ build_evidence_term(Id, LabelAtom, Body, NodesById, ChildMap, CtxMap, Evidence) 
     % contexts
     % (we keep existing behaviour)
     contexts_for_node(Id, NodesById, ChildMap, CtxMap, Ctx),
-    Evidence = evidence(Category, Desc, Ctx).
+    Evidence = evidence(Id, LabelAtom, Category, Desc, Ctx).
 
 contexts_for_node(Id, NodesById, ChildMap, CtxMap, ContextTerms) :-
     contexts_of(Id, CtxMap, CtxIds1),
@@ -816,16 +924,16 @@ contexts_for_node(Id, NodesById, ChildMap, CtxMap, ContextTerms) :-
 build_context_terms([], _NodesById, []).
 build_context_terms([CtxId|Rest], NodesById, [Term|Terms]) :-
     lookup_node(CtxId, NodesById,
-                node(CtxId, Type, _Label, Body, _Level, _Line)),
-    context_term(Type, Body, Term),
+				node(CtxId, Type, LabelAtom, Body, _Level, _Line)),
+	context_term(Type, CtxId, LabelAtom, Body, Term),
     !,
     build_context_terms(Rest, NodesById, Terms).
 build_context_terms([_CtxId|Rest], NodesById, Terms) :-
     build_context_terms(Rest, NodesById, Terms).
 
-context_term(context,      Body, context(Text))       :- context_text(Body, Text).
-context_term(assumption,   Body, assumption(Text))    :- context_text(Body, Text).
-context_term(justification,Body, justification(Text)) :- context_text(Body, Text).
+context_term(context,      Id, Label, Body, context(Id, Label, Text))       :- context_text(Body, Text).
+context_term(assumption,   Id, Label, Body, assumption(Id, Label, Text))    :- context_text(Body, Text).
+context_term(justification,Id, Label, Body, justification(Id, Label, Text)) :- context_text(Body, Text).
 
 context_text(Body, Text) :-
     ( Body \= '',
@@ -833,4 +941,3 @@ context_text(Body, Text) :-
     -> Text = Body
     ;  Text = ''
     ).
-

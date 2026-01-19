@@ -1,5 +1,39 @@
 % ETB-specific command procedures
 
+proc(inst_test, [
+	reset,
+	instantiate_pattern(person, [marius,programming], person_example),
+	export_case(person_example,txt),
+	export_case(person_example,html),
+	detach_case,
+
+	instantiate_pattern(teamOfN, [programming, list([marius,rance])], team_example),
+	export_case(team_example, txt),
+	export_case(team_example, html),
+	detach_case,
+
+	aco_apl('../TEST/ACO/op_plane.aco', '../TEST/ACO/op_plane.apl'),
+	load_patterns('../TEST/ACO/op_plane.apl'),
+	instantiate_pattern('Op_Plane', [ ], op_plane),
+	export_case(op_plane, txt),
+	export_case(op_plane, html),
+	detach_case,
+
+	aco_apl('../TEST/ACO/tiny_multi5.aco', '../TEST/ACO/tiny_multi5.apl'),
+	load_patterns('../TEST/ACO/tiny_multi5.apl'),
+	instantiate_pattern('Main', [ ], tiny_multi5),
+	export_case(tiny_multi5, txt),
+	export_case(tiny_multi5, html),
+	detach_case,
+
+	aco_apl('../TEST/ACO/bio_v6.aco', '../TEST/ACO/bio_v6.apl'),
+	load_patterns('../TEST/aco/bio_v6.apl'),
+	% show_pattern('BioAssist'),
+	instantiate_pattern('BioAssist', [ ], bio6),
+	export_case(bio6, txt),
+	export_case(bio6, html)
+	]).
+
 proc(show_aco_tests, [
 	shell('cat ../TEST/ACO/tiny_test.aco'),
 	echo('--------------------------------'),
@@ -106,8 +140,8 @@ proc('ISO_case', [
 		set_v(ModelId, '2.0'),
 		set_v(CaseId, iso_system_example),
 		load_model_v(ModelId, App_Specification, Platform, _Configuration),
-                instantiate_pattern('MS_generic_risk_based',['hit-spec',App_Specification,Platform],CaseId),
-	        export_case(CaseId,txt),
+        instantiate_pattern('MS_generic_risk_based',['hit-spec',App_Specification,Platform],CaseId),
+	    export_case(CaseId,txt),
 		export_case(CaseId,html),
 		detach_case
     ]).

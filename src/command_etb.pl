@@ -89,7 +89,7 @@ semantics(etb_reset(D)) :- !, (D == cap ; D == repos ; D == all).
 semantics(etbt(T)) :- !, atom(T).
 semantics(etbt(T,E)) :- !, atom(T), atom(E).
 
-semantics(export_case(Name,Format)) :- !, atom(Name), atom(Format), member(Format,[txt,html,html90]).
+semantics(export_case(Name,Format)) :- !, atom(Name), atom(Format), memberchk(Format,[txt,html,html90,htmlH]).
 
 semantics(import(T,F,Id)) :- !, atom(T), atom(F), atom(Id).
 

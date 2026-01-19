@@ -55,9 +55,11 @@ build_version(etb,'1.1.1','Revisions to Prototype #1, incl: commands and pattern
 
 build_version(etb,'1.1.2', 'integration and use case testing; new ACO subsystem for AC Outlines' ).
 
-build_version(etb,'1.1.3' /* ongoing development */ ).
+build_version(etb,'1.1.3', 'provisional evidence categories, enhanced ACO capabilities, internal changes/additions' ).
 
-build_current_version_description(etb,'dev with UC tests, provisional evidence categories and enhanced ACO capabilities').
+build_version(etb,'1.1.4' /* ongoing development */ ).
+
+build_current_version_description(etb,'development of internal structures to support shared pattern instantiations').
 %
 
 % Used by the command interpreter
