@@ -9,6 +9,7 @@
 :- use_module(agent_interface).
 
 :- use_module(stringutil).
+:- use_module(com/ui).
 
 :- dynamic ac_pattern_pending/4, ac_pattern_running/4, ac_occurrence_done/1.
 % ac_pattern_pending(OccId, PatternId, AArgs, InstId).
@@ -204,8 +205,8 @@ instantiate_subgoal_list_aux([SubgoalP | BodyP], AArgs, Pos0, KPath, N, SubgoalI
 	instantiate_subgoal_list_aux(BodyP, AArgs, Pos0, KPath, N1, BodyI, Log2),
 	(SubgoalI \= no_goal -> SubgoalIList = [SubgoalI | BodyI] ; SubgoalIList = BodyI),
 	append(Log1, Log2, Log).
-				% instantiate_subgoal(+GoalP, +AArgs, +Pos, +KPath, -GoalI, -Log)
 
+				% instantiate_subgoal(+GoalP, +AArgs, +Pos, +KPath, -GoalI, -Log)
 
 instantiate_subgoal(goal(Id, LabelP, ClaimP, ContextP, BodyP), AArgs, Pos, KPath, SubgoalI, Log) :-
 	instantiate_goal(goal(Id, LabelP, ClaimP, ContextP, BodyP), AArgs, Pos, KPath, SubgoalI, Log).
@@ -248,21 +249,25 @@ instantiate_subgoal(strategy(ClaimP, ContextP, BodyP), AArgs, Pos, KPath,
 	append(Log1, Log2, Log12), append(Log12, Log3, Log).
 
 instantiate_subgoal(ac_pattern_ref(Id, LabelP, PatternId, Args), AArgs, Pos, KPath,
-		ac_pattern_ref(IdArgs, LabelI, PatternId, Args, CalleeRootId), Log) :-
+			ac_pattern_ref(IdArgs, LabelI, PatternId, Args, RefInfo), Log) :-
 	current_instid(InstId),
 	lift_id(Id, InstId, KPath, IdArgs),
 	instantiate_text(LabelP, AArgs, LabelI, Log0),
 
-	% Compute/enqueue callee occurrence and InstId
+	% Compute child occurrence identity for deterministic navigation / provenance
 	occid_child(Pos, KPath, ChildOccId),
-	insert_ac_occurrence(ChildOccId, PatternId, Args, ChildInstId),
-	assertz( ac_pattern_pending(ChildOccId, PatternId, Args, ChildInstId) ),
 
-	% Lift the callee's root goal id so exports can refer unambiguously to the callee instance panel
-	(   ac_pattern(PatternId, _FArgsCallee, goal(BaseGoalId, _L, _C, _Ctx, _Body))
-	->  lift_id(BaseGoalId, ChildInstId, kpath([]), CalleeRootId)
-	;   % If pattern is undefined, still return something deterministic; export will show [UNDEFINED]
-		CalleeRootId = 'G_UNDEF'
+	% Determine callee binding status and (if defined) enqueue it
+	(   ac_pattern(PatternId, FArgsCallee, GoalTerm), goal_root_id(GoalTerm, BaseGoalId),
+	    bind_call_arguments(FArgsCallee, Args, AArgs, AArgsForCall)
+	->  insert_ac_occurrence(ChildOccId, PatternId, AArgsForCall, ChildInstId),
+	    assertz( ac_pattern_pending(ChildOccId, PatternId, AArgsForCall, ChildInstId) ),
+	    lift_id(BaseGoalId, ChildInstId, kpath([]), CalleeRootId),
+	    RefInfo = pref_info(CalleeRootId, ChildInstId, ChildOccId, defined)
+	;   (   ac_pattern(PatternId, _FArgsCallee, goal(_BaseGoalId, _L, _Ctx, _Body))
+	    ->  RefInfo = pref_info('G_BADARGS', none, ChildOccId, arg_mismatch)
+	    ;   RefInfo = pref_info('G_UNDEF', none, ChildOccId, undefined)
+	    )
 	),
 
 	Log = Log0,
@@ -280,33 +285,30 @@ instantiate_subgoal(ac_pattern_ref(Id, LabelP, PatternId, Args), AArgs, Pos, KPa
 % 	Log = Log0,
 % 	!.
 
-instantiate_subgoal(ac_pattern_ref(PatternId, Args), AArgs, Pos, KPath,
-		    away_goal_ref(IdArgs), []) :-
-				% pattern lookup, actual arguments binding
-	ac_pattern(PatternId, FArgs, goal( Id, _, _, _)),
-	bind_call_arguments(FArgs, Args, AArgs, AArgsForCall),
-				% compute callee occurrence identity and InstId
-	current_occurrence(ParentOccId),
-	CallPos = callpos(Pos),
-	OccId = occ(ParentOccId, CallPos, KPath),
-	insert_ac_occurrence(OccId, PatternId, AArgsForCall, InstIdCallee),
-				% lift Id in the callee context for a stable cross-instance reference
-	lift_id(Id, InstIdCallee, IdArgs),
-				% enqueue, but only once per occurrence
-	( ( \+ ac_pattern_pending(OccId, _, _, _),
-	    \+ ac_pattern_running(OccId, _, _, _),
-	    \+ ac_occurrence_done(OccId))
-	-> assertz( ac_pattern_pending(OccId, PatternId, AArgsForCall, InstIdCallee) )
-	;  true).
-
-instantiate_subgoal(ac_pattern_ref(PatternId, Args), AArgs, _Pos, _KPath,
-		    missing_goal, [ [ 'pattern ref arguments mismatch', [] ] ] ) :-
-	ac_pattern(PatternId, FArgs, _),
-	\+ bind_call_arguments(FArgs, Args, AArgs, _AArgsForCall).
-
-instantiate_subgoal(ac_pattern_ref(PatternId, _Args), _AArgs, _Pos, _KPath,
-		    missing_goal, [ [ 'pattern ref (~a) not found', [PatternId] ] ]) :-
-	\+ ac_pattern(PatternId, _, _).
+% the following clause has been commented-out as it has been replaced by
+% 	the ac_pattern_ref/4 version above.
+%	Remove when there are no calls to this variant.
+% the load-time normalization of ac_pattern_ref should keep this code unnecessary
+% instantiate_subgoal(ac_pattern_ref(PatternId, Args), AArgs, Pos, KPath,
+% 			ac_pattern_ref(IdArgs, '', PatternId, Args, RefInfo), []) :-
+% 	% Synthesize a stable base id from the call position within the caller pattern.
+% 	synth_pattern_ref_id(Pos, SynthBaseId),
+% 	current_instid(InstId),
+% 	lift_id(SynthBaseId, InstId, KPath, IdArgs),
+% 	% Compute child occurrence identity for deterministic navigation / provenance
+% 	occid_child(Pos, KPath, ChildOccId),
+% 	% Determine callee binding status and (if defined) enqueue it
+% 	(   ac_pattern(PatternId, FArgsCallee, goal(BaseGoalId, _L, _Ctx, _Body)),
+% 	    bind_call_arguments(FArgsCallee, Args, AArgs, AArgsForCall)
+% 	->  insert_ac_occurrence(ChildOccId, PatternId, AArgsForCall, ChildInstId),
+% 	    assertz( ac_pattern_pending(ChildOccId, PatternId, AArgsForCall, ChildInstId) ),
+% 	    lift_id(BaseGoalId, ChildInstId, kpath([]), CalleeRootId),
+% 	    RefInfo = pref_info(CalleeRootId, ChildInstId, ChildOccId, defined)
+% 	;   (   ac_pattern(PatternId, _FArgsCallee, goal(_BaseGoalId, _L, _Ctx, _Body))
+% 	    ->  RefInfo = pref_info('G_BADARGS', none, ChildOccId, arg_mismatch)
+% 	    ;   RefInfo = pref_info('G_UNDEF', none, ChildOccId, undefined)
+% 	    )
+% 	).
 
 
 instantiate_subgoal(evidence(Id, LabelP, Category, ClaimP, ContextP), AArgs, _Pos, KPath,
@@ -380,10 +382,20 @@ select_existing_evidence_xref(Category, Claim, Context, AArgs, XRef) :-
 
 bind_call_arguments([], [], _AArgs, []).
 
-bind_call_arguments([arg(Name, Category) | FArgs], [ UName | Args], AArgs,
-		    [arg(Name, Category, Value) | AArgsForCall]) :-
-	member( arg(UName, Category, Value), AArgs),
-	bind_call_arguments( FArgs, Args, AArgs, AArgsForCall ).
+% For pattern references, the "actuals" list may be either:
+%   1) names of values already present in the caller's AArgs (i.e., "pass-through"), or
+%   2) literal values to be used directly for the callee's parameters.
+%
+% We support both. If a caller binding exists for (UName, Category), we reuse it.
+% Otherwise, we treat UName itself as the literal Value.
+
+bind_call_arguments([arg(Name, Category) | FArgs], [UName | Args], AArgs,
+                    [arg(Name, Category, Value) | AArgsForCall]) :-
+    (   member(arg(UName, Category, Value0), AArgs)
+    ->  Value = Value0
+    ;   Value = UName
+    ),
+    bind_call_arguments(FArgs, Args, AArgs, AArgsForCall).
 
 				% strategy_iterator_match(+Iterator, +AArgs, -AArgIt)
 
@@ -680,3 +692,25 @@ aarg_text_value( arg(_, _, ss_flow(Value, _, _, _, _)), Value).
 aarg_text_value( arg(_, _, ipc_flow(Value, _, _, _, _)), Value).
 
 aarg_text_value( arg(_, _, Value), Value).
+% synth_pattern_ref_id(+Pos, -BaseId)
+% Generate a stable base id for pattern references that do not carry an explicit
+% author-supplied id. This is structural (CallPos-based), not source-location-based.
+% BaseId is lifted later with InstId and KPath.
+
+synth_pattern_ref_id(Pos, BaseId) :-
+	( var(Pos) -> PosList = []
+	; is_list(Pos) -> PosList = Pos
+	; PosList = [Pos]
+	),
+	( PosList == []
+	-> BaseId = 'M'
+	;  maplist(pos_step_atom, PosList, PosAtoms),
+	   atomic_list_concat(['M'|PosAtoms], '_', BaseId)
+	).
+
+pos_step_atom(Step, Atom) :-
+	( number(Step) -> number_atom(Step, Atom)
+	; atom(Step)   -> Atom = Step
+	; string(Step) -> atom_string(Atom, Step)
+	; term_to_atom(Step, Atom)
+	).

@@ -177,12 +177,15 @@ ac_format_txt_goal(Output, missing_goal, Indent ) :-
 %     format(Output, "~a  ~w~n", [Indent, Label]),
 %     !.
 
-ac_format_txt_goal(Output, ac_pattern_ref(Id, Label, PatternId, Args, CalleeRootId), Indent) :-
-    ( ref_is_undefined(PatternId, Args) -> Suffix = '  [UNDEFINED]' ; Suffix = '' ),
+ac_format_txt_goal(Output, ac_pattern_ref(Id, Label, PatternId, Args, pref_info(CalleeRootId, _ChildInstId, _ChildOccId, Status)), Indent) :-
+    ( Status == undefined    -> Suffix = '  [UNDEFINED]'
+    ; Status == arg_mismatch -> Suffix = '  [ARG_MISMATCH]'
+    ; Suffix = ''
+    ),
     atomic_list_concat([PatternId, '_', CalleeRootId], CalleeBase),
     format(Output, "~amodule ~a : ~w(~w)~w  -> ~a~n",
            [Indent, Id, PatternId, Args, Suffix, CalleeBase]),
-    format(Output, "~a  ~w~n", [Indent, Label]),
+	(Label \== '' -> format(Output, "~a  ~w~n", [Indent, Label]) ; true),
     !.
 
 % ac_format_txt_goal(Output, ac_pattern_ref(Id, Label, PatternId, Args), Indent) :-
@@ -339,21 +342,21 @@ ac_format_dot_goal(Output, ParentId, Depth, goal(Id, Claim, Context, Subgoals)) 
 	       [Id, Id, ClaimBr]),
 	% format(Output, "\"~a\" [shape=rectangle label=<<b>goal</b><br/>~a>]~n", % HERE
 	%        [Id, ClaimBr]),
-	( ParentId \= null -> format(Output, "~a -> ~a~n", [ParentId, Id]) ; true), % HERE
+	( ParentId \= null -> format(Output, "~a -> ~a~n", [ParentId, Id]) ; true),
 	maplist( ac_format_dot_context(Output, Id, Depth), Context),
 	NextDepth is Depth + 1,
 	maplist( ac_format_dot_goal(Output, Id, NextDepth), Subgoals).
 
 ac_format_dot_goal(Output, ParentId, Depth, strategy(Id, Label, Claim, Context, Subgoals) ) :-
 	% ac_format_dot_label_br_ify(Claim, ClaimBr),
-	% format(Output, "~a [shape=parallelogram margin=margin=\"0.03,0.01\" label=<<b>strategy ~a</b><br/><font point-size=\"9\">~a</font><br/>~a>]~n",
+	% format(Output, "~a [shape=parallelogram margin=\"0.03,0.01\" label=<<b>strategy ~a</b><br/><font point-size=\"9\">~a</font><br/>~a>]~n",
 	%        [Id, Id, Label, ClaimBr]),
 	ac_format_dot_identifier_words(Label, LabelWords),
 	ac_format_dot_label_br_ify(LabelWords, LabelBr),
 	ac_format_dot_label_br_ify(Claim, ClaimBr),
 
 	format(Output,
-		"~a [shape=parallelogram margin=0 label=<<TABLE BORDER=\"0\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"0\">\c
+		"~a [shape=parallelogram fixedsize=false margin=\"0.01,0.01\" label=<<TABLE BORDER=\"0\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"0\">\c
 	  <TR><TD ALIGN=\"CENTER\">\c
 	  <B>strategy ~a</B><BR/>\c
 	  <FONT POINT-SIZE=\"9\">~a</FONT><BR/>\c
@@ -376,7 +379,7 @@ ac_format_dot_goal(Output, ParentId, Depth, strategy(Claim, Context, Subgoals) )
 	ac_format_dot_label_br_ify(Claim, ClaimBr),
 
 	format(Output,
-		"~a [shape=parallelogram margin=0 label=<<TABLE BORDER=\"0\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"0\">\c
+		"~a [shape=parallelogram fixedsize=false margin=\"0.01,0.01\" label=<<TABLE BORDER=\"0\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"0\">\c
 	  <TR><TD ALIGN=\"CENTER\">\c
 	  <B>strategy ~a</B><BR/>\c
 	  <FONT POINT-SIZE=\"9\">~a</FONT><BR/>\c
@@ -524,21 +527,32 @@ ac_format_dot_goal(Output, ParentId, _Depth, missing_goal ) :-
 %     !.
 
 ac_format_dot_goal(Output, ParentId, _Depth,
-                   ac_pattern_ref(Id, Label, PatternId, Args, CalleeRootId) ) :-
-    ( ref_is_undefined(PatternId, Args) -> Suffix = '  [UNDEFINED]' ; Suffix = '' ),
+                   ac_pattern_ref(Id, Label, PatternId, Args, pref_info(CalleeRootId, _ChildInstId, _ChildOccId, Status)) ) :-
+    ( Status == undefined    ->
+        Suffix = '  [UNDEFINED]',
+        CalleeBase = '[UNDEFINED]',
+        UrlAttrs = ''
+    ; Status == arg_mismatch ->
+        Suffix = '  [ARG_MISMATCH]',
+        CalleeBase = '[ARG_MISMATCH]',
+        UrlAttrs = ''
+    ;
+        Suffix = '',
+        atomic_list_concat([PatternId, '_', CalleeRootId], CalleeBase),
+        atomic_list_concat([CalleeBase, '.html'], Href),
+        format(atom(UrlAttrs), ' URL="~a" href="~a" target="layout"', [Href, Href])
+    ),
 
     ac_format_dot_call_br(PatternId, Args, CallBr),
     ac_format_dot_identifier_words(Label, LabelWords),
     ac_format_dot_label_br_ify(LabelWords, LabelBr),
 
-    % Callee panel basename corresponds to list.html link names: PatternId_GoalId
-    atomic_list_concat([PatternId, '_', CalleeRootId], CalleeBase),
-    atomic_list_concat([CalleeBase, '.html'], CalleeHref),
-
-    % Node-level hyperlink (whole box clickable)
-    (   CalleeHref == ''
-    ->  UrlAttrs = ''
-    ;   format(atom(UrlAttrs), ' URL="~a" href="~a" target="layout"', [CalleeHref,CalleeHref])
+    % Graphviz HTML-like labels will error on empty tags such as:
+    %   <font point-size="9"></font>
+    % Therefore, omit the label line entirely when LabelBr is empty.
+    (   LabelBr == ''
+    ->  LabelLine = ''
+    ;   format(atom(LabelLine), '<font point-size="9">~a</font><br/>', [LabelBr])
     ),
 
     atomic_list_concat([
@@ -546,24 +560,19 @@ ac_format_dot_goal(Output, ParentId, _Depth,
         '~a',              % UrlAttrs (includes leading space when non-empty)
         ' label=<',
             '<b>module ~a</b><br/>',
-            '<font point-size="9">~a</font><br/>',
+            '~a',
             '~a~w<br/>',
             '<font point-size="9">-&gt; ~a</font>',
         '>]~n'
     ], Fmt),
 
     format(Output, Fmt,
-           [Id, UrlAttrs, Id, LabelBr, CallBr, Suffix, CalleeBase]),
+           [Id, UrlAttrs, Id, LabelLine, CallBr, Suffix, CalleeBase]),
 
     format(Output, "~a -> ~a~n", [ParentId, Id]),
     !.
 
 
-% ac_format_dot_goal(Output, ParentId, _Depth, ac_pattern_ref(Id, Label, PatternId, Args) ) :-
-% 	format(Output, "~a [shape=box style=rounded margin=\"0.12,0.18\" label=<<b>module ~a</b><br/><font point-size=\"9\">~a</font><br/>~w(~w)>]~n",
-% 	       [Id, Id, Label, PatternId, Args]),
-% 	format(Output, "~a -> ~a~n", [ParentId, Id]),
-% 	!.
 
 ac_format_dot_goal(Output, ParentId, _Depth, ac_pattern_ref(Id, Label, PatternId, Args) ) :-
     ( ref_is_undefined(PatternId, Args) -> Suffix = '  [UNDEFINED]' ; Suffix = '' ),
@@ -573,9 +582,15 @@ ac_format_dot_goal(Output, ParentId, _Depth, ac_pattern_ref(Id, Label, PatternId
 	ac_format_dot_call_br(PatternId, Args, CallBr),
 	ac_format_dot_identifier_words(Label, LabelWords),
 	ac_format_dot_label_br_ify(LabelWords, LabelBr),
+
+	% Avoid empty HTML-like tags in DOT labels.
+	(   LabelBr == ''
+	->  LabelLine = ''
+	;   format(atom(LabelLine), '<font point-size="9">~a</font><br/>', [LabelBr])
+	),
 	format(Output,
-       "~a [shape=box style=rounded margin=\"0.12,0.18\" label=<<b>module ~a</b><br/><font point-size=\"9\">~a</font><br/>~a~w>>]~n",
-       [Id, Id, LabelBr, CallBr, Suffix]),
+	   "~a [shape=box style=rounded margin=\"0.12,0.18\" label=<<b>module ~a</b><br/>~a~a~w>>]~n",
+	   [Id, Id, LabelLine, CallBr, Suffix]),
 
     format(Output, "~a -> ~a~n", [ParentId, Id]),
     !.
@@ -921,7 +936,7 @@ ac_pattern_ref_node(PatternId, Args) :-
 % Walk the instantiated goal tree and extract pattern references.
 goal_pattern_refs(ac_pattern_ref(PatternId, Args), PatternId, Args).
 goal_pattern_refs(ac_pattern_ref(_Id, _Label, PatternId, Args), PatternId, Args).
-goal_pattern_refs(ac_pattern_ref(_Id, _Label, PatternId, Args, _AwayId), PatternId, Args).
+goal_pattern_refs(ac_pattern_ref(_Id, _Label, PatternId, Args, _RefInfo), PatternId, Args).
 
 goal_pattern_refs(goal(_Id, _Label, _Claim, _Ctx, Subgoals), PatternId, Args) :-
     member(G, Subgoals),
