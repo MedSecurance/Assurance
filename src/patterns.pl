@@ -90,9 +90,22 @@ load_patterns(FullFile) :-
 	;   format('~q: file not found.~n',[FullFile]),
 		!, fail
 	),
-	ensure_loaded(FullFile),
+	resolve_patterns_file(FullFile, ActualFile),
+	% Prevent multiple in-memory definitions of the same PatternId across repeated loads
+	% within the same run (e.g., when a modified pattern set is loaded again, or loaded
+	% under a different filename). If the same PatternId is defined more than once in the
+	% database, once/1 in instantiation will always pick the oldest clause.
+	%
+	% Strategy: scan the file for ac_pattern/3 definitions, retract any existing clauses
+	% for those PatternIds, then (re)load the file.
+	scan_pattern_ids(ActualFile, PatIds),
+	forall(member(PatId, PatIds), (
+		retractall(ac_pattern(PatId, _, _)),
+		retractall(ac_pattern_sig(PatId, _))
+	)),
+	load_files(ActualFile, [reconsult(true)]),
 	refresh_pattern_sigs,
-	file_base_name(FullFile,Base), file_name_extension(Core,_,Base),
+	file_base_name(ActualFile,Base), file_name_extension(Core,_,Base),
 	atom(Core), % remember core of basename of loaded file
 	(   patterns_defined(Core)
 	->  retractall( patterns_defined(Core) )
@@ -100,6 +113,38 @@ load_patterns(FullFile) :-
 	),
 	assert( patterns_defined(Core) ),
 	true.
+
+				% resolve_patterns_file(+UserFile, -ActualFile)
+				%   Allow callers to omit the .pl extension.
+
+resolve_patterns_file(UserFile, ActualFile) :-
+	(   exists_file(UserFile)
+	->  ActualFile = UserFile
+	;   atom_concat(UserFile, '.pl', ActualFile),
+		exists_file(ActualFile)
+	).
+
+				% scan_pattern_ids(+File, -PatternIds)
+				%   Collect PatternId values of any ac_pattern/3 facts in File.
+				%   Used to retract old definitions prior to (re)loading.
+
+scan_pattern_ids(File, PatternIds) :-
+	setup_call_cleanup(
+		open(File, read, In),
+		scan_pattern_ids_stream(In, [], Rev),
+		close(In)
+	),
+	sort(Rev, PatternIds).
+
+scan_pattern_ids_stream(In, Acc, Out) :-
+	read_term(In, Term, [syntax_errors(dec10)]),
+	(   Term == end_of_file
+	->  Out = Acc
+	;   (   Term = ac_pattern(PatternId, _Args, _Goal)
+		->  scan_pattern_ids_stream(In, [PatternId|Acc], Out)
+		;   scan_pattern_ids_stream(In, Acc, Out)
+		)
+	).
 
 				% pattern_sig(+PatternId, -PatternSig)
 				%   PatternSig is a stable, content-derived signature identifying the

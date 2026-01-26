@@ -26,7 +26,7 @@
                   jsonresp_server/1, jsonresp/1,
                   localhost_ip/1, serverhost_ip/1,
 		  etb_run_with_http_server/1, etb_server_is_running/1,
-		  path_prefix/1
+		  path_prefix/1, reserved_words/1
 		 ]).
 
 % Versioning of various things
@@ -93,14 +93,14 @@ name_string(erepo,'O-ETB EVIDENCE Repository').
         initialize/1, initialized/1, etb_initialized/1, user_level/1,
         etb_mode/1, etb_logging/1, null_stream/1, sleep_after_server_start/1,
         etb_run_with_http_server/1, etb_server_is_running/1,
-		 path_prefix/1.
+		 path_prefix/1, reserved_words/1.
 
 settable_params([prompt_string,debug,statusprt,guitracer,guiserver,
 		 self_test,regression_test,verbose,
 		 initialize,initialized,etb_initialized,user_level,
 		 etb_mode, etb_logging, null_stream, sleep_after_server_start,
 		 etb_run_with_http_server, etb_server_is_running,
-		 path_prefix
+		 path_prefix, reserved_words
                 ]).
 
 setparam(Param,Value) :- atom(Param), ground(Value),
@@ -302,3 +302,5 @@ host_os(os_x). % define only one
 local_pdf_viewer(os_x,'"/Applications/Adobe Reader 9/Adobe Reader.app/Contents/MacOS/AdobeReader"').
 local_dot_render(os_x,'dot').
 local_open_file(os_x,'open').
+
+reserved_words(["BioAssist", "StabVida", "IoMT", "O-ETB", "MDCG"]).

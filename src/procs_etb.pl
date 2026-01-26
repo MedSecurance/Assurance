@@ -1,5 +1,16 @@
 % ETB-specific command procedures
 
+proc(inst_test_d, [
+	% reset,
+	aco_apl('../TEST/ACO/bio_v6d.aco', '../TEST/ACO/bio_v6d.apl'),
+	load_patterns('../TEST/aco/bio_v6d.apl'),
+	% show_pattern('BioAssist'),
+	instantiate_pattern('BioAssist', [ ], bio6d),
+	export_case(bio6d, txt),
+	export_case(bio6d, html),
+	detach_case
+	]).
+
 proc(inst_test, [
 	reset,
 	instantiate_pattern(person, [marius,programming], person_example),
@@ -31,7 +42,8 @@ proc(inst_test, [
 	% show_pattern('BioAssist'),
 	instantiate_pattern('BioAssist', [ ], bio6),
 	export_case(bio6, txt),
-	export_case(bio6, html)
+	export_case(bio6, html),
+	detach_case
 	]).
 
 proc(show_aco_tests, [

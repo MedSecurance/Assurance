@@ -6,6 +6,11 @@
 :- use_module(stringutil).
 :- use_module(library(pcre)).
 
+:- dynamic(ac_format_dot_linewidth/1).
+
+ac_format_dot_linewidth(N) :- current_predicate(param:dot_linewidth/1), param:dot_linewidth(N), !.
+ac_format_dot_linewidth(32). % default may be overriden by param if defined there
+
 
 reset_CAP :-
 	% param:cap(CapRoot), param:cap_dir(CapDir),
@@ -15,10 +20,9 @@ reset_CAP :-
 	% Following version is to save examples in CAP
 	shell('make clean_cap'). % just use makefile unless it becomes a problem
 
-%
-%
-% ac_export(Filename, Format)
-%
+
+				% ac_export(Filename, Format)
+				%
 
 ac_export(FileBasename, 'txt') :- atom(FileBasename), !,
 	param:cap_dir(CapDir),
@@ -34,6 +38,7 @@ ac_export(Dirname, Format) :- member(Format,['html', 'html90', 'htmlH']), !,
 	      E,
 	      ( print_message(error, E),
 	        fail )).
+
 
 			% ac_export_html(+Dirname, +Format)
 
@@ -56,6 +61,7 @@ ac_export_html(Dirname, Format) :-
 		format(List_Output, '<p><a href="~a.html" target=layout>~a</a>~n', [Basename, Basename]) ) ),
 	close(List_Output).
 
+
 			% ac_export_html_instance(+Format, +ACInstance, +Dirname, -Basename)
 
 ac_export_html_instance(Format, ac_instance(PatternId, AArgs, InstId, Goal, Log), Dirname, Basename ) :-
@@ -74,6 +80,7 @@ ac_export_html_instance(Format, ac_instance(PatternId, AArgs, InstId, Goal, Log)
 	open(Filename_Html, write, Output_Html),
 	ac_format(Output_Html, 'html', ac_instance(PatternId, AArgs, InstId, Goal, Log)),
 	close(Output_Html).
+
 
 				% ac_string(-String)
 				%	used internally to generate text of current AC as a string
@@ -114,19 +121,12 @@ ac_format(Output, Format, ACInstance) :- memberchk(Format, ['dot', 'dot90', 'dot
 ac_format_txt(Output, ac_instance(_PatternId, _AArgs, _InstId, Goal, _Log)) :-
 	ac_format_txt_goal(Output, Goal, '').
 
+
 				% ac_format_txt_goal(+Output, +Goal, +Indent)
 
 ac_format_txt_goal(Output, null_goal(Id), Indent) :-
 	format(Output, '~anull goal ~a', [Indent, Id]).
 
-% not used now:
-% ac_format_txt_goal(Output,
-% 		goal(_Id, missingPattern, missing_pattern_ref(PatternId, Args), _Context, _Subgoals),
-% 		Indent) :-
-% 	format(Output, "~apattern reference : ~w(~w)  [UNDEFINED]~n",
-% 			[Indent, PatternId, Args]),
-% 	!.
-	
 ac_format_txt_goal(Output, goal(Id, Label, Claim, Context, Subgoals), Indent ) :-
 	format(Output, "~agoal ~a (~a) : ~a~n", [Indent, Id, Label, Claim]),
 	NewIndent = '  ', atom_concat(Indent, NewIndent, Indent2),
@@ -164,19 +164,6 @@ ac_format_txt_goal(Output, away_goal_ref(Id), Indent) :-
 ac_format_txt_goal(Output, missing_goal, Indent ) :-
 	format(Output, '~amissing goal~n', Indent).
 
-
-% ac_format_txt_goal(Output, ac_pattern_ref(Id, Label, PatternId, Args, AwayGoalId), Indent) :-
-%     format(Output, "~amodule ~a -> away goal ~a: ~w(~w)~n", [Indent, Id, AwayGoalId, PatternId, Args]),
-%     format(Output, "~a  ~w~n", [Indent, Label]),
-%     !.
-
-% ac_format_txt_goal(Output, ac_pattern_ref(Id, Label, PatternId, Args, AwayGoalId), Indent) :-
-%     ( ref_is_undefined(PatternId, Args) -> Suffix = '  [UNDEFINED]' ; Suffix = '' ),
-%     format(Output, "~amodule ~a -> away goal ~a: ~w(~w)~w~n",
-%            [Indent, Id, AwayGoalId, PatternId, Args, Suffix]),
-%     format(Output, "~a  ~w~n", [Indent, Label]),
-%     !.
-
 ac_format_txt_goal(Output, ac_pattern_ref(Id, Label, PatternId, Args, pref_info(CalleeRootId, _ChildInstId, _ChildOccId, Status)), Indent) :-
     ( Status == undefined    -> Suffix = '  [UNDEFINED]'
     ; Status == arg_mismatch -> Suffix = '  [ARG_MISMATCH]'
@@ -188,26 +175,14 @@ ac_format_txt_goal(Output, ac_pattern_ref(Id, Label, PatternId, Args, pref_info(
 	(Label \== '' -> format(Output, "~a  ~w~n", [Indent, Label]) ; true),
     !.
 
-% ac_format_txt_goal(Output, ac_pattern_ref(Id, Label, PatternId, Args), Indent) :-
-% 	format(Output, "~amodule ~a (~a) : ~w ~w~n", [Indent, Id, Label, PatternId, Args]).
-
 ac_format_txt_goal(Output, ac_pattern_ref(Id, Label, PatternId, Args), Indent) :-
     ( ref_is_undefined(PatternId, Args) -> Suffix = '  [UNDEFINED]' ; Suffix = '' ),
     format(Output, "~amodule ~a (~a) : ~w(~w)~w~n",
            [Indent, Id, Label, PatternId, Args, Suffix]).
 
-% ac_format_txt_goal(Output, ac_pattern_ref(PatternId, Args), Indent) :-
-% 	format(Output, "~amodule : ~w ~w~n", [Indent, PatternId, Args]).
-
 ac_format_txt_goal(Output, ac_pattern_ref(PatternId, Args), Indent) :-
     ( ref_is_undefined(PatternId, Args) -> Suffix = '  [UNDEFINED]' ; Suffix = '' ),
     format(Output, "~amodule : ~w(~w)~w~n", [Indent, PatternId, Args, Suffix]).
-
-% ac_format_txt_goal(Output, evidence(Id, Label, Category, Claim, Context, XRef), Indent ) :-
-% 	format(Output, "~aevidence ~a (~a) : ~a~n", [Indent, Id, Label, Claim]),
-% 	format(Output, "~a  evidence-category: ~a, xref: ~w~n", [Indent, Category, XRef]),
-% 	NewIndent = '  ', atom_concat(Indent, NewIndent, Indent2),
-% 	ac_format_txt_context(Output, Context, Indent2).
 
 ac_format_txt_goal(Output, evidence(Id, Label, Category, Claim, Context, XRef), Indent ) :-
 	format(Output, "~aevidence ~a (~a) : ", [Indent, Id, Label]),
@@ -234,6 +209,7 @@ ac_format_txt_evidence(Output, evidence(Category, Claim, Context, XRef), Indent)
 	writeq(Output, XRef),
 	format(Output, '~n', []).
 
+
 				% ac_format_txt_goals(+Output, +Goals, +Indent)
 
 ac_format_txt_goals(_Output, [], _Indent).
@@ -241,6 +217,7 @@ ac_format_txt_goals(_Output, [], _Indent).
 ac_format_txt_goals(Output, [G | Goals], Indent) :-
 	ac_format_txt_goal(Output, G, Indent),
 	ac_format_txt_goals(Output, Goals, Indent).
+
 
 				% ac_format_txt_context(+Output, +Context, +Indent)
 
@@ -274,6 +251,7 @@ ac_format_txt_context(Output, [assumption(X) | C], Indent) :-
 				% ac_format_txt_text(+Output, +Indent, +Text)
 				% Indent continuation lines if Text contains embedded newlines.
 				% Continuation lines are indented by Indent + two spaces.
+
 ac_format_txt_text(Output, Indent, Text) :-
 	(   string(Text)
 	->  S = Text
@@ -340,19 +318,14 @@ ac_format_dot_goal(Output, ParentId, Depth, goal(Id, Claim, Context, Subgoals)) 
 	ac_format_dot_label_br_ify(Claim, ClaimBr),
 	format(Output, "~a [shape=rectangle label=<<b>goal ~a</b><br/>~a>]~n",
 	       [Id, Id, ClaimBr]),
-	% format(Output, "\"~a\" [shape=rectangle label=<<b>goal</b><br/>~a>]~n", % HERE
-	%        [Id, ClaimBr]),
 	( ParentId \= null -> format(Output, "~a -> ~a~n", [ParentId, Id]) ; true),
 	maplist( ac_format_dot_context(Output, Id, Depth), Context),
 	NextDepth is Depth + 1,
 	maplist( ac_format_dot_goal(Output, Id, NextDepth), Subgoals).
 
 ac_format_dot_goal(Output, ParentId, Depth, strategy(Id, Label, Claim, Context, Subgoals) ) :-
-	% ac_format_dot_label_br_ify(Claim, ClaimBr),
-	% format(Output, "~a [shape=parallelogram margin=\"0.03,0.01\" label=<<b>strategy ~a</b><br/><font point-size=\"9\">~a</font><br/>~a>]~n",
-	%        [Id, Id, Label, ClaimBr]),
 	ac_format_dot_identifier_words(Label, LabelWords),
-	ac_format_dot_label_br_ify(LabelWords, LabelBr),
+	ac_format_dot_label_br_ify_raw(LabelWords, LabelBr),
 	ac_format_dot_label_br_ify(Claim, ClaimBr),
 
 	format(Output,
@@ -363,71 +336,31 @@ ac_format_dot_goal(Output, ParentId, Depth, strategy(Id, Label, Claim, Context, 
 	  ~a\c
 	  </TD></TR></TABLE>>]~n",
 		[Id, Id, LabelBr, ClaimBr]),
-	  
-	% format(Output,
-	% 		"~a [shape=parallelogram margin=\"0.03,0.01\" label=<<b>strategy ~a</b><br/><font point-size=\"9\">~a</font><br/>~a>]~n",
-	% 		[Id, Id, LabelBr, ClaimBr]),
-
 	format(Output, "~a -> ~a~n", [ParentId, Id]),
 	maplist(ac_format_dot_context( Output, Id, Depth), Context),
 	NextDepth is Depth + 1,
 	maplist( ac_format_dot_goal(Output, Id, NextDepth), Subgoals), !.
 
-ac_format_dot_goal(Output, ParentId, Depth, strategy(Claim, Context, Subgoals) ) :-
+ac_format_dot_goal(Output, ParentId, Depth, strategy(Claim, Context, Subgoals)) :-
 	ac_format_dot_counter_next(C),
 	atomic_concat('strategy_', C, Id),
 	ac_format_dot_label_br_ify(Claim, ClaimBr),
 
 	format(Output,
 		"~a [shape=parallelogram fixedsize=false margin=\"0.01,0.01\" label=<<TABLE BORDER=\"0\" CELLBORDER=\"0\" CELLSPACING=\"0\" CELLPADDING=\"0\">\c
-	  <TR><TD ALIGN=\"CENTER\">\c
-	  <B>strategy ~a</B><BR/>\c
-	  <FONT POINT-SIZE=\"9\">~a</FONT><BR/>\c
-	  </TD></TR></TABLE>>]~n",
+			<TR><TD ALIGN=\"CENTER\">\c
+			<B>strategy ~a</B><BR/>\c
+			~a\c
+			</TD></TR></TABLE>>]~n",
 		[Id, Id, ClaimBr]),
 
-
-	% format(Output, "~a [shape=parallelogram margin=\"0.03,0.01\" label=<<b>strategy ~a</b><br/>~a>]~n",
-	% 	[Id, Id, ClaimBr]),
-
-	% format(Output, "\"~a\" [shape=parallelogram margin=\"0.03,0.01\" label=<<b>strategy</b><br/>~a>]~n", [Id, ClaimBr]), % HERE
-
 	format(Output, "~a -> ~a~n", [ParentId, Id]),
-	maplist( ac_format_dot_context(Output, Id, Depth), Context),
+	maplist(ac_format_dot_context(Output, Id, Depth), Context),
 	NextDepth is Depth + 1,
-	maplist( ac_format_dot_goal(Output, Id, NextDepth), Subgoals).
-
+	maplist(ac_format_dot_goal(Output, Id, NextDepth), Subgoals).
+	
 ac_format_dot_goal(Output, ParentId, _Depth, goal_ref(Id) ) :-
 	format(Output, "~a -> ~a~n", [ParentId, Id]).
-
-% ac_format_dot_goal(Output, ParentId, _Depth, away_goal_ref(AwayId, PatternId, Args) ) :-
-%     % Legacy patterns: the instantiated tree carries an "away goal" placeholder.
-%     % Display the callee root goal Id plus the callee pattern/args for traceability.
-%     format(Output,
-%            '~a [shape=box style="rounded" label=<<b>away goal ~a</b><br/>~w(~w)>];~n',
-%            [AwayId, AwayId, PatternId, Args]),
-%     format(Output, '~a -> ~a;~n', [ParentId, AwayId]),
-%     !.
-
-% ac_format_dot_goal(Output, ParentId, _Depth, away_goal_ref(AwayId, PatternId, Args) ) :-
-% 	(   ac_instance(PatternId, Args, _InstId, Goal, _Log)
-% 	->  goal_id(Goal, CalleeRootId),
-% 		atomic_list_concat([PatternId, '_', CalleeRootId], CalleeBase),
-% 		atomic_list_concat([CalleeBase, '.html'], CalleeHref),
-% 		format(string(LinkHtml),
-% 			'<A HREF="~a" TARGET="layout">~a</A>', [CalleeHref, CalleeBase])
-% 	;   LinkHtml = '[UNDEFINED]'
-% 	),
-% 	ac_format_dot_call_br(PatternId, Args, CallBr),
-% 	atomic_list_concat([
-% 		'~a [shape=box style="rounded" label=<',
-% 		'<b>pattern reference</b><br/>',
-% 		'~a<br/>',
-% 		'<font point-size="9">-&gt; ~w</font>',
-% 		'>];~n'], Fmt),
-% 	format(Output, Fmt, [AwayId, CallBr, LinkHtml]),
-% 	format(Output, '~a -> ~a;~n', [ParentId, AwayId]),
-% 	!.
 
 ac_format_dot_goal(Output, ParentId, _Depth, away_goal_ref(AwayId, PatternId, Args) ) :-
 (   ac_instance(PatternId, Args, _InstId, Goal, _Log)
@@ -448,11 +381,11 @@ atomic_list_concat([
 		'~a<br/>',
 		'<font point-size="9">-&gt; ~w</font>',
 	'>];~n'
-], Fmt),
+	], Fmt),
 
-format(Output, Fmt, [AwayId, UrlAttrs, CallBr, CalleeBase]),
-format(Output, '~a -> ~a;~n', [ParentId, AwayId]),
-!.
+	format(Output, Fmt, [AwayId, UrlAttrs, CallBr, CalleeBase]),
+	format(Output, '~a -> ~a;~n', [ParentId, AwayId]),
+	!.
 
 
 ac_format_dot_goal(Output, ParentId, _Depth, away_goal_ref(AwayId) ) :-
@@ -477,55 +410,6 @@ ac_format_dot_goal(Output, ParentId, _Depth, missing_goal ) :-
 	format(Output, "~a [shape=rectangle label=<<b>missing goal</b>> color=red]~n", [Id]), % HERE
 	format(Output, "~a -> ~a~n", [ParentId, Id]).
 
-
-% ac_format_dot_goal(Output, _ParentId, _Depth, ac_pattern_ref(Id, Label, PatternId, Args, AwayGoalId) ) :-
-%     % format(Output,
-%     %        '~a [shape=box style="rounded" label=<<b>module ~a</b><br/>away goal ~a<br/>~w(~w)<br/>~w>];~n',
-%     %        [Id, Id, AwayGoalId, PatternId, Args, Label]),
-%     % format(Output, '~a -> ~a;~n', [ParentId, Id]),
-% 	( ref_is_undefined(PatternId, Args) -> Suffix = '  [UNDEFINED]' ; Suffix = '' ),
-% 	format(Output,
-%        '~a [shape=box style="rounded" label=<<b>module ~a</b><br/>away goal ~a<br/>~w(~w)~w<br/>~w>];~n',
-%        [Id, Id, AwayGoalId, PatternId, Args, Suffix, Label]),
-
-%     !.
-
-% ac_format_dot_goal(Output, ParentId, _Depth, ac_pattern_ref(Id, Label, PatternId, Args, CalleeRootId) ) :-
-%     ( ref_is_undefined(PatternId, Args) -> Suffix = '  [UNDEFINED]' ; Suffix = '' ),
-
-%     ac_format_dot_call_br(PatternId, Args, CallBr),
-%     ac_format_dot_identifier_words(Label, LabelWords),
-%     ac_format_dot_label_br_ify(LabelWords, LabelBr),
-
-%     % Callee panel basename corresponds to list.html link names: PatternId_GoalId
-% 	atomic_list_concat([PatternId, '_', CalleeRootId], CalleeBase),
-%     atomic_list_concat([CalleeBase, '.html'], CalleeHref),
-
-%     % Build optional URL attributes (only when defined)
-%     (   CalleeHref == ''
-%     ->  UrlAttrs = ''
-%     ;   format(atom(UrlAttrs), ' URL="~a" target="layout"', [CalleeHref])
-%     ),
-
-% 	atomic_list_concat([
-% 		'~a [shape=box style=rounded margin="0.12,0.18"',
-% 		'~a', %UrlAttrs
-% 		'label=<',
-% 			'<b>module ~a</b><br/>',
-% 			'<font point-size="9">~a</font><br/>',
-% 			'~a~w<br/>',
-% 			'<font point-size="9">-&gt; <A HREF="~a" TARGET="layout">~a</A></font>',     
-% 		'>]~n'], Fmt),
-
-%     format(Output, Fmt,
-%            [Id, UrlAttrs, Id, LabelBr, CallBr, Suffix, CalleeHref, CalleeBase]),
-
-%     % format(Output,
-%     %        '~a [shape=box style=rounded margin="0.12,0.18" label=<<b>module ~a</b><br/><font point-size="9">~a</font><br/>~a~w<br/><font point-size="9">-&gt; ~a</font>>]~n',
-%     %        [Id, Id, LabelBr, CallBr, Suffix, CalleeBase]),
-%     format(Output, "~a -> ~a~n", [ParentId, Id]),
-%     !.
-
 ac_format_dot_goal(Output, ParentId, _Depth,
                    ac_pattern_ref(Id, Label, PatternId, Args, pref_info(CalleeRootId, _ChildInstId, _ChildOccId, Status)) ) :-
     ( Status == undefined    ->
@@ -545,11 +429,9 @@ ac_format_dot_goal(Output, ParentId, _Depth,
 
     ac_format_dot_call_br(PatternId, Args, CallBr),
     ac_format_dot_identifier_words(Label, LabelWords),
-    ac_format_dot_label_br_ify(LabelWords, LabelBr),
+    ac_format_dot_label_br_ify_raw(LabelWords, LabelBr),
 
-    % Graphviz HTML-like labels will error on empty tags such as:
-    %   <font point-size="9"></font>
-    % Therefore, omit the label line entirely when LabelBr is empty.
+    %  omit the label line entirely when LabelBr is empty.
     (   LabelBr == ''
     ->  LabelLine = ''
     ;   format(atom(LabelLine), '<font point-size="9">~a</font><br/>', [LabelBr])
@@ -572,8 +454,6 @@ ac_format_dot_goal(Output, ParentId, _Depth,
     format(Output, "~a -> ~a~n", [ParentId, Id]),
     !.
 
-
-
 ac_format_dot_goal(Output, ParentId, _Depth, ac_pattern_ref(Id, Label, PatternId, Args) ) :-
     ( ref_is_undefined(PatternId, Args) -> Suffix = '  [UNDEFINED]' ; Suffix = '' ),
     % format(Output,
@@ -581,7 +461,7 @@ ac_format_dot_goal(Output, ParentId, _Depth, ac_pattern_ref(Id, Label, PatternId
     %        [Id, Id, Label, PatternId, Args, Suffix]),
 	ac_format_dot_call_br(PatternId, Args, CallBr),
 	ac_format_dot_identifier_words(Label, LabelWords),
-	ac_format_dot_label_br_ify(LabelWords, LabelBr),
+	ac_format_dot_label_br_ify_raw(LabelWords, LabelBr),
 
 	% Avoid empty HTML-like tags in DOT labels.
 	(   LabelBr == ''
@@ -595,14 +475,6 @@ ac_format_dot_goal(Output, ParentId, _Depth, ac_pattern_ref(Id, Label, PatternId
     format(Output, "~a -> ~a~n", [ParentId, Id]),
     !.
 
-% ac_format_dot_goal(Output, ParentId, _Depth, ac_pattern_ref(PatternId, Args) ) :-
-% 	ac_format_dot_counter_next(C),
-% 	atomic_concat('module_', C, Id),
-% 	format(Output, "~a [shape=box style=rounded margin=\"0.12,0.18\" label=<<b>module ~a</b><br/><font point-size=\"9\">~w(~w)</font>>]~n",
-% 	       [Id, Id, PatternId, Args]),
-% 	format(Output, "~a -> ~a~n", [ParentId, Id]),
-% 	!.
-
 ac_format_dot_goal(Output, ParentId, _Depth, ac_pattern_ref(PatternId, Args) ) :-
     ( ref_is_undefined(PatternId, Args) -> Suffix = '  [UNDEFINED]' ; Suffix = '' ),
     ac_format_dot_counter_next(C),
@@ -613,12 +485,12 @@ ac_format_dot_goal(Output, ParentId, _Depth, ac_pattern_ref(PatternId, Args) ) :
     format(Output, "~a -> ~a~n", [ParentId, Id]),
     !.
 
-ac_format_dot_goal(Output, ParentId, Depth, evidence(Id, Label, Category, Claim, Context, XRef) ) :-
+ac_format_dot_goal(Output, ParentId, Depth, evidence(Id, _Label, Category, Claim, Context, XRef) ) :-
 	ac_evidence(Category, Claim, Context, _AArgs, XRef, Status),
 	ac_format_dot_evidence_color(Status, Color),
 	ac_format_dot_label_br_ify(Claim, ClaimBr),
-	format(Output, "~a [shape=ellipse label=<<b>evidence ~a</b><br/><font point-size=\"9\">~a</font><br/><font point-size=\"9\">~a</font><br/>~a<br/>~a xref: ~a> color=~a]~n",
-	       [Id, Id, Category, Label, ClaimBr, Status, XRef, Color]),
+	format(Output, "~a [shape=ellipse label=<<b>evidence ~a</b><br/><font point-size=\"9\">~a</font><br/>~a<br/>~a xref: ~a> color=~a]~n",
+	       [Id, Id, Category, ClaimBr, Status, XRef, Color]),
 	format(Output, "~a -> ~a~n", [ParentId, Id]),
 	maplist(ac_format_dot_context( Output, Id, Depth), Context), !.
 
@@ -636,15 +508,13 @@ ac_format_dot_evidence(Output, ParentId, Depth, evidence(Category, Claim, Contex
 	ac_format_dot_label_br_ify(Claim, ClaimBr),
 	format(Output, "~a [shape=ellipse label=<<b>evidence ~a</b><br/><font point-size=\"9\">~a</font><br/>~a<br/>~a xref: ~a> color=~a]~n",
 	       [Id, Id, Category, ClaimBr, Status, XRef, Color]),
-	% format(Output, "~a [shape=ellipse label=<<b>~a</b><br/>~a<br/>~a xref: ~a> color=~a]~n",
-	%        [Id, Category, ClaimBr, Status, XRef, Color]),
-
 	format(Output, "~a -> ~a~n", [ParentId, Id]),
 	maplist(ac_format_dot_context( Output, Id, Depth), Context), !.
 
 ac_format_dot_evidence_color(valid, black) :- true, !.
 ac_format_dot_evidence_color(invalid, red) :- true, !.
 ac_format_dot_evidence_color(_, blue).
+
 
 				% ac_format_dot_context(+Output, +ParentId, +Depth, +Clause)
 
@@ -673,9 +543,8 @@ ac_format_dot_context_aux(Output, ParentId, _Depth, Category, Text) :-
 	ac_format_dot_label_br_ify(Text, TextBr),
 	format(Output, "~a [shape=rectangle style=rounded label=<<b>~a ~a</b><br/>~a>]~n",
 	       [Id, Category, Id, TextBr]),
-	% format(Output, "~a [shape=rectangle style=rounded label=<<b>~a</b><br/>~a>]~n", [Id, Category, TextBr]),
-
 	format(Output, "{ rank=same; ~a -> ~a [style=dashed]; }~n", [ParentId, Id]).
+
 
 				% ac_format_dot_counter_init, ac_format_dot_counter_next(-X)
 
@@ -696,15 +565,32 @@ ac_format_dot_counter_next(X) :-
 	assertz( ac_format_dot_counter(X) ).
 
 
-				% label_text(+Term, -Text) 
-				% Render structured label terms for DOT/HTML
-				%   currently  just missing_pattern_ref
+				% label_text(+Term, -Text)
+				% Render structured label terms for DOT/HTML, plus conservative normalization
+				% for identifier-like labels and minor punctuation whitespace repair.
+
 label_text(missing_pattern_ref(PatternId, Args), Text) :- !,
     format(string(Text),
            "pattern reference : ~w(~w)  [UNDEFINED]",
            [PatternId, Args]).
 
-label_text(Text, Text).
+label_text(Term, Text) :-
+    term_to_text(Term, Text0),
+    normalize_label_text(Text0, Text).
+
+
+				% Convert common term types to a printable string.
+term_to_text(Text, Text) :- string(Text), !.
+term_to_text(Text, TextS) :- atom(Text), !, atom_string(Text, TextS).
+term_to_text(Term, TextS) :- format(string(TextS), "~w", [Term]).
+
+
+				% Normalize identifier-like labels (camelCase, underscores) and repair
+				% sentence punctuation that is missing a following space (e.g., "ingestion.Tool").
+normalize_label_text(Text0, Text) :-
+    re_replace('_'/g, ' ', Text0, T1), % Replace underscores with spaces (if any)
+    re_replace('([a-z])([A-Z])'/g, '$1 $2', T1, T2), % Insert spaces at camelCase boundaries: "secureTransit" -> "secure Transit"
+    re_replace('\\.([A-Z])'/g, '. $1', T2, Text). % Repair missing space after '.' when next char is Uppercase (avoids URLs)
 
 
 				% Render PatternId(Args) as a wrap-friendly string
@@ -713,6 +599,7 @@ ac_format_dot_call_br(PatternId, Args, CallBr) :-
     format(string(S0), "~w(~w)", [PatternId, Args]),
     dot_call_breakpoints(S0, S1),
     ac_format_dot_label_br_ify(S1, CallBr).
+
 
 				% Introduce spaces after punctuation so split_string/2 creates break opportunities.
 dot_call_breakpoints(S0, S) :-
@@ -729,13 +616,16 @@ dot_call_breakpoints(S0, S) :-
 				% with word breaks at underscores and CamelCase boundaries
 				% so it can be wrapped by ac_format_dot_label_br_ify/2.
 ac_format_dot_identifier_words(Label0, WordsString) :-
-    (   string(Label0) -> S0 = Label0
-    ;   atom(Label0)   -> atom_string(Label0, S0)
-    ;   % fall back to a single token
-        term_string(Label0, S0)
-    ),
-    split_identifier_words(S0, Words),
-    atomic_list_concat(Words, ' ', WordsString).
+	(   string(Label0) -> S0 = Label0
+	;   atom(Label0)   -> atom_string(Label0, S0)
+	;   term_string(Label0, S0)
+	),
+	(   identifier_like_string(S0)
+	->  split_identifier_words(S0, Words),
+		atomic_list_concat(Words, ' ', WordsString)
+	;   WordsString = S0
+	).
+				
 
 split_identifier_words(S, Words) :-
     string_codes(S, Cs),
@@ -743,39 +633,111 @@ split_identifier_words(S, Words) :-
     reverse(RevWords, Words).
 
 split_identifier_words_codes([], CurrRev, Acc, Out) :-
-    ( CurrRev = [] -> Out = Acc
-    ; reverse(CurrRev, WCs),
-      string_codes(W, WCs),
-      Out = [W|Acc]
+	( CurrRev = [] -> Out = Acc
+	; reverse(CurrRev, WCs),
+		string_codes(W0, WCs),
+		word_normalized(W0, W),
+		Out = [W|Acc]
+	).
+
+% Separator '_' or '-': flush current token, then continue
+split_identifier_words_codes([C|Cs], CurrRev, Acc, Out) :-
+	( C =:= 0'_
+	; C =:= 0'-
+	),
+	!,
+	( CurrRev = [] ->
+		Acc1 = Acc
+	; reverse(CurrRev, WCs),
+		string_codes(W0, WCs),
+		word_normalized(W0, W),
+		Acc1 = [W|Acc]
+	),
+	split_identifier_words_codes(Cs, [], Acc1, Out).
+
+% CamelCase boundary: lower/digit followed by upper starts a new word
+% Include C in the current token before flushing.
+split_identifier_words_codes([C|Cs], CurrRev, Acc, Out) :-
+	Cs = [Next|_],
+	is_lower_or_digit(C),
+	is_upper(Next),
+	CurrRev \= [],
+	!,
+	reverse([C|CurrRev], WCs),
+	string_codes(W0, WCs),
+	word_normalized(W0, W),
+	split_identifier_words_codes(Cs, [], [W|Acc], Out).
+
+% Default: accumulate
+split_identifier_words_codes([C|Cs], CurrRev, Acc, Out) :-
+	split_identifier_words_codes(Cs, [C|CurrRev], Acc, Out).
+	
+
+reserved_words(Ws) :-
+	current_predicate(param:reserved_words/1), param:reserved_words(Ws), !.
+reserved_words(["BioAssist","IoMT"]).
+
+
+merge_reserved_words_in_text(Text0, Text) :-
+	reserved_words(Rs),
+	( Rs == []
+	-> Text = Text0
+	;  split_string(Text0, " \t\r\n", " \t\r\n", Words0),
+	   merge_reserved_words_in_word_list(Rs, Words0, Words),
+	   atomic_list_concat(Words, ' ', Text)
+	).
+
+merge_reserved_words_in_word_list([], Words, Words) :- !.
+
+merge_reserved_words_in_word_list([Reserved | Rs], Words0, Words) :-
+	split_identifier_words(Reserved, Parts),
+	( Parts = [Reserved]
+	-> Words1 = Words0
+	;  merge_word_sequence(Words0, Parts, Reserved, Words1)
+	),
+	merge_reserved_words_in_word_list(Rs, Words1, Words).
+
+merge_word_sequence([], _Parts, _Whole, []) :- !.
+
+merge_word_sequence(Words0, Parts, Whole, [Whole | Rest2]) :-
+	append(Parts, Rest, Words0), !,
+	merge_word_sequence(Rest, Parts, Whole, Rest2).
+
+merge_word_sequence([W | Ws], Parts, Whole, [W | Rest]) :-
+	merge_word_sequence(Ws, Parts, Whole, Rest).
+
+
+word_normalized(W0, W) :-
+    reserved_words(Rs),
+    (   memberchk(W0, Rs)
+    ->  W = W0
+    ;   word_capitalized(W0, W)
     ).
-split_identifier_words_codes([C|Cs], CurrRev, Acc, Out) :-
-    (   C =:= 0'_
-    ;   C =:= 0'-
-    ),
-    !,
-    split_identifier_words_codes(Cs, [], Acc, Out0),
-    % flush current token (if any) before continuing
-    ( CurrRev = [] -> Out = Out0
-    ; reverse(CurrRev, WCs),
-      string_codes(W, WCs),
-      Out = [W|Out0]
-    ).
-split_identifier_words_codes([C|Cs], CurrRev, Acc, Out) :-
-    % CamelCase boundary: lower/digit followed by upper starts a new word
-    Cs = [Next|_],
-    is_lower_or_digit(C),
-    is_upper(Next),
-    CurrRev \= [],
-    !,
-    reverse(CurrRev, WCs),
-    string_codes(W, WCs),
-    split_identifier_words_codes(Cs, [], [W|Acc], Out).
-split_identifier_words_codes([C|Cs], CurrRev, Acc, Out) :-
-    split_identifier_words_codes(Cs, [C|CurrRev], Acc, Out).
+
+
+word_capitalized(Word, CapWord) :-
+	string_codes(Word, [C0 | Cs]),
+	code_type(C0, lower),
+	!,
+	code_type(CU, to_upper(C0)),
+	string_codes(CapWord, [CU | Cs]).
+word_capitalized(Word, Word).
+	
 
 is_upper(C) :- C >= 0'A, C =< 0'Z.
 is_lower_or_digit(C) :-
     (C >= 0'a, C =< 0'z) ; (C >= 0'0, C =< 0'9).
+
+
+				% Label normalization for DOT/HTML rendering
+				%   - makes identifiers breakable (camelCase, underscores)
+				%   - fixes missing whitespace after punctuation (e.g., "...ingestion.Tool")
+
+ac_format_dot_normalize_label(Text0, Text) :-
+    re_replace('_'/g, ' ', Text0, T1), % underscores to spaces
+    re_replace('([a-z])([A-Z])'/g, '$1 $2', T1, T2), % insert spaces at camelCase boundaries: aB -> a B
+    re_replace('([.!?])([A-Za-z])'/g, '$1 $2', T2, T3), % insert space after sentence punctuation when followed by a letter: ".T" -> ". T"
+    merge_reserved_words_in_text(T3, Text).
 
 
 				%
@@ -783,21 +745,33 @@ is_lower_or_digit(C) :-
 				%
 
 ac_format_dot_label_br_ify(Text0, TextWithBr) :-
-	label_text(Text0, Text),
-	split_string(Text, WordList), % split_string(Text, ' ', ' ', WordList),
-	ac_format_dot_label_br_ify_aux('', 0, WordList, TextWithBr).
+    label_text(Text0, Text1),
+    ac_format_dot_normalize_label(Text1, Text2),
+    split_string(Text2, " \t\r\n", " \t\r\n", WordList),
+    ac_format_dot_label_br_ify_aux('', 0, WordList, TextWithBr).
+
 
 ac_format_dot_label_br_ify_aux(IText, _Count, [], IText) :- !.
 
-ac_format_dot_label_br_ify_aux(IText, Count, WordList, OText) :-
-	Count > 18, !, atomic_concat(IText, '<br/>', ITextBr),
-	ac_format_dot_label_br_ify_aux(ITextBr, 0, WordList, OText).
-
 ac_format_dot_label_br_ify_aux(IText, Count, [Word | WordList], OText) :-
-	( Count == 0 -> IText_ = IText, SpaceLen = 0 ; atomic_concat(IText, ' ', IText_), SpaceLen = 1),
+    ac_format_dot_linewidth(Max),
+    string_length(Word, WordLength),
+    ( Count =:= 0 -> SpaceLen = 0 ; SpaceLen = 1 ),
+    NewCount is Count + WordLength + SpaceLen,
+    ( Count > 0, NewCount > Max ->
+        atomic_concat(IText, '<br/>', ITextBr),
+        ac_format_dot_label_br_ify_aux(ITextBr, 0, [Word | WordList], OText)
+    ;
+        ( Count =:= 0 -> IText_ = IText ; atomic_concat(IText, ' ', IText_) ),
         atomic_concat(IText_, Word, IText_Word),
-	string_length(Word, WordLength), NewCount is Count + WordLength + SpaceLen,
-	ac_format_dot_label_br_ify_aux(IText_Word, NewCount, WordList, OText).
+        ac_format_dot_label_br_ify_aux(IText_Word, NewCount, WordList, OText)
+    ).
+
+
+ac_format_dot_label_br_ify_raw(Text, TextWithBr) :-
+	split_string(Text, " \t\r\n", " \t\r\n", WordList),
+	ac_format_dot_label_br_ify_aux('', 0, WordList, TextWithBr).
+
 
 				%
 				%
@@ -813,11 +787,6 @@ ac_format_html(Output, ac_instance(PatternId, AArgs, InstId, Goal, Log)) :-
 	maplist( ac_format_html_arg(Output), AArgs),
 				% svg embedding
 	format(Output, "<hr><h3>GSN Representation</h3>~n", []),
-
-	% format(Output, '<img src="~a.svg" alt="graphical view">~n', [Basename]),
-        % format(Output, '<object data="~a.svg" type="image/svg+xml" width="100%" height="900">~n', [Basename]),
-        % format(Output, '  <p>Your browser does not support inline SVG. Open <a href="~a.svg">the SVG</a>.</p>~n', [Basename]),
-        % format(Output, '</object>~n', []),
 
 	% svg embedding (scrollable, preserves size, no compression to fit)
 	format(Output,'<p><a href="~a.svg" target="_blank">Scroll down or click to open GSN in a new tab (for zoom)</a></p>~n',
@@ -951,42 +920,13 @@ goal_pattern_refs(strategy(_Id, _Ctx, Subgoals), PatternId, Args) :-
 ref_is_undefined(PatternId, Args) :-
     \+ ac_instance(PatternId, Args, _InstId, _Goal, _Log).
 
-/*
-with_output_to(Output, Goal, []) =>
-   with_output_to(Output, Goal).
-with_output_to(Output, Goal, Options) =>
-    option(capture(Streams), Options, []),
-    must_be(list(oneof([user_output,user_error])), Streams),
-    with_output_to(
-	Output,
-	setup_call_cleanup(
-	    output_state(State, Streams),
-	    capture(Goal, Streams, Options),
-	    restore_output(State, Streams))).
 
-capture(Goal, Streams, Options) :-
-    current_output(S),
-    (   option(color(true), Options)
-    ->  set_stream(S, tty(true))
-    ;   true
-      ),
-      maplist(capture_output(S), Streams),
-      once(Goal),
-      maplist(flush_output, [current_output|Streams]).
-  
-  output_state(State, Streams) :-
-      maplist(stream_id, Streams, State).
-  
-  stream_id(Alias, Stream) :-
-      stream_property(Stream, alias(Alias)).
-  
-  restore_output(State, Streams) :-
-      maplist(restore_stream, Streams, State).
-  
-  restore_stream(Alias, Stream) :-
-      set_stream(Stream, alias(Alias)).
-  
-  capture_output(S, Alias) :-
-      set_stream(S, alias(Alias))
-
-*/
+identifier_like_string(S) :-
+    (   sub_string(S, _, _, _, "_")
+    ;   sub_string(S, _, _, _, "-")
+    ;   string_codes(S, Cs),
+        append(_, [C1, C2 | _], Cs),
+        char_type(C1, lower),
+        char_type(C2, upper)
+    ),
+    !.
