@@ -3,6 +3,7 @@
 :- use_module('etb').
 :- use_module('patterns').
 :- use_module('aco/aco_cli').
+%:- use_module('aco/aco_modularize').
 
 commands_defined(etb).
 
@@ -17,6 +18,10 @@ syntax(aco_canon(in_outline, out_canonical),                     etb).
 syntax(aco_stats(in_outline),                                   etb).
 syntax(aco_tree(in_outline),                                    etb).
 syntax(aco_tree(in_outline, arglist),                           etb).
+
+% ACO transformation commands (future aco mode)
+syntax(aco_modularize(goal_or_goals, in_outline, out_outline),  etb).
+
 syntax(attach_case(case_id),                                     etb).
 syntax(attach_evidence,                                     	etb).
 syntax(detach_case,                                              etb).
@@ -80,6 +85,10 @@ semantics(aco_stats(Aco)) :- atom(Aco), exists_file(Aco).
 semantics(aco_tree(Aco)) :- atom(Aco), exists_file(Aco).
 semantics(aco_tree(Aco, Arglist)) :- atom(Aco), exists_file(Aco), is_list(Arglist).
 
+semantics(aco_modularize(Goals, InAco, OutAco)) :- !,
+	( atom(Goals) ; is_list(Goals), maplist(atom, Goals) ),
+    atom(InAco), exists_file(InAco), atom(OutAco), InAco \== OutAco.
+
 semantics(attach_case(Case)) :- !, atom(Case).
 
 semantics(etb_reset(D)) :- !, (D == cap ; D == repos ; D == all).
@@ -126,6 +135,11 @@ help(aco_tree, 'Show ASCII tree for ACO file.').
 help(aco_tree, '  Arg1 is ACO file.').
 help(aco_tree, '  Arg2 is list of options from {full,structure,skeleton,no_aliases}.').
 
+help(aco_modularize, 'T6 modularization: extract goal subtree(s) to module .aco files and replace with Module references.').
+help(aco_modularize, 'Arg1 is a Goal id atom, or a list of Goal id atoms (descendants should come first if overlapping).').
+help(aco_modularize, 'Arg2 is input .aco file.').
+help(aco_modularize, 'Arg3 is output .aco file.').
+
 help(attach_case, 'Attach the identified assurance case in the repository.').
 help(attach_case, 'Arg is an assurance case identifier.').
 
@@ -146,7 +160,7 @@ help(etbt,      'Arg2 (opt) is etb mode.').
 
 help(export_case,	'Export the current assurance case to the CAP.').
 help(export_case,	'Arg1 is a name in the CAP directory for the export.').
-help(export_case,   'Arg2 is the format (currently txt, html or html90).').
+help(export_case,   'Arg2 is the format (currently txt, html, html90, htmlH).').
 help(export_case,   '  (html90 rotates rendered GSN graphics 90 degrees.').
 
 help(import,    'Import a specification of type (model, property, ...).').
@@ -185,10 +199,10 @@ help(show_evidence, 'Arg1 (opt) is summary or all (summary if not specified).').
 
 help(show_pattern, 'Show a loaded assurance case pattern.').
 help(show_pattern, 'Arg1 is the identifier for the pattern.').
-help(show_pattern, 'Arg2 (opt) is the mode {all,header,pp}.').
+help(show_pattern, 'Arg2 (opt) is the mode {text,header,pp}.').
 
 help(show_patterns, 'Show all currently loaded assurance case patterns.').
-help(show_patterns, 'Arg1 (opt) is the mode {all,header,pp}.').
+help(show_patterns, 'Arg1 (opt) is the mode {text,header,pp}.').
 
 help(update,	'Update assurance cases and evidence.').
 
@@ -209,6 +223,9 @@ do(aco_apl(Aco, Apl)) :- !, Aco \== Apl, dispatch(apl,[Aco,Apl]).
 do(aco_aplc(Aco, AplC)) :- !, Aco \== AplC, dispatch(aplc,[Aco,AplC]).
 
 do(aco_canon(Aco, AcoC)) :- !, Aco \== AcoC, dispatch(canon,[Aco,AcoC]).
+
+do(aco_modularize(Goals, InAco, OutAco)) :- !,
+    aco_modularize:modularize(Goals, InAco, OutAco).
 
 do(aco_stats(Aco)) :- !, Aco \== '', dispatch(stats,[Aco]).
 
@@ -381,4 +398,3 @@ etb_show_evidence(all) :-
 etb_show_evidence(summary) :-
 	forall( evidence:ac_evidence(Cat,Clm,_Ctx,_A,X,S),
 			format('~q ~q ~q ~q~n',[X,S,Cat,Clm]) ).
-

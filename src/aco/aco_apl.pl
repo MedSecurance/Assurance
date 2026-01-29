@@ -545,12 +545,13 @@ build_child_map(TreeEdges, ChildMap) :-
     findall(P-C,
             member(supported_by(P,C), TreeEdges),
             Pairs0),
-    sort(Pairs0, Pairs),
+    reverse(Pairs0, Pairs0R),
+    keysort(Pairs0R, Pairs),
     group_pairs_by_key(Pairs, ChildMap).
 
 children_of(Id, ChildMap, Children) :-
     (   member(Id-Childs0, ChildMap)
-    ->  sort(Childs0, Children)
+    ->  list_to_set(Childs0, Children)
     ;   Children = []
     ).
 
@@ -558,12 +559,13 @@ build_context_map(TreeEdges, CtxMap) :-
     findall(P-C,
             member(in_context_of(P,C), TreeEdges),
             Pairs0),
-    sort(Pairs0, Pairs),
+    reverse(Pairs0, Pairs0R),
+    keysort(Pairs0R, Pairs),
     group_pairs_by_key(Pairs, CtxMap).
 
 contexts_of(Id, CtxMap, CtxIds) :-
     (   member(Id-CtxIds0, CtxMap)
-    ->  sort(CtxIds0, CtxIds)
+    ->  list_to_set(CtxIds0, CtxIds)
     ;   CtxIds = []
     ).
 

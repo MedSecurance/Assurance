@@ -1,13 +1,14 @@
 % ETB-specific command procedures
 
-proc(inst_test_d, [
+proc(mod_test, [
 	% reset,
-	aco_apl('../TEST/ACO/bio_v6d.aco', '../TEST/ACO/bio_v6d.apl'),
-	load_patterns('../TEST/aco/bio_v6d.apl'),
-	% show_pattern('BioAssist'),
-	instantiate_pattern('BioAssist', [ ], bio6d),
-	export_case(bio6d, txt),
-	export_case(bio6d, html),
+	aco_modularize(['G1','G11','G51'], '../TEST/ACO/bio_v6d.aco', '../TEST/ACO/bio_v7c.aco'),
+	aco_apl('../TEST/ACO/bio_v7c.aco', '../TEST/ACO/bio_v7c.apl'),
+	load_patterns('../TEST/ACO/bio_v7c.apl'),
+	instantiate_pattern('BioAssist', [], bio7c),
+	export_case(bio7c,txt),
+	export_case(bio7c,html),
+	export_case(bio7c90,html90),
 	detach_case
 	]).
 
@@ -37,12 +38,12 @@ proc(inst_test, [
 	export_case(tiny_multi5, html),
 	detach_case,
 
-	aco_apl('../TEST/ACO/bio_v6.aco', '../TEST/ACO/bio_v6.apl'),
-	load_patterns('../TEST/aco/bio_v6.apl'),
+	aco_apl('../TEST/ACO/bio_v6d.aco', '../TEST/ACO/bio_v6d.apl'),
+	load_patterns('../TEST/aco/bio_v6d.apl'),
 	% show_pattern('BioAssist'),
-	instantiate_pattern('BioAssist', [ ], bio6),
-	export_case(bio6, txt),
-	export_case(bio6, html),
+	instantiate_pattern('BioAssist', [ ], bio6d),
+	export_case(bio6d, txt),
+	export_case(bio6d, html),
 	detach_case
 	]).
 

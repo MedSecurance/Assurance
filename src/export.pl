@@ -28,8 +28,10 @@ ac_export(FileBasename, 'txt') :- atom(FileBasename), !,
 	param:cap_dir(CapDir),
 	atomic_list_concat([CapDir,'/',FileBasename,'.txt'],FullFilename),
 	open(FullFilename, write, Output),
-	forall(ac_instance(PatternId, AArgs, InstId, Goal, Log),
-	       ac_format(Output, 'txt', ac_instance(PatternId, AArgs, InstId, Goal, Log))),
+	findall(ac_instance(PatternId, AArgs, InstId, Goal, Log),
+		   ac_instance(PatternId, AArgs, InstId, Goal, Log),
+		   Instances),
+	ac_format_txt_instances(Output, Instances),
 	close(Output), !.
 
 ac_export(Dirname, Format) :- member(Format,['html', 'html90', 'htmlH']), !,
@@ -115,7 +117,18 @@ ac_format(Output, Format, ACInstance) :- memberchk(Format, ['dot', 'dot90', 'dot
 
 				%
 				%
-				% ac_format_txt(+Output, +ACInstance)
+				
+			% ac_format_txt_instances(+Output, +Instances)
+			% Write multiple ac_instances with a blank line between top-level instances
+			% to improve readability (e.g., case instance followed by module instances).
+
+ac_format_txt_instances(_Output, []) :- !.
+ac_format_txt_instances(Output, [I|Is]) :-
+	ac_format(Output, 'txt', I),
+	( Is \== [] -> format(Output, '~n', []) ; true),
+	ac_format_txt_instances(Output, Is).
+
+% ac_format_txt(+Output, +ACInstance)
 				%
 
 ac_format_txt(Output, ac_instance(_PatternId, _AArgs, _InstId, Goal, _Log)) :-
@@ -228,11 +241,15 @@ ac_format_txt_context(Output, [context(Id, Label, X) | C], Indent) :-
 	ac_format_txt_context(Output, C, Indent).
 
 ac_format_txt_context(Output, [justification(Id, Label, X) | C], Indent) :-
-	format(Output, "~a- justification ~a (~a) : ~a~n", [ Indent, Id, Label, X ] ),
+	format(Output, "~ajustification ~a (~a) : ", [Indent, Id, Label]),
+	ac_format_txt_text(Output, Indent, X),
+	format(Output, "~n", []),
 	ac_format_txt_context(Output, C, Indent).
 
 ac_format_txt_context(Output, [assumption(Id, Label, X) | C], Indent) :-
-	format(Output, "~a- assumption ~a (~a) : ~a~n", [ Indent, Id, Label, X ] ),
+	format(Output, "~aassumption ~a (~a) : ", [Indent, Id, Label]),
+	ac_format_txt_text(Output, Indent, X),
+	format(Output, "~n", []),
 	ac_format_txt_context(Output, C, Indent).
 
 ac_format_txt_context(Output, [context(X) | C], Indent) :-
@@ -240,11 +257,15 @@ ac_format_txt_context(Output, [context(X) | C], Indent) :-
 	ac_format_txt_context(Output, C, Indent).
 
 ac_format_txt_context(Output, [justification(X) | C], Indent) :-
-	format(Output, "~a- justification : ~a~n", [ Indent, X ] ),
+	format(Output, "~ajustification : ", [Indent]),
+	ac_format_txt_text(Output, Indent, X),
+	format(Output, "~n", []),
 	ac_format_txt_context(Output, C, Indent).
 
 ac_format_txt_context(Output, [assumption(X) | C], Indent) :-
-	format(Output, "~a- assumption : ~a~n", [ Indent, X ]),
+	format(Output, "~aassumption : ", [Indent]),
+	ac_format_txt_text(Output, Indent, X),
+	format(Output, "~n", []),
 	ac_format_txt_context(Output, C, Indent).
 
 

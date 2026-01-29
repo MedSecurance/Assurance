@@ -5,6 +5,7 @@
 :- use_module(aco_processor).
 :- use_module(aco_ascii_tree).
 :- use_module(aco_apl).
+:- use_module(aco_modularize).
 
 main :-
     current_prolog_flag(argv, Argv),
