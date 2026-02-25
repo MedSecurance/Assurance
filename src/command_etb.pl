@@ -58,6 +58,7 @@ syntax(load_patterns(patterns_file),							etb).
 syntax(show_case,						 etb).
 syntax(show_case(case_id),					 etb).
 syntax(show_cases,						 etb).
+syntax(show_case_v(case_str),                                   etb).
 syntax(show_evidence,											etb).
 syntax(show_evidence(opt),										etb).
 syntax(show_pattern(pattern_id),                                 etb).
@@ -112,6 +113,7 @@ semantics(load_model_v(Mid,Pol,Plat,Config)) :- !, atom(Mid), var(Pol), var(Plat
 semantics(load_patterns(F)) :- !, atom(F).
 
 semantics(show_case(Case)) :- !, atom(Case).
+semantics(show_case_v(CaseStr)) :- !, var(CaseStr).
 
 semantics(show_evidence(Opt)) :- !, ( Opt=='summary' ; Opt=='all').
 
@@ -191,6 +193,9 @@ help(load_patterns,'Arg is the patterns file name.').
 
 help(show_case, 'Show the current or identified assurance case.').
 help(show_case, 'Arg1 (opt) is the assurance case ID, otherwise current case.').
+
+help(show_case_v, 'Load variable with current assurance case.').
+help(show_case_v, 'Arg1 is a variable to receive the assurance case string.').
 
 help(show_cases, 'Show all assurance cases in the CASES Repo.').
 
@@ -297,8 +302,16 @@ do(show_case) :- !,
 	->	writeln('No current assurance case.')
 	;	(
 			format('Case ~a:~n',ACid),
-			export:ac_string(S), writeln(S)
+			do( show_case_v(S) ),
+			writeln(S)
 		)
+	).
+
+do(show_case_v(S)) :- !,
+	assurance:current_assurance_repository(ACid),	
+	(	ACid == none
+	->	writeln('No current assurance case.'), S=none
+	;	export:ac_string(S)
 	).
 
 %do(show_case(ACid)) :- !, do(detach_case), do(attach_case(ACid)), do(show_case). % show and leave as current case

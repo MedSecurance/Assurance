@@ -203,7 +203,7 @@ initialize_all :-
 	param:setparam(initialized,true).
 
 etb_reset :- 
-        shell('make clean'), % just use makefile unless it's a problem in some env
+    shell('make -s clean'), % just use makefile unless it's a problem in some env
 	% TODO following currently not resulting in a perfect reset, using make clean
 	% etb_reset(repos),
 	% etb_reset(cap),

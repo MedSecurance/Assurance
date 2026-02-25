@@ -18,7 +18,7 @@ reset_CAP :-
 	% shell(Cmd).
 	% e.g. 'find -d ../CAP -not "(" -name README.md -or -name CAP ")" -delete'
 	% Following version is to save examples in CAP
-	shell('make clean_cap'). % just use makefile unless it becomes a problem
+	shell('make -s clean_cap'). % just use makefile unless it becomes a problem
 
 
 				% ac_export(Filename, Format)

@@ -1,6 +1,6 @@
 :- module(aco_processor, [
     translate_aco_file/2,          % +ACOFile, +APLFile
-    translate_aco_string/4,        % +SourceName, +String, -AplTerms, -Messages
+%    translate_aco_string/4,        % +SourceName, +String, -AplTerms, -Messages
 
     canonicalize_aco_file/2,       % +ACOFile, +CanonicalACOFile
     canonicalize_aco_string/4,     % +SourceName, +String, -CanonicalString, -Messages
@@ -120,9 +120,13 @@ print_stats_summary(
     format("~n  supported_by edges:~n", []),
     format("    from indentation (tree):  ~d~n", [NumTreeSupported]),
     format("    from explicit relations:  ~d~n", [NumRelSupported]),
+
+    format("~n  in_context_of edges:~n", []),
+    format("    from indentation (tree):  ~d~n", [NumTreeContexts]),
+    format("    from explicit relations:  ~d~n", [NumRelContexts]),
+    
     format("~n  Cross-branch relations: ~d~n", [NumCrossRelations]),
     format("======================~n~n", []).
-
 
 /*
 print_stats_summary(

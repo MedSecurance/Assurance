@@ -63,8 +63,7 @@ reset_assurance_repository :-
 	detach_assurance_repository,
 	% param:cases_repo_dir(ACRepoDir), param:cases(Cases),
 	% atomic_list_concat(['find -d ',ACRepoDir,' -not "(" -name README.md -or -name ',Cases,' ")" -delete'],Cmd),
-	Cmd = 'make clean_cases', % just use make
-	shell(Cmd).
+	shell('make -s clean_cases'). % just use make
 
 				% init repository db
 

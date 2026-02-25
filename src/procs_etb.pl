@@ -40,10 +40,16 @@ proc(inst_test, [
 
 	aco_apl('../TEST/ACO/bio_v6d.aco', '../TEST/ACO/bio_v6d.apl'),
 	load_patterns('../TEST/aco/bio_v6d.apl'),
-	% show_pattern('BioAssist'),
 	instantiate_pattern('BioAssist', [ ], bio6d),
 	export_case(bio6d, txt),
 	export_case(bio6d, html),
+	detach_case,
+
+	aco_apl('../TEST/ACO/bio_v7c.aco', '../TEST/ACO/bio_v7c.apl'),
+	load_patterns('../TEST/aco/bio_v7c.apl'),
+	instantiate_pattern('BioAssist', [ ], bio7c),
+	export_case(bio7c, txt),
+	export_case(bio7c, html),
 	detach_case
 	]).
 
@@ -58,12 +64,6 @@ proc(show_aco_tests, [
 	echo('--------------------------------'),
 	aco_tree('../TEST/ACO/tiny_multi.aco'),
 	aco_stats('../TEST/ACO/tiny_multi.aco'),
-	echo('================================'),
-
-	shell('cat ../TEST/ACO/tiny_multi3.aco'),
-	echo('--------------------------------'),
-	aco_tree('../TEST/ACO/tiny_multi3.aco'),
-	aco_stats('../TEST/ACO/tiny_multi3.aco'),
 	echo('================================'),
 
 	shell('cat ../TEST/ACO/tiny_multi5.aco'),
@@ -149,9 +149,9 @@ proc('IoMT_case', [
 		detach_case
     ]).
 
-proc('ISO_case', [
+proc('MS_ISO_case', [ % support for pattern alternatives construct not yet implemented
 		set_v(ModelId, '2.0'),
-		set_v(CaseId, iso_system_example),
+		set_v(CaseId, ms_iso_system_example),
 		load_model_v(ModelId, App_Specification, Platform, _Configuration),
         instantiate_pattern('MS_generic_risk_based',['hit-spec',App_Specification,Platform],CaseId),
 	    export_case(CaseId,txt),

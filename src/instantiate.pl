@@ -400,7 +400,7 @@ bind_call_arguments([arg(Name, Category) | FArgs], [UName | Args], AArgs,
 				% strategy_iterator_match(+Iterator, +AArgs, -AArgIt)
 
 strategy_iterator_match( iterate(Name, Category, list(Values)), _AArgs,
-			 arg(Name, Category, Value)) :-
+			 arg(Name, Category, Value)) :- is_list(Values),
 	member(Value, Values).
 
 strategy_iterator_match( iterate(Name, Category, expand(AArgName)), AArgs,
