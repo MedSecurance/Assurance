@@ -2,7 +2,7 @@
 % ETB self_test
 etb_startup_tests([tc01, tc02, tc03
 		   ]).
-etb_regression_tests([ % tc_meta00
+etb_regression_tests([
 		     ]).
 
 self_test :-
@@ -21,89 +21,7 @@ regression_test :-
 	forall(member(T,AllTests), test:report_test(etb:T)).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% experimental
-
-run_tests_safe([]).
-run_tests_safe([TC|TCs]) :-
-	setup_call_cleanup(
-		true,
-		run_single_test(TC),
-		safe_detach_repository),
-	run_tests_safe(TCs).
-
-run_single_test(TC) :-
-	test:report_test(TC),
-	call(TC).
-
-safe_detach_repository :-
-	catch( detach_assurance_repository, _, true).
-
-tc_translate_aco_string_to_apl_terms(AcoString, AplTerms) :-
-	aco_processor:translate_aco_string(
-		'<test>',
-		AcoString,
-		AplTerms,
-		Messages),
-	aco_processor:print_messages(Messages),
-	(   member(Msg, Messages),
-		Msg = message(error, _, _)
-	->  throw(error(aco_translation_failed, _))
-	;   true).
-
-tc_write_apl_terms_to_temp_file(AplTerms, File) :-
-	tmp_file_stream(text, File, Stream),
-	forall(member(Term, AplTerms),
-			( write_term(Stream, Term, [fullstop(true)]),
-				nl(Stream)
-			)),
-	close(Stream).
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Test cases, test passes if tcxx goal succeeds
-
-% Baseline
-tc_meta00 :-
-	assurance:reset_assurance_repository,
-    AcoString = "
-Case: META_BASELINE
-Goal: G1
-  Evidence: E1
-    Tool: demo_tool
-    evidence-category: analysis
-    xref: DEMO-1
-    This is a simple evidence description.
-",
-    tc_translate_aco_string_to_apl_terms(AcoString, AplTerms),
-    tc_write_apl_terms_to_temp_file(AplTerms, AplFile),
-    load_patterns(AplFile),
-    instantiate_pattern('META_BASELINE', [], meta00),
-    export:ac_string(Result),
-    assurance:detach_assurance_repository,
-
-	Expected="=== ACO summary ===
-	Total nodes: 0
-	  Goals:          0 (undeveloped: 0)
-	  Strategies:     0
-	  Contexts:       0 (tree: 0, relation: 0)
-	  Assumptions:    0
-	  Justifications: 0
-	  Evidence:       0
-	  Modules:        0 (undeveloped: 0)
-  
-	supported_by edges:
-	  from indentation (tree):  0
-	  from explicit relations:  0
-  
-	in_context_of edges:
-	  from indentation (tree):  0
-	  from explicit relations:  0
-  
-	Cross-branch relations: 0
-  ======================
-  ",
-  Result == Expected.
-
-tc_meta01 :- true. % Metadata assertion test
 
 % Instantiate pattern tests
 %      instantiate_pattern(PatternName,PatternArgs,AssuranceCaseId)
