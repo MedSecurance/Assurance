@@ -1,0 +1,257 @@
+\usepackage{epsf}
+%\usepackage{newcent}
+\usepackage{calc}
+\usepackage{ifthen}
+\usepackage[utf8]{inputenc}
+\usepackage{xspace}
+\usepackage{url}
+\usepackage{times}
+\usepackage{setspace}
+%\usepackage{mathtime}
+\usepackage[font=scriptsize]{caption}
+
+\advance\headheight 3pt
+\advance\textheight 0.5\baselineskip
+\advance\topmargin 0.25\baselineskip
+
+\advance\textwidth 3.2cm
+\advance\oddsidemargin -0.8cm
+\advance\evensidemargin -2.4cm
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt plus 2pt minus 1pt}
+\addtolength{\textheight}{210pt}
+\setlength{\voffset}{-85pt}
+\setlength{\headsep}{25pt}
+\addtolength{\footskip}{25pt}
+\setlength{\headheight}{10pt}
+
+\usepackage{bigstrut}
+
+\usepackage{fancyhdr}
+\usepackage{fancyvrb}
+\pagestyle{fancy}
+
+\fancyhead{}%
+\fancyhead[LO,RE]{\epsfig{file=./style/medsec_logo_deliverable_header}}
+\fancyhead[RO,LE]{\footnotesize D\dnumber~\dtitle}
+\fancyfoot[LO,RE]{\footnotesize \ddate}
+\fancyfoot[RO,LE]{\footnotesize\rm Page \thepage}
+\fancyfoot[C]{\footnotesize Version~\dversion \\ Confidentiality:~\ddist~Distribution}
+\pagenumbering{roman}
+
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+\usepackage{titlesec}
+\titleformat*{\section}{\large\bf}
+\titleformat*{\subsection}{\normalsize\bf}
+\titleformat*{\subsubsection}{\small\bf}
+\titleformat*{\paragraph}{\small\bf}
+
+\hyphenation{MedSecurance}
+
+
+\def\eupid{Project Number 101095448\xspace}
+\def\deliverable#1{\gdef\@deliverable{#1}\gdef\thedeliverable{#1}}
+
+\def\thedate{\today}
+
+\newcommand{\tm}{$^\textrm{\scriptsize TM}$\xspace}
+
+\newcommand{\firstpage}{
+\advance\textheight -4cm
+\advance\topmargin  +0.8cm
+
+\thispagestyle{empty}
+\begin{center}
+{\bf\sffamily
+\vspace*{-10mm}
+\epsfig{file=./style/horizon-europe_logo,width=48mm}\\[4ex]
+\vskip 9mm
+\epsfig{file=./style/medsec_logo_deliverable_cover}\\
+\vskip 8mm
+{\large \eupid}\\[3ex]
+{\Large
+\vskip 25.5mm
+{D\dnumber \xspace \dtitle}\\[2ex]}
+\vskip 6mm
+Version \dversion\\
+\ddate\\
+\dstatus\\[3ex]
+\vskip 3.5mm
+\ddist~Distribution\\[2ex]
+\vskip 18.5mm
+{\large \dauthors}\\
+}
+\end{center}
+\vskip 20mm
+
+\hskip -2mm
+{\footnotesize\sffamily
+% Prevent partner names from being hyphenated
+\hyphenpenalty=10000
+\exhyphenpenalty=10000
+\begin{tabular}{l@{\hspace{2ex}}p{0.8\textwidth}}
+{\bf\sffamily Project Partners:}
+& \textbf{BioAssist, CEA, Doccla, European Federation for Medical Informatics, European University of Cyprus, Hospital Garcia de Orta, Hygeia Hospital, Polytechnical University of Catalonia, STAB VIDA, The Open Group, University of Birmingham, University of Warwick, Unparallel Innovation} \\
+\end{tabular}
+}
+% Return to normal hyphenation rules
+\hyphenpenalty=0
+\exhyphenpenalty=0
+\vskip 9.5mm
+
+\begin{spacing} {0.7}
+\footnotesize 
+Every effort has been made to ensure that all statements and information
+contained herein are accurate, however the MedSecurance Project Partners accept 
+no liability for any error or omission in the same.
+\end{spacing}
+\vskip 4mm
+
+{\footnotesize\copyright\xspace \dyear Copyright in this document remains vested in
+  the MedSecurance Project Partners.}
+
+%\addtolength{\textheight}{-80pt}
+}
+
+\newcommand{\partnerpage}{
+\newpage
+
+{\large \bf Project Partner Contact Information}\\[10pt]
+\begin{spacing} {0.85}
+\footnotesize
+\begin{center}
+\vskip -0.9cm
+\begin{tabular}{*{2}{|p{.42\textwidth}}|}\hline
+
+\textbf{BioAssist} & \textbf{CEA}\bigstrut[t]\\
+Christos Panagopoulos & Nikolaos Matragkas\bigstrut[t]\\
+Georgiou Mpakou 1 & NanoInnov Bat. 862 PC 174\bigstrut[t]\\
+Athens 11521 & 91191 Gif-sur-Yvette Cedex\bigstrut[t]\\
+Greece & France\bigstrut[t]\\
+E-mail: cpan@bioassist.gr & E-mail: nikolaos.matragkas@cea.fr\bigstrut[t]\\
+
+\hline
+
+\textbf{Doccla} & \textbf{European Federation for Medical Informatics}\bigstrut[t]\\
+Adam Clements & Paris Gallos\bigstrut[t]\\
+Humleg{\aa}rdsgatan 4, 3v{\aa}n & Chemin de Maillefer 37\bigstrut[t]\\
+114 46 Stockholm & 1052 Le Mont-sur-Lausanne\bigstrut[t]\\
+Sweden & Switzerland\bigstrut[t]\\
+E-mail: adam@doccla.com & E-mail: parisgallos@yahoo.com\bigstrut[t]\\
+
+\hline
+
+\textbf{European University of Cyprus} & \textbf{Hospital Garcia de Orta}\bigstrut[t]\\
+Konstantinos Katzis & Pedro Lopes\bigstrut[t]\\
+6 Diogenis Street & Av. Torrado da Silva\bigstrut[t]\\
+2404 Engomi & 2805-267 Almada\bigstrut[t]\\
+Cyprus & Portugal\bigstrut[t]\\
+E-mail: k.katzis@euc.ac.cy & E-mail: pedro.lopes@ulsas.min-saude.pt \bigstrut[t]\\
+
+\hline
+
+\textbf{Hygeia Hospital} & \textbf{Polytechnical University of Catalonia}\bigstrut[t]\\
+Petros Papachristou & Jaime Delgado\bigstrut[t]\\
+Kifisias Av. \& 4 Erythrou Str. & Jordi Girona, 1-3\bigstrut[t]\\
+151 23 Marousi, Athens & 08034 Barcelona\bigstrut[t]\\
+Greece & Spain\bigstrut[t]\\
+E-mail: ppapachristou@hygeia.gr & E-mail: jaime.delgado@upc.edu\bigstrut[t]\\
+
+\hline
+
+\textbf{STAB VIDA} & \textbf{The Open Group}\bigstrut[t]\\
+Orfeu Flores & Scott Hansen\bigstrut[t]\\
+Rua dos Inventores, Office 2.18 \& 2.19 & Rond Point Schuman 6, 7th Floor\bigstrut[t]\\
+2825-182 Caparica & 1040 Brussels\bigstrut[t]\\
+Portugal & Belgium\bigstrut[t]\\
+E-mail: a.orfeuflores@gmail.com & E-mail: s.hansen@opengroup.org\bigstrut[t]\\
+
+\hline
+
+\textbf{University of Birmingham} & \textbf{University of Warwick}\bigstrut[t]\\
+Theodoros Arvanitis & Gregory Epiphaniou\bigstrut[t]\\
+Edgbaston & Kirby Corner Road\bigstrut[t]\\
+Birmingham B15 2TT & Coventry CV4 8UW\bigstrut[t]\\
+United Kingdom & United Kingdom\bigstrut[t]\\
+E-mail: t.arvanitis@bham.ac.uk & E-mail: gregory.epiphaniou@warwick.ac.uk\bigstrut[t]\\
+
+\hline
+
+\textbf{Unparallel Innovation} & \textbf{\hspace{1cm}        }\bigstrut[t]\\
+Bruno Almeida & \hspace{1cm}        \bigstrut[t]\\
+Rua dos Inventores, Office 0.04 & \hspace{1cm}        \bigstrut[t]\\
+2825-182 Caparica & \hspace{1cm}        \bigstrut[t]\\
+Portugal & \hspace{1cm}        \bigstrut[t]\\
+E-mail: bruno.almeida@unparallel.pt & \hspace{1cm}        \bigstrut[t]\\
+
+\hline
+
+\end{tabular}
+\end{center}
+\normalsize
+\end{spacing}
+}
+
+
+\renewenvironment{itemize}[0]{
+\begin{list}{$\bullet$}{%
+\setlength{\itemsep}{0pt}
+\setlength{\parskip}{-1pt}
+\setlength{\parsep}{0pt}
+}}
+{\end{list}}
+
+\renewenvironment{description}[0]{
+\begin{list}{}{%
+\setlength{\itemsep}{2pt}
+\setlength{\parskip}{-1pt}
+\setlength{\parsep}{4pt}
+}}
+{\end{list}}
+
+\newcommand{\rr}[0]{\let\temp=\\\raggedright\let\\=\temp\hspace{0pt}}
+\newcommand{\cen}[0]{\let\temp=\\\centering\let\\=\temp\hspace{0pt}}
+
+% for draft only:
+%\newcommand{\ebox}[1]{\epsfbox{dummy.eps}}
+\newcommand{\ebox}[1]{\epsfbox{#1}}
+
+
+\newcommand{\ahfig}[4]{
+\begin{figure}[!h]
+\begin{center}
+\makebox{
+\begin{minipage}[c]{\textwidth}
+\begin{center}
+\includegraphics[scale=#4]{#3}\\\ah
+\end{center}
+\end{minipage}}
+\caption{\label{#1}#2}
+\end{center}
+\end{figure}
+}
+
+\newcommand{\ahex}[3]{
+\begin{example}[#1]\label{#2}\textit{#3}\\
+ \\\ah
+\end{example}
+}
+
+\newcommand{\ahdef}[3]{
+\begin{definition}[#1]\label{#2}\textit{#3}\\
+ \\\ah
+\end{definition}
+}
+
+
+\usepackage{listings}
+
+
+% Disable single lines at the start of a paragraph (Schusterjungen)
+\clubpenalty = 10000
+%
+% Disable single lines at the end of a paragraph (Hurenkinder)
+\widowpenalty = 10000 \displaywidowpenalty = 10000

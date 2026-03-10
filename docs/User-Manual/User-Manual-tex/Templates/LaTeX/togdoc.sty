@@ -1,0 +1,148 @@
+
+\usepackage{epsf}
+%\usepackage{newcent}
+\usepackage{calc}
+\usepackage{ifthen}
+\usepackage[utf8]{inputenc}
+\usepackage{xspace}
+\usepackage{url}
+\usepackage{times}
+\usepackage{setspace}
+%\usepackage{mathtime}
+
+
+\advance\headheight 3pt
+\advance\textheight 0.5\baselineskip
+\advance\topmargin 0.25\baselineskip
+
+\advance\textwidth 3.2cm
+\advance\oddsidemargin -0.8cm
+\advance\evensidemargin -2.4cm
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt plus 2pt minus 1pt}
+\addtolength{\textheight}{160pt}
+\setlength{\voffset}{-75pt}
+\setlength{\headsep}{20pt}
+\addtolength{\footskip}{30pt}
+\setlength{\headheight}{30pt}
+
+\usepackage{bigstrut}
+
+\usepackage{fancyhdr}
+\usepackage{fancyvrb}
+\pagestyle{fancy}
+
+\fancyhead{}%
+\fancyfoot{}%
+\pagenumbering{roman}
+
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+
+\hyphenation{D-MILS}
+\def\thedate{\today}
+
+\def\tog{\textbf{The Open Group}\xspace}
+\def\fbk{\textbf{Fondazione Bruno Kessler}\xspace}
+\def\uga{\textbf{Universit\'e Grenoble Alpes}\xspace}
+\def\ais{\textbf{atsec information security}\xspace}
+
+
+\newcommand{\tm}{$^\textrm{\scriptsize TM}$\xspace}
+
+\newcommand{\firstpage}{
+\advance\textheight -4cm
+\advance\topmargin  +0.8cm
+
+\thispagestyle{empty}
+\begin{center}
+{\bf\sffamily
+\vspace*{-44mm}
+\vskip 33mm
+{\Large
+\vskip 12mm
+{\dtitle}\\[2ex]}
+\vskip 3mm
+Version \dversion\\
+\ddate\\
+\dstatus\\
+\vskip 10mm
+\ddist~Distribution\\[2ex]
+\vskip 20mm
+{\Large \dauthors}\\
+}
+\end{center}
+\vskip 15mm
+
+\hskip -2mm
+\vskip 14mm
+
+
+\begin{spacing} {0.7}
+\end{spacing}
+\vskip 0.4cm
+}
+
+
+\renewenvironment{itemize}[0]{
+\begin{list}{$\bullet$}{%
+\setlength{\itemsep}{0pt}
+\setlength{\parskip}{-1pt}
+\setlength{\parsep}{0pt}
+}}
+{\end{list}}
+
+\renewenvironment{description}[0]{
+\begin{list}{}{%
+\setlength{\itemsep}{2pt}
+\setlength{\parskip}{-1pt}
+\setlength{\parsep}{4pt}
+}}
+{\end{list}}
+
+\newcommand{\rr}[0]{\let\temp=\\\raggedright\let\\=\temp\hspace{0pt}}
+\newcommand{\cen}[0]{\let\temp=\\\centering\let\\=\temp\hspace{0pt}}
+
+% for draft only:
+%\newcommand{\ebox}[1]{\epsfbox{dummy.eps}}
+\newcommand{\ebox}[1]{\epsfbox{#1}}
+
+
+\newcommand{\ahfig}[4]{
+\begin{figure}[!h]
+\begin{center}
+\makebox{
+\begin{minipage}[c]{\textwidth}
+\begin{center}
+\includegraphics[scale=#4]{#3}\\\ah
+\end{center}
+\end{minipage}}
+\caption{\label{#1}#2}
+\end{center}
+\end{figure}
+}
+
+\newcommand{\ahex}[3]{
+\begin{example}[#1]\label{#2}\textit{#3}\\
+ \\\ah
+\end{example}
+}
+
+\newcommand{\ahdef}[3]{
+\begin{definition}[#1]\label{#2}\textit{#3}\\
+ \\\ah
+\end{definition}
+}
+
+
+\usepackage{listings}
+
+
+% Disable single lines at the start of a paragraph (Schusterjungen)
+\clubpenalty = 10000
+%
+% Disable single lines at the end of a paragraph (Hurenkinder)
+\widowpenalty = 10000 \displaywidowpenalty = 10000
+

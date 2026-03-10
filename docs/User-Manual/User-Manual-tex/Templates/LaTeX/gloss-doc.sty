@@ -1,0 +1,195 @@
+
+\usepackage{epsf}
+%\usepackage{newcent}
+\usepackage{calc}
+\usepackage{ifthen}
+\usepackage[latin1]{inputenc}
+\usepackage{xspace}
+\usepackage{url}
+\usepackage{times}
+\usepackage{setspace}
+%\usepackage{mathtime}
+
+\advance\headheight 3pt
+\advance\textheight 0.5\baselineskip
+\advance\topmargin 0.25\baselineskip
+
+\advance\textwidth 3.2cm
+\advance\oddsidemargin -0.8cm
+\advance\evensidemargin -2.4cm
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{5pt plus 2pt minus 1pt}
+\addtolength{\textheight}{160pt}
+\setlength{\voffset}{-75pt}
+\setlength{\headsep}{20pt}
+\addtolength{\footskip}{30pt}
+\setlength{\headheight}{30pt}
+
+\usepackage{bigstrut}
+
+\usepackage{fancyhdr}
+\usepackage{fancyvrb}
+\pagestyle{fancy}
+
+\fancyhead{}%
+\fancyhead[RO,LE]{\footnotesize D\dnumber~\dtitle}
+\fancyfoot[LO,RE]{\footnotesize \ddate}
+\fancyfoot[RO,LE]{\footnotesize\rm Page \thepage}
+\fancyfoot[C]{\footnotesize Version~\dversion \\ Confidentiality:~\ddist~Distribution}
+\pagenumbering{roman}
+
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+
+%\hyphenation{D-MILS}
+%\hyphenation{EURO-MILS}
+%\hyphenation{Informatik}
+
+\def\eupid{MedSecurance Project Number 101095448\xspace}
+\def\deliverable#1{\gdef\@deliverable{#1}\gdef\thedeliverable{#1}}
+
+\def\thedate{\today}
+
+\def\tog{\textbf{The Open Group}\xspace}
+
+\newcommand{\tm}{$^\textrm{\scriptsize TM}$\xspace}
+
+\newcommand{\firstpage}{
+\advance\textheight -4cm
+\advance\topmargin  +0.8cm
+
+\thispagestyle{empty}
+\begin{center}
+{\bf\sffamily
+\vspace*{-24mm}
+\epsfig{file=../Templates/Logos/horizon-europe_logo.jpg,width=.28\textwidth}\\[4ex]
+\vskip 10mm
+%\epsfig{file=../Templates/Logos/horizon-europe_logo.jpg,width=.40\textwidth}\\
+\vskip 13mm
+{\large \eupid}\\[3ex]
+{\Large
+\vskip 12mm
+{\dtitle}\\[2ex]}
+\vskip 3mm
+Version \dversion\\
+\ddate\\
+\dstatus\\[3ex]
+\vskip 5mm
+\ddist~Distribution\\[2ex]
+\vskip 5mm %no authors :-(
+{\Large \dauthors}\\
+}
+\end{center}
+\vskip 6cm
+
+%\hskip -5mm
+%{\footnotesize\sffamily
+%\begin{tabular}{l@{\hspace{1ex}}p{0.8\textwidth}}
+%{\bf\sffamily Project Partners:}
+%& \tog  \\
+%\end{tabular}
+%}
+\vskip 2cm
+
+
+\begin{spacing} {0.5}
+\footnotesize 
+Every effort has been made to ensure that all statements and information 
+contained herein are accurate, however The Open Group accepts 
+no liability for any error or omission in the same.
+\end{spacing}
+\vskip 0.4cm
+{\footnotesize\copyright\xspace \dyear Copyright 
+The Open Group.}
+
+
+%\addtolength{\textheight}{-80pt}
+}
+
+\newcommand{\partnerpage}{
+\newpage
+
+
+{\large \bf Contact Information}\\[10pt]
+\footnotesize
+\begin{center}
+\vskip -0.7cm
+\begin{tabular}{*{2}{|p{.40\textwidth}}|}\hline
+
+\tog					&  \\
+Scott Hansen			& Rance DeLong \\
+Rond Point Schuman 6, 7th Floor & Apex Plaza, Forbury Road \\
+1040 Brussels, Belgium	& Reading RG1 1AX, United Kingdom \\
+E-mail: s.hansen@opengroup.org & E-mail: r.delong@opengroup.org \\
+
+\hline
+
+% Must not delete the ~ or bigstrut causes unwanted spacing
+\hline
+\end{tabular}
+\end{center}
+\normalsize
+}
+
+\renewenvironment{itemize}[0]{
+\begin{list}{$\bullet$}{%
+\setlength{\itemsep}{0pt}
+\setlength{\parskip}{-1pt}
+\setlength{\parsep}{0pt}
+}}
+{\end{list}}
+
+\renewenvironment{description}[0]{
+\begin{list}{}{%
+\setlength{\itemsep}{2pt}
+\setlength{\parskip}{-1pt}
+\setlength{\parsep}{4pt}
+}}
+{\end{list}}
+
+\newcommand{\rr}[0]{\let\temp=\\\raggedright\let\\=\temp\hspace{0pt}}
+\newcommand{\cen}[0]{\let\temp=\\\centering\let\\=\temp\hspace{0pt}}
+
+% for draft only:
+%\newcommand{\ebox}[1]{\epsfbox{dummy.eps}}
+\newcommand{\ebox}[1]{\epsfbox{#1}}
+
+
+\newcommand{\ahfig}[4]{
+\begin{figure}[!h]
+\begin{center}
+\makebox{
+\begin{minipage}[c]{\textwidth}
+\begin{center}
+\includegraphics[scale=#4]{#3}\\\ah
+\end{center}
+\end{minipage}}
+\caption{\label{#1}#2}
+\end{center}
+\end{figure}
+}
+
+\newcommand{\ahex}[3]{
+\begin{example}[#1]\label{#2}\textit{#3}\\
+ \\\ah
+\end{example}
+}
+
+\newcommand{\ahdef}[3]{
+\begin{definition}[#1]\label{#2}\textit{#3}\\
+ \\\ah
+\end{definition}
+}
+
+
+\usepackage{listings}
+
+
+% Disable single lines at the start of a paragraph
+\clubpenalty = 10000
+%
+% Disable single lines at the end of a paragraph
+\widowpenalty = 10000 \displaywidowpenalty = 10000
+
