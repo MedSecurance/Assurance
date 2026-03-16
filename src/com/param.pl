@@ -4,7 +4,7 @@
 %
 :- module(param, [setparam/2,
                   debug/1, statusprt/1, guitracer/1, guiserver/1,
-		  self_test/1, regression_test/1, initialize/1, verbose/1,
+		  self_test/1, /* regression_test/1,*/ initialize/1, verbose/1,
 		  initialized/1, etb_initialized/1, user_level/1, settable_params/1,
 		  self_test_modules/1, regression_test_modules/1, test_modules/2,
 		  local_pdf_viewer/2, local_dot_render/2,local_open_file/2,
@@ -13,9 +13,10 @@
 		  name_string/1, name_string/2, prompt_string/1, prompt_string/2, msg_failed_command/1,
 		  msg_unimplemented_command/1,
 		  msg_script_read/1, msg_running_script/1, msg_script_aborted/1,
-		  pattern_prefix/1, pattern_language_version/1, server_version/1,
+		  pattern_prefix/1, expected_suffix/1, pattern_language_version/1, server_version/1,
 		  test_directory/1, patterns_directory/1, models_directory/1, log_directory/1,
 		  cases_repo_dir/1, evidence_repo_dir/1, cap_dir/1,
+		  test_dir/1, test_aco_dir/1, test_aco_expected_dir/1,
 		  prettyprint_tab/1,
 		  host_os/1,
                   server_port/1, etb_port/1, etb_api_port/1, erepo_api_port/1, arepo_api_port/1,
@@ -83,6 +84,8 @@ name_string(aco,'Assurance Case Outline Workbench').
 name_string(kb,'O-ETB Knowledge Base').
 name_string(arepo,'O-ETB Assurance CASES Repository').
 name_string(erepo,'O-ETB EVIDENCE Repository').
+name_string(tests,'O-ETB TESTS').
+name_string(tests_aco,'O-ETB ACO TESTS').
 
 % SETTABLE PARAMETERS
 %
@@ -203,6 +206,7 @@ msg_script_aborted('script aborted').
 pattern_prefix('pat_').
 pattern_language_version('0.1').
 server_version('0.1').
+expected_suffix('_expected').
 
 
 % Files and directories
@@ -234,6 +238,8 @@ patterns('PATTERNS').		% Assurance Case Patterns dir name
 models('MODELS').		% System Models dir name
 workflows('WORKFLOWS').	% Workflow definitions dir name
 categories('CATEGORIES').	% Evidence Categories dir name
+test('TEST'). % see also test_directory/1
+expected('EXPECTED').
 
 repository('REPOSITORY').	% Base of the Repositories
 cases('CASES').			% Assurance Case Repository name
@@ -248,6 +254,7 @@ categories_directory('KB/CATEGORIES').
 evidence_directory('KB/EVIDENCE').
 agents_directory('KB/AGENTS').
 log_directory('RUNTIME/LOG').
+test_aco_directory('TEST/ACO').
 
 pattern_files( [ 'patterns_IoMT', 'patterns_ISO_81001', 'patterns_MILS' ] ).
 
@@ -289,6 +296,19 @@ log_file_name(LogFile) :-
         path_prefix(Pre), log_directory(RUNTIME), etb_log_file(ETBlog),
         atomic_list_concat([Pre,RUNTIME,ETBlog],'/',LogFile).
 
+test_dir(TESTdir) :- 
+	path_prefix(Pre), test(TEST),
+	atomic_list_concat([Pre,TEST],'/',TESTdir).
+	
+test_aco_dir(TESTACOdir) :- 
+	path_prefix(Pre), test_aco_directory(TESTACO),
+	atomic_list_concat([Pre,TESTACO],'/',TESTACOdir).
+		
+test_aco_expected_dir(TESTACOEXPdir) :- 
+	path_prefix(Pre), test_aco_directory(TESTACO), expected(EXP),
+	atomic_list_concat([Pre,TESTACO,EXP],'/',TESTACOEXPdir).
+			
+			
 % Misc values
 %
 prettyprint_tab(2). % tab indent for pretty printed output

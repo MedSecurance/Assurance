@@ -1,17 +1,86 @@
 % ETB-specific command procedures
 
-proc(mod_test, [
+proc(rev_demo_mod, [
 	% reset,
-	aco_modularize(['G1','G11','G51'], '../TEST/ACO/bio_v6d.aco', '../TEST/ACO/bio_v7c.aco'),
-	aco_apl('../TEST/ACO/bio_v7c.aco', '../TEST/ACO/bio_v7c.apl'),
-	load_patterns('../TEST/ACO/bio_v7c.apl'),
-	instantiate_pattern('BioAssist', [], bio7c),
-	export_case(bio7c,txt),
-	export_case(bio7c,html),
-	export_case(bio7c90,html90),
+	aco_modularize(['G1','G11','G51'], '../TEST/ACO/bio_v6d.aco', '../TEST/ACO/bio_v7t.aco'),
+	aco_apl('../TEST/ACO/bio_v7t.aco', '../TEST/ACO/bio_v7t.apl'),
+	load_patterns('../TEST/ACO/bio_v7t.apl'),
+	instantiate_pattern('BioAssist', [], bio7t),
+	export_case(bio7t,txt),
+	export_case(bio7t,html),
+	export_case(bio7t90,html90),
 	detach_case
 	]).
 
+proc(rev_demo_etb, [
+	reset,
+	instantiate_pattern(person, [marius,programming], person_example),
+	export_case(person_example,txt),
+	export_case(person_example,html),
+	detach_case,
+
+	instantiate_pattern(teamOfN, [programming, list([marius,rance])], team_example),
+	export_case(team_example, txt),
+	export_case(team_example, html),
+	detach_case,
+
+	aco_apl('../TEST/ACO/op_plane.aco', '../TEST/ACO/op_plane.apl'),
+	load_patterns('../TEST/ACO/op_plane.apl'),
+	instantiate_pattern('Op_Plane', [ ], op_plane),
+	export_case(op_plane, txt),
+	export_case(op_plane, html),
+	detach_case,
+
+	aco_apl('../TEST/ACO/tiny_multi5.aco', '../TEST/ACO/tiny_multi5.apl'),
+	load_patterns('../TEST/ACO/tiny_multi5.apl'),
+	instantiate_pattern('Main', [ ], tiny_multi5),
+	export_case(tiny_multi5, txt),
+	export_case(tiny_multi5, html),
+	detach_case,
+
+	aco_apl('../TEST/ACO/bio_v6d.aco', '../TEST/ACO/bio_v6d.apl'),
+	load_patterns('../TEST/aco/bio_v6d.apl'),
+	instantiate_pattern('BioAssist', [ ], bio6d),
+	export_case(bio6d, txt),
+	export_case(bio6d, html),
+	detach_case,
+
+	aco_apl('../TEST/ACO/bio_v7c.aco', '../TEST/ACO/bio_v7c.apl'),
+	load_patterns('../TEST/aco/bio_v7c.apl'),
+	instantiate_pattern('BioAssist', [ ], bio7c),
+	export_case(bio7c, txt),
+	export_case(bio7c, html),
+	detach_case
+	]).
+
+proc(rev_demo_aco, [
+	shell('cat ../TEST/ACO/tiny_test.aco'),
+	aco_tree('../TEST/ACO/tiny_test.aco'),
+	aco_stats('../TEST/ACO/tiny_test.aco'),
+
+	shell('cat ../TEST/ACO/tiny_multi.aco'),
+	aco_tree('../TEST/ACO/tiny_multi.aco'),
+	aco_stats('../TEST/ACO/tiny_multi.aco'),
+
+	shell('cat ../TEST/ACO/tiny_multi5.aco'),
+	aco_tree('../TEST/ACO/tiny_multi5.aco'),
+	aco_stats('../TEST/ACO/tiny_multi5.aco'),
+
+	shell('cat ../TEST/ACO/op_plane.aco'),
+	aco_tree('../TEST/aco/op_plane.aco'),
+	aco_stats('../TEST/aco/op_plane.aco'),
+	aco_tree('../TEST/aco/op_plane.aco', [skeleton]),
+	aco_apl('../TEST/aco/op_plane.aco', '../TEST/aco/op_plane.apl'),
+	load_patterns('../TEST/aco/op_plane.apl'),
+	show_pattern('Op_Plane'),
+	instantiate_pattern('Op_Plane', [ ], op_plane),
+	export_case(op_plane, txt),
+	export_case(op_plane, html),
+	echo('DONE! Browse result in CAP/op_plane/index.html')
+	]).
+	
+%%%%%%%%%%%%%%%
+	
 proc(inst_test, [
 	reset,
 	instantiate_pattern(person, [marius,programming], person_example),
@@ -53,6 +122,45 @@ proc(inst_test, [
 	detach_case
 	]).
 
+%%%%%%%%%%
+% Demonstration of ACO capabilities
+%   run these in ETB command interpreter by typing, e.g.:  proc(op_plane_ACO, step). (step through with Return key)
+%   only canonicalization is not demonstrated in these examples
+% It is suggested to reset the REPOSITORY and CAP when repeating these examples. in ETB command mode type: reset.
+
+proc(op_plane_ACO, [
+	aco_tree('../TEST/aco/op_plane.aco'),
+	aco_stats('../TEST/aco/op_plane.aco'),
+	aco_tree('../TEST/aco/op_plane.aco', [skeleton]),
+	aco_apl('../TEST/aco/op_plane.aco', '../TEST/aco/op_plane.apl'),
+	load_patterns('../TEST/aco/op_plane.apl'),
+	show_pattern('Op_Plane'),
+	instantiate_pattern('Op_Plane', [ ], op_plane),
+	export_case(op_plane, txt),
+	export_case(op_plane, html),
+   echo('DONE! Browse result in CAP/op_plane/index.html')
+	]).
+
+proc(aco_tests, [
+	shell('cat ../TEST/ACO/tiny_test.aco'),
+	aco_tree('../TEST/ACO/tiny_test.aco'),
+	aco_stats('../TEST/ACO/tiny_test.aco'),
+
+	shell('cat ../TEST/ACO/tiny_multi.aco'),
+	aco_tree('../TEST/ACO/tiny_multi.aco'),
+	aco_stats('../TEST/ACO/tiny_multi.aco'),
+
+	shell('cat ../TEST/ACO/tiny_multi5.aco'),
+	aco_tree('../TEST/ACO/tiny_multi5.aco'),
+	aco_stats('../TEST/ACO/tiny_multi5.aco'),
+
+	shell('cat ../TEST/ACO/op_plane.aco'),
+	aco_tree('../TEST/ACO/op_plane.aco'),
+	aco_stats('../TEST/ACO/op_plane.aco')
+	]).
+
+%%%%%%%%%%
+
 proc(show_aco_tests, [
 	shell('cat ../TEST/ACO/tiny_test.aco'),
 	echo('--------------------------------'),
@@ -79,27 +187,31 @@ proc(show_aco_tests, [
 	echo('================================')
 	]).
 
-%%%%%%%%%%
-% Demonstration of ACO capabilities
-%   run these in ETB command interpreter by typing, e.g.:  proc(op_plane_ACO, step). (step through with Return key)
-%   only canonicalization is not demonstrated in these examples
-% It is suggested to reset the REPOSITORY and CAP when repeating these examples. in ETB command mode type: reset.
+proc(show_aco_tests, [
+	shell('cat ../TEST/ACO/tiny_test.aco'),
+	echo('--------------------------------'),
+	aco_tree('../TEST/ACO/tiny_test.aco'),
+	aco_stats('../TEST/ACO/tiny_test.aco'),
+	echo('================================'),
 
-proc(op_plane_ACO, [
-	 aco_tree('../TEST/aco/tiny_test.aco'),
-	 aco_stats('../TEST/aco/tiny_test.aco'),
+	shell('cat ../TEST/ACO/tiny_multi.aco'),
+	echo('--------------------------------'),
+	aco_tree('../TEST/ACO/tiny_multi.aco'),
+	aco_stats('../TEST/ACO/tiny_multi.aco'),
+	echo('================================'),
 
-	 aco_tree('../TEST/aco/op_plane.aco'),
-	 aco_stats('../TEST/aco/op_plane.aco'),
-	 aco_tree('../TEST/aco/op_plane.aco', [skeleton]),
-	 aco_apl('../TEST/aco/op_plane.aco', '../TEST/aco/op_plane.apl'),
-	 load_patterns('../TEST/aco/op_plane.apl'),
-	 show_pattern('Op_Plane'),
-	 instantiate_pattern('Op_Plane', [ ], op_plane),
-	 export_case(op_plane, txt),
-	 export_case(op_plane, html),
-	echo('DONE! Browse result in CAP/op_plane/index.html')
-     ]).
+	shell('cat ../TEST/ACO/tiny_multi5.aco'),
+	echo('--------------------------------'),
+	aco_tree('../TEST/ACO/tiny_multi5.aco'),
+	aco_stats('../TEST/ACO/tiny_multi5.aco'),
+	echo('================================'),
+
+	shell('cat ../TEST/ACO/op_plane.aco'),
+	echo('--------------------------------'),
+	aco_tree('../TEST/ACO/op_plane.aco'),
+	aco_stats('../TEST/ACO/op_plane.aco'),
+	echo('================================')
+	]).
 
 proc(hgo_ACO, [
 	 aco_tree('../TEST/aco/hgo_v2.aco'),

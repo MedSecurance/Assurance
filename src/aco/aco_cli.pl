@@ -5,7 +5,8 @@
 :- use_module(aco_processor).
 :- use_module(aco_ascii_tree).
 :- use_module(aco_apl).
-:- use_module(aco_modularize).
+:- use_module(aco_actions).
+:- use_module(aco_transforms).
 
 main :-
     current_prolog_flag(argv, Argv),
@@ -56,6 +57,41 @@ dispatch(stats, [In]) :-
     aco_processor:translate_aco_string(CleanIn, Raw, _Terms, Messages),
     print_messages(Messages).
 
+dispatch(t1_observe, [In]) :-
+    !,
+    aco_transforms:t1_observe_file(In, Cands),
+    forall(member(C, Cands), (write_term(C, [quoted(true)]), nl)).
+
+dispatch(t1_slim, [TargetAtom, In, Out]) :-
+    !,
+    term_string(Target0, TargetAtom),
+    aco_transforms:t1_slim_evidence_file(Target0, In, Out).
+
+dispatch(t2_observe, [In]) :-
+    !,
+    aco_transforms:t2_observe_file(In, Cands),
+    forall(member(C, Cands), (write_term(C, [quoted(true)]), nl)).
+
+dispatch(t2_insert, [TargetAtom, In, Out]) :-
+    !,
+    term_string(Target0, TargetAtom),
+    aco_transforms:t2_insert_goal_file(Target0, In, Out).
+
+dispatch(t6, [GoalsAtom, In, Out]) :-
+    !,
+    term_string(Goals, GoalsAtom),
+    aco_transforms:t6_modularize_file(Goals, In, Out).
+
+dispatch(t7_observe, [In]) :-
+    !,
+    aco_transforms:t7_observe_file(In, Cands),
+    forall(member(C, Cands), (write_term(C, [quoted(true)]), nl)).
+
+dispatch(t7_insert, [TargetAtom, In, Out]) :-
+    !,
+    term_string(Target0, TargetAtom),
+    aco_transforms:t7_insert_strategy_file(Target0, In, Out).
+
 dispatch(_, _) :-
     usage.
 
@@ -66,7 +102,17 @@ usage :-
     format("  aco apl   IN_OUTLINE OUT_APL_PL~n", []),
     format("  aco aplc  IN_OUTLINE OUT_APL_PL~n", []),
     format("  aco stats IN_OUTLINE~n", []),
+    format("  aco t6 GOALS_TERM IN_OUTLINE OUT_OUTLINE~n", []),
+    format("  aco t1_observe IN_OUTLINE~n", []),
+    format("  aco t1_slim TARGET_TERM IN_OUTLINE OUT_OUTLINE~n", []),
+    format("  aco t2_observe IN_OUTLINE~n", []),
+    format("  aco t2_insert TARGET_TERM IN_OUTLINE OUT_OUTLINE~n", []),
+    format("  aco t7_observe IN_OUTLINE~n", []),
+    format("  aco t7_insert TARGET_TERM IN_OUTLINE OUT_OUTLINE~n", []),
     halt(1).
+    % Note: TARGET_TERM is passed through term_string/2, so onw can write e.g. goal('G10') or evidence('E111')
+    % depending on the Ti entrypoint’s normalization.
+
 
 % ----------------------------------------------------------------------
 % Tree subcommand: argument parsing

@@ -310,7 +310,6 @@ instantiate_subgoal(ac_pattern_ref(Id, LabelP, PatternId, Args), AArgs, Pos, KPa
 % 	    )
 % 	).
 
-
 instantiate_subgoal(evidence(Id, LabelP, Category, ClaimP, ContextP), AArgs, _Pos, KPath,
 		    evidence(IdArgs, LabelI, Category, ClaimI, ContextI, XRef), Log) :-
 	current_instid(InstId),
@@ -337,6 +336,59 @@ instantiate_subgoal(evidence(Category, ClaimP, ContextP), AArgs, _Pos, _KPath,
 	     once(evidence_validate(Category, ClaimI, ContextI, AArgs, XRef)) )
 	),
 	!.
+
+
+				%   ac_shared_goal_ref(SharingKey, Args)
+				%   - First occurrence for a given SharingKey is DEFINING and instantiates once.
+				%   - Later occurrences are ALIASES and do not instantiate.
+				%   - Each occurrence gets its own local Id (lifted), but points to the same
+				%     shared instance root for navigation and single-evidence semantics.
+
+instantiate_subgoal(ac_shared_goal_ref(SharingKey, Args), AArgs, Pos, KPath,
+                    ac_shared_goal_ref(IdArgs, '', SharingKey, Args, RefInfo), []) :-
+
+    % Synthesize a stable base id from call position within caller pattern.
+    synth_pattern_ref_id(Pos, SynthBaseId),
+    current_instid(InstId),
+    lift_id(SynthBaseId, InstId, KPath, IdArgs),
+
+    % Compute this occurrence id (for provenance); used for linkability.
+    occid_child(Pos, KPath, ThisOccId),
+
+    % Resolve (or define) the shared instance for SharingKey.
+    (   ac_shared_defined(SharingKey, SharedOccId, SharedInstId, SharedRootId)
+    ->  % Alias occurrence: no instantiation, just link to the existing shared instance.
+        RefInfo = sref_info(SharedRootId, SharedInstId, SharedOccId, defined)
+
+    ;   % Defining occurrence: instantiate exactly once.
+        % We model the shared argument body as a normal pattern instantiation
+        % under a canonical "shared wrapper" pattern id derived from SharingKey.
+        %
+        % The wrapper must exist as an ac_pattern/3, or you can implement a
+        % different backing mechanism. For now we treat SharingKey as a pattern id.
+        %
+        % IMPORTANT: This is the only "policy" choice here:
+        % Either SharingKey names a pattern directly, or it names a shared identity
+        % which maps to a pattern. For now we use SharingKey as the pattern id.
+
+        SharingKey = sharing(PatternId, _KeyArgs),  % SharingKey carries the callee PatternId
+        (   ac_pattern(PatternId, FArgsCallee, GoalTerm),
+            goal_root_id(GoalTerm, BaseGoalId),
+            bind_call_arguments(FArgsCallee, Args, AArgs, AArgsForCall)
+        ->  insert_ac_occurrence(ThisOccId, PatternId, AArgsForCall, SharedInstId),
+            assertz(ac_pattern_pending(ThisOccId, PatternId, AArgsForCall, SharedInstId)),
+            lift_id(BaseGoalId, SharedInstId, kpath([]), SharedRootId),
+            SharedOccId = ThisOccId,
+            assertz(ac_shared_defined(SharingKey, SharedOccId, SharedInstId, SharedRootId)),
+            RefInfo = sref_info(SharedRootId, SharedInstId, SharedOccId, defined)
+
+        ;   (   ac_pattern(PatternId, _FArgsCallee, _GoalTerm)
+            ->  RefInfo = sref_info('G_BADARGS', none, ThisOccId, arg_mismatch)
+            ;   RefInfo = sref_info('G_UNDEF', none, ThisOccId, undefined)
+            )
+        )
+    ).
+
 
 instantiate_subgoal(conditional(Condition, GoalP), AArgs, Pos, KPath, GoalI, Log) :-
 	condition_holds(Condition, AArgs),

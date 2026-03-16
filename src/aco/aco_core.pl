@@ -85,7 +85,7 @@ translate_aco_string(SourceName, Raw, AplTerms, Messages) :-
         UndevelopedMsgs, StatsMsg
     ),
     % hierarchical ID info & consistency messages
-    compute_hierarchical_id_messages(Nodes0, HierarchyMsgs),
+    compute_hierarchical_id_messages(Nodes0, HierarchyMsgs), !,
     % all messages
     append(
         [IndentMsg, BodyMsgs, NodeMsgs, IndentMsgs,
@@ -119,7 +119,7 @@ canonicalize_aco_string(SourceName, Raw, CanonicalRaw, Messages) :-
     flatten(AllLineLists, FlatLines),
     atomic_list_concat(FlatLines, '\n', CanonicalRaw),
 
-    Messages = HierMsgs.
+    Messages = HierMsgs, !.
 
 % ----------------------------------------------------------------------
 % Comment handling
@@ -299,7 +299,8 @@ rewrite_inline_after_colon_1(Unit, [line(N,S0)|Rest], LinesAcc0, LinesAcc, MsgsA
     ;   LinesAcc1 = [line(N,S0)|LinesAcc0],
         MsgsAcc1  = MsgsAcc0
     ),
-    rewrite_inline_after_colon_1(Unit, Rest, LinesAcc1, LinesAcc, MsgsAcc1, MsgsAcc).
+    rewrite_inline_after_colon_1(Unit, Rest, LinesAcc1, LinesAcc, MsgsAcc1, MsgsAcc),
+    !.
 
 % S0 is rewritten into S1 (header-only, ends with ':') and S2 (body line).
 rewrite_inline_after_colon_line(Unit, S0, S1, S2, TypeWord, InlineText) :-
@@ -605,7 +606,7 @@ build_nodes([header(Line, Level, Type, IdOpt, Label, BodyLines)|Rest],
     Node = node(Id, Type, Label, BodyStr, Level, Line),
     build_nodes(Rest, Counter1, [Node|NAcc], NOut, MAcc, MOut).
 
-body_lines_to_string([], "").
+body_lines_to_string([], '').
 body_lines_to_string(Pairs, S) :-
     findall(T,
         ( member((_N, T), Pairs),
@@ -990,14 +991,44 @@ strip_trailing_punct(Token0, Clean) :-
     ;  Clean = T1
     ).
 
+% strip_trailing_comma(+Token0, -Clean)
+% Preserve the type of Token0 (atom stays atom, string stays string).
+strip_trailing_comma(Token0, Clean) :-
+    (   atom(Token0)
+    ->  atom_chars(Token0, Cs0),
+        strip_trailing_comma_chars(Cs0, Cs),
+        atom_chars(Clean, Cs)
+    ;   string(Token0)
+    ->  string_chars(Token0, Cs0),
+        strip_trailing_comma_chars(Cs0, Cs),
+        string_chars(Clean, Cs)
+    ;   Clean = Token0
+    ).
 
+strip_trailing_comma_chars(Cs0, Cs) :-
+    (   append(Cs, [','], Cs0)
+    ->  true
+    ;   Cs = Cs0
+    ).
 
 % strip_trailing_comma(+Token0, -Clean)
-strip_trailing_comma(Token0, Clean) :-
-    ( sub_string(Token0, _, 1, 0, ",")
-    -> sub_string(Token0, 0, _, 1, Clean)
-    ;  Clean = Token0
-    ).
+% this version always converts to string
+% and has been removed from service
+% strip_trailing_comma(Token0, Clean) :-
+%    ( sub_string(Token0, _, 1, 0, ",")
+%    -> sub_string(Token0, 0, _, 1, Clean)
+%    ;  Clean = Token0
+%    ).
+
+% this optional version assumes the input arg is an atom and it returns an atom
+% can be used if confident that the input will always be an atom
+% strip_trailing_comma(+Token0, -Clean)
+% strip_trailing_comma(Token0, Clean) :-
+%    atom_chars(Token0, Cs0),
+%    (   append(Cs, [','], Cs0)
+%    ->  atom_chars(Clean, Cs)
+%    ;   Clean = Token0
+%    ).
 
 % valid_id_token(+TokenString)
 %

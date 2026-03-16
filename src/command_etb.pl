@@ -2,7 +2,9 @@
 
 :- use_module('etb').
 :- use_module('patterns').
+:- use_module('category').
 :- use_module('aco/aco_cli').
+:- use_module('aco/aco_transforms').
 %:- use_module('aco/aco_modularize').
 
 commands_defined(etb).
@@ -20,7 +22,14 @@ syntax(aco_tree(in_outline),                                    etb).
 syntax(aco_tree(in_outline, arglist),                           etb).
 
 % ACO transformation commands (future aco mode)
-syntax(aco_modularize(goal_or_goals, in_outline, out_outline),  etb).
+syntax(aco_t1_observe(in_outline),                             etb).
+syntax(aco_t1_slim(target, in_outline, out_outline),          etb).
+syntax(aco_t2_observe(in_outline),                             etb).
+syntax(aco_t2_insert(target, in_outline, out_outline),        etb).
+syntax(aco_t6(goal_or_goals, in_outline, out_outline),  		etb). % synonym for modularize
+syntax(aco_modularize(goal_or_goals, in_outline, out_outline),  etb). % synonym for aco_t6
+syntax(aco_t7_observe(in_outline),                             etb).
+syntax(aco_t7_insert(target, in_outline, out_outline),        etb).
 
 syntax(attach_case(case_id),                                     etb).
 syntax(attach_evidence,                                     	etb).
@@ -59,6 +68,7 @@ syntax(show_case,						 etb).
 syntax(show_case(case_id),					 etb).
 syntax(show_cases,						 etb).
 syntax(show_case_v(case_str),                                   etb).
+syntax(show_categories,                                         etb).
 syntax(show_evidence,											etb).
 syntax(show_evidence(opt),										etb).
 syntax(show_pattern(pattern_id),                                 etb).
@@ -86,6 +96,8 @@ semantics(aco_stats(Aco)) :- atom(Aco), exists_file(Aco).
 semantics(aco_tree(Aco)) :- atom(Aco), exists_file(Aco).
 semantics(aco_tree(Aco, Arglist)) :- atom(Aco), exists_file(Aco), is_list(Arglist).
 
+semantics(aco_t6(Goals, InAco, OutAco)) :- !,
+	semantics(aco_modularize(Goals, InAco, OutAco)).
 semantics(aco_modularize(Goals, InAco, OutAco)) :- !,
 	( atom(Goals) ; is_list(Goals), maplist(atom, Goals) ),
     atom(InAco), exists_file(InAco), atom(OutAco), InAco \== OutAco.
@@ -115,6 +127,7 @@ semantics(load_patterns(F)) :- !, atom(F).
 semantics(show_case(Case)) :- !, atom(Case).
 semantics(show_case_v(CaseStr)) :- !, var(CaseStr).
 
+
 semantics(show_evidence(Opt)) :- !, ( Opt=='summary' ; Opt=='all').
 
 semantics(show_pattern(PatId)) :- !, atom(PatId).
@@ -137,10 +150,18 @@ help(aco_tree, 'Show ASCII tree for ACO file.').
 help(aco_tree, '  Arg1 is ACO file.').
 help(aco_tree, '  Arg2 is list of options from {full,structure,skeleton,no_aliases}.').
 
+help(aco_t6, 'Synonym for aco_modularize').
 help(aco_modularize, 'T6 modularization: extract goal subtree(s) to module .aco files and replace with Module references.').
 help(aco_modularize, 'Arg1 is a Goal id atom, or a list of Goal id atoms (descendants should come first if overlapping).').
 help(aco_modularize, 'Arg2 is input .aco file.').
 help(aco_modularize, 'Arg3 is output .aco file.').
+
+help(aco_t1_observe, 'T1 observe: list evidence-slimming candidates in a .aco file.').
+help(aco_t1_slim,    'T1 apply: slim a fat Evidence node; writes new .aco file.').
+help(aco_t2_observe, 'T2 observe: list goal/evidence abstraction-gap candidates in a .aco file.').
+help(aco_t2_insert,  'T2 apply: insert evidence-discharging intermediate goal; writes new .aco file.').
+help(aco_t7_observe, 'T7 observe: list goals needing Strategy insertion.').
+help(aco_t7_insert,  'T7 apply: insert Strategy (and wrapper Goal if needed) under target Goal.').
 
 help(attach_case, 'Attach the identified assurance case in the repository.').
 help(attach_case, 'Arg is an assurance case identifier.').
@@ -199,6 +220,8 @@ help(show_case_v, 'Arg1 is a variable to receive the assurance case string.').
 
 help(show_cases, 'Show all assurance cases in the CASES Repo.').
 
+help(show_categories, 'Show evidence categories, validation methods and agents.').
+
 help(show_evidence, 'Show current evidence records.').
 help(show_evidence, 'Arg1 (opt) is summary or all (summary if not specified).').
 
@@ -229,8 +252,30 @@ do(aco_aplc(Aco, AplC)) :- !, Aco \== AplC, dispatch(aplc,[Aco,AplC]).
 
 do(aco_canon(Aco, AcoC)) :- !, Aco \== AcoC, dispatch(canon,[Aco,AcoC]).
 
+do(aco_t6(Goals, InAco, OutAco)) :- !, do(aco_modularize(Goals, InAco, OutAco)).
 do(aco_modularize(Goals, InAco, OutAco)) :- !,
-    aco_modularize:modularize(Goals, InAco, OutAco).
+    aco_transforms:t6_modularize_file(Goals, InAco, OutAco).
+
+do(aco_t1_observe(InAco)) :- !,
+    aco_transforms:t1_observe_file(InAco, Cands),
+    forall(member(C, Cands), (write_term(C, [quoted(true)]), nl)).
+
+do(aco_t1_slim(Target, InAco, OutAco)) :- !,
+    aco_transforms:t1_slim_evidence_file(Target, InAco, OutAco).
+
+do(aco_t2_observe(InAco)) :- !,
+    aco_transforms:t2_observe_file(InAco, Cands),
+    forall(member(C, Cands), (write_term(C, [quoted(true)]), nl)).
+
+do(aco_t2_insert(Target, InAco, OutAco)) :- !,
+    aco_transforms:t2_insert_goal_file(Target, InAco, OutAco).
+
+do(aco_t7_observe(InAco)) :- !,
+    aco_transforms:t7_observe_file(InAco, Cands),
+    forall(member(C, Cands), (write_term(C, [quoted(true)]), nl)).
+
+do(aco_t7_insert(Target, InAco, OutAco)) :- !,
+    aco_transforms:t7_insert_strategy_file(Target, InAco, OutAco).
 
 do(aco_stats(Aco)) :- !, Aco \== '', dispatch(stats,[Aco]).
 
@@ -341,8 +386,16 @@ do(show_cases) :- !,
         ),
         (       CurrentACid \== none
         ->      do( attach_case(CurrentACid) )
-	;       true
+		;       true
         ).
+
+do(show_categories) :- !,
+	writeln('\nCategories:'),
+	forall( evidence_category(Cat,_,_,Method), format('category: ~a,  method: ~a~n',[Cat,Method])),
+	writeln('\nMethods:'),
+	forall( validation_method(Method,Desc,Agent), format('method: ~a,  description: ~a,  agent: ~a~n',[Method,Desc,Agent])),
+	writeln('\nAgents:'),
+	forall( validation_agent(Agent,_,_), format('agent: ~a~n',[Agent])).
 
 do(show_evidence) :- !, etb_show_evidence(summary).
 do(show_evidence(Opt)) :- !, etb_show_evidence(Opt).

@@ -1,0 +1,36 @@
+indent(2,space)
+Case: T7 Strategy Insertion - Minimal Regression
+/*
+  Minimal test for T7 (Strategy Insertion).
+  Expectation:
+    - G10 has supporters and no Strategy child -> becomes a candidate and is rewritten:
+      insert Strategy S10a insertedStrategy: and rehang its former children under it.
+    - G20 already has a Strategy child -> not a candidate.
+*/
+
+Goal G0 top:
+  System property holds.
+
+  Goal G10 needsStrategy:
+    Some claim requiring an explicit strategy place.
+
+    Strategy SG10a insertedStrategy:
+      AUTHOR CHECK: The evidence will show that the subclaims below are sufficient to support this goal.
+
+      Goal GG10a strategySupport:
+        AUTHOR CHECK: The evidence supports the claim stated above.
+
+        Evidence E101 someEvidence:
+          Tool: Example Tool.
+          The evidence records a property.
+
+  Goal G20 alreadyHasStrategy:
+    Another claim.
+
+    Strategy S20 existingStrategy:
+      AUTHOR CHECK: Existing strategy.
+
+      Evidence E201 otherEvidence:
+        Tool: Example Tool.
+        The evidence records another property.
+

@@ -1,6 +1,8 @@
 % TEST - FRAMEWORK FOR SELF-TEST AND REGRESSION TESTS
 :- module(test, [module_test/2]).
 
+:- use_module(param).
+
 regression_test :- % external functionality tests
 	param:regression_test_modules(R),
 	forall(member(M,R), module_test(M,regression_test)).
@@ -35,7 +37,7 @@ report_test(G) :- % argument is a test goal
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 regression_test(M) :-
-	param:test_directory(D),
+	param:test(D),
 	atom_concat([M,'.pl'], '.', Mfilename),
 	atomic_list_concat([D, '/', M, '_test.pl'], Tfilename),
 	exists_file(Mfilename), exists_file(Tfilename),

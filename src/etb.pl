@@ -22,8 +22,11 @@
 % :- use_module(agents/certificate_agent).
 % :- use_module(agents/ocra_agent).
 % :- use_module(agents/ichecker_agent).
-:- use_module(agent_interface).
 
+:- use_module(aco/aco_cli).
+:- use_module(aco/aco_transforms).
+
+:- use_module(agent_interface).
 :- use_module(instantiate).
 :- use_module(export).
 % :- use_module(etb_server).
@@ -32,6 +35,7 @@
 :- use_module(logging).
 
 :- include(etb_test).
+:- include(aco/aco_test).
 
 :- style_check(-singleton).
 
