@@ -51,7 +51,10 @@ reset_evidence_repository :-
 attach_evidence_repository :-
 	param:evidence_repo_dir(EvRepoDir), param:ev_repo_file(RepoFile),
 	atomic_list_concat([EvRepoDir, '/', RepoFile], FullRepoFile),
-    	db_attach(FullRepoFile, []).
+    db_attach(FullRepoFile, []),
+	with_mutex( evidence, % make certain that the evidence counter is there
+		( ac_evidence_counter(_) -> true ; assert_ac_evidence_counter(10000) )
+	).
 
 				% detach repository db
 
@@ -77,7 +80,7 @@ insert_ac_evidence(Category, Claim, Context, AArgs, XRef, 'pending') :-
 	),
 	% KB/EVIDENCE/categories.pl either defines Category or permits provisional categories
 	with_mutex( evidence,
-		    ( ac_evidence_counter(LastXRef),
+		    ( ( ac_evidence_counter(LastXRef) -> true ; LastXRef = 10000 ), % for safety
 		      retractall_ac_evidence_counter(_),
 		      XRef is LastXRef + 1,
 		      assert_ac_evidence_counter(XRef),
