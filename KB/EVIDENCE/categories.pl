@@ -18,7 +18,7 @@ validation_method(cert_check, 'Certificate exists and is valid', certificate_age
 validation_method(invariant_check, 'Invariant is valid for artefact', ichecker_agent).
 validation_method(contract_check, 'Contract consistency and refinement is valid', ocra_agent).
 validation_method(property_check, 'Behavior property is valid for artefact', nusmv_agent).
-% validation_method(undefined_method, 'Provisional/undefined evidence category (no auto validation)', undefined_agent).
+validation_method(undefined_method, 'Provisional/undefined evidence category (no auto validation)', undefined_agent).
 
 %	validation_agent(AgentName, AgentArgs, AgentResult)
 %		additional information about the agent to support improved agent interface
@@ -31,5 +31,5 @@ validation_agent(axiom_agent, _, _).
 validation_agent(certificate_agent, _, _).
 validation_agent(ichecker_agent, _, _).
 validation_agent(ocra_agent, _, _).
-% validation_agent(nusmv_agent, _, _). % does not currently exist
 validation_agent(undefined_agent, _, _).
+% validation_agent(nusmv_agent, _, _). % does not currently exist

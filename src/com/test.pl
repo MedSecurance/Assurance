@@ -1,7 +1,7 @@
 % TEST - FRAMEWORK FOR SELF-TEST AND REGRESSION TESTS
 :- module(test, [module_test/2]).
 
-:- use_module(param).
+% :- use_module(param).
 
 regression_test :- % external functionality tests
 	param:regression_test_modules(R),
@@ -19,19 +19,35 @@ self_test :- % internal self-tests
 	forall(member(M,S), module_test(M,self_test)),
 	true.
 
+self_test(Ts) :-
+	param:self_test_modules(S),
+	(   S \== []
+	->  writeln('Self Tests:')
+	;   true
+	),
+	forall(member(M,S), module_test(M,self_test,Ts)),
+	true.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 module_test(Module,TestCategory) :-
 	call(Module:TestCategory),
 	true.
 
+module_test(Module,TestCategory,Ts) :-
+        TestCall =.. [TestCategory, Ts],
+        call(Module:TestCall).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 report_test(G) :- % argument is a test goal
 	write(G), write(' ... '),
-	(   call(G)
-	->  writeln('ok')
-	;   writeln('failed')
+	(	predicate_property(G, defined)
+	->	(   call(G)
+		->  writeln('ok')
+		;   writeln('failed')
+		)
+	;	writeln('undefined')
 	).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

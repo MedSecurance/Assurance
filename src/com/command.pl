@@ -139,6 +139,7 @@ syntax(reinit,                                                          develope
 syntax(script(file),                    basic).
 syntax(script(file,step_or_verbose),	basic).
 syntax(selftest,					                  advanced).
+syntax(selftest(tests),					                  advanced).
 syntax(set,						                      advanced).
 syntax(set(name),				                      advanced).
 syntax(set(name,value),				                  advanced).
@@ -181,6 +182,8 @@ semantics(reset(Dom)) :- !, atom(Dom).
 semantics(script(F)) :- !, atom(F).
 semantics(script(F,Opt)) :- !, atom(F), atom(Opt),
 	member(Opt,[step,s,verbose,v]). % other opts can be added
+semantics(selftest(T)) :- callable(T), !.
+semantics(selftest(Ts)) :- is_list(Ts), !, forall( member(T,Ts), semantics(selftest(T)) ).
 semantics(set(N)) :- !, atom(N).
 semantics(set(N,V)) :- !, atom(N), ground(V).
 semantics(set_v(V,E)) :- !, ground(E), var(V).
@@ -244,6 +247,7 @@ help(script,	'Arg 1 is the file name.').
 help(script,	'Arg 2 (optional) is "step" or "verbose".').
 
 help(selftest,  'Run self tests.').
+help(selftest,  'Arg 1 (optional) is the name of a test or a list of test names.').
 
 help(set,	'With no argument displays all settable parameters.').
 help(set,	'Arg 1 is name of a paramater. If only one arg, display its value.').
@@ -351,6 +355,12 @@ do(reset(D)) :- !, etb_reset(D).
 do(script(F)) :- !, user_mode(M), run_command_script(M,F,none).
 do(script(F,Opt)) :- !, param:prompt_string(P), run_command_script(P,F,Opt).
 do(selftest) :- !, user_mode(M), M:self_test_all, /* others ... */ true.
+do(selftest(T)) :- !, % T already checked by semantics to be a callable or a list of callable
+        (       is_list(T)
+        ->      Ts = T
+		;       Ts = [T]
+        ),
+       user_mode(M), M:self_test_all(Ts).
 do(set) :- !, param:settable_params(Ps), forall(member(P,Ps),do(set(P))). % display all settable params
 do(set(P)) :- param:settable_params(Ps), member(P,Ps), !, % display a settable param
 	Q =.. [P,V], call(param:Q), format('~a=~w~n',[P,V]).

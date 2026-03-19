@@ -33,7 +33,10 @@ reset_evidence_repository :-
 	detach_evidence_repository,
 	% param:evidence_repo_dir(EvRepoDir), param:ev_repo_file(RepoFile), param:evidence(Evidence),
 	% atomic_list_concat(['find -d ',EvRepoDir,' -not "(" -name README.md -or -name ',Evidence,' -or -name axiom -or -name certificate -or -name ichecker -or -name ocra -or -name unknown ")" -delete'],Cmd),
+
 	shell('make -s clean_evidence'), % just use make
+	attach_evidence_repository,
+
 	% following not currently used due to use of make command above
 	% param:initial_evidence_counter_base(EC),
 	% make_directory_path( EvRepoDir ),

@@ -12,20 +12,43 @@ proc(rev_demo_mod, [
 	detach_case
 	]).
 
+proc(rev_demo_aco, [
+	shell('cat ../TEST/ACO/tiny_test.aco'),
+	aco_tree('../TEST/ACO/tiny_test.aco'),
+	aco_stats('../TEST/ACO/tiny_test.aco'),
+
+	shell('cat ../TEST/ACO/tiny_multi.aco'),
+	aco_tree('../TEST/ACO/tiny_multi.aco'),
+	aco_stats('../TEST/ACO/tiny_multi.aco'),
+
+	shell('cat ../TEST/ACO/tiny_multi5.aco'),
+	aco_tree('../TEST/ACO/tiny_multi5.aco'),
+	aco_stats('../TEST/ACO/tiny_multi5.aco'),
+
+	shell('cat ../TEST/ACO/op_plane.aco'),
+	aco_tree('../TEST/aco/op_plane.aco'),
+	aco_stats('../TEST/aco/op_plane.aco'),
+	aco_tree('../TEST/aco/op_plane.aco', [skeleton])
+	]).
+		
 proc(rev_demo_etb, [
 	reset,
+	show_pattern(person),
 	instantiate_pattern(person, [marius,programming], person_example),
 	export_case(person_example,txt),
 	export_case(person_example,html),
 	detach_case,
 
+	show_pattern(teamOfN),
 	instantiate_pattern(teamOfN, [programming, list([marius,rance])], team_example),
 	export_case(team_example, txt),
 	export_case(team_example, html),
 	detach_case,
 
+	shell('cat ../TEST/ACO/op_plane.aco'),
 	aco_apl('../TEST/ACO/op_plane.aco', '../TEST/ACO/op_plane.apl'),
 	load_patterns('../TEST/ACO/op_plane.apl'),
+	show_pattern('Op_Plane'),
 	instantiate_pattern('Op_Plane', [ ], op_plane),
 	export_case(op_plane, txt),
 	export_case(op_plane, html),
@@ -53,32 +76,6 @@ proc(rev_demo_etb, [
 	detach_case
 	]).
 
-proc(rev_demo_aco, [
-	shell('cat ../TEST/ACO/tiny_test.aco'),
-	aco_tree('../TEST/ACO/tiny_test.aco'),
-	aco_stats('../TEST/ACO/tiny_test.aco'),
-
-	shell('cat ../TEST/ACO/tiny_multi.aco'),
-	aco_tree('../TEST/ACO/tiny_multi.aco'),
-	aco_stats('../TEST/ACO/tiny_multi.aco'),
-
-	shell('cat ../TEST/ACO/tiny_multi5.aco'),
-	aco_tree('../TEST/ACO/tiny_multi5.aco'),
-	aco_stats('../TEST/ACO/tiny_multi5.aco'),
-
-	shell('cat ../TEST/ACO/op_plane.aco'),
-	aco_tree('../TEST/aco/op_plane.aco'),
-	aco_stats('../TEST/aco/op_plane.aco'),
-	aco_tree('../TEST/aco/op_plane.aco', [skeleton]),
-	aco_apl('../TEST/aco/op_plane.aco', '../TEST/aco/op_plane.apl'),
-	load_patterns('../TEST/aco/op_plane.apl'),
-	show_pattern('Op_Plane'),
-	instantiate_pattern('Op_Plane', [ ], op_plane),
-	export_case(op_plane, txt),
-	export_case(op_plane, html),
-	echo('DONE! Browse result in CAP/op_plane/index.html')
-	]).
-	
 %%%%%%%%%%%%%%%
 	
 proc(inst_test, [

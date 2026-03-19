@@ -14,14 +14,17 @@ etb_regression_tests([ % tc_meta00
 
 self_test :-
 	etb_startup_tests(Tests),
-        aco_parser_regression_tests(ACO_Regression),
+    aco_parser_regression_tests(ACO_Regression),
 	append([Tests, ACO_Regression], AllTests),
-	forall( member(T, AllTests),
-	        (       param:verbose(V), param:setparam(verbose,off),
-                        test:report_test(etb:T),
-                        param:setparam(verbose,V)
-                )
-              ).
+        self_test(AllTests).
+
+self_test(Ts) :-
+	forall( member(T, Ts),
+		(   param:verbose(V), param:setparam(verbose,off),
+			test:report_test(etb:T),
+			param:setparam(verbose,V)
+		)
+	).
 
 regression_test :-
 	etb_startup_tests(Startup),
@@ -78,9 +81,9 @@ tc_aco_files(PName, FullInFile, FullExpFile) :-
 
 % tc_aco_files/5 +PName, +InExt, +OutExt, -FullInFile, -FullExpFile
 tc_aco_files(PName, InExt, OutExt, FullInFile, FullExpFile) :-
-    test_aco_dir(TestAcoDir),
-    test_aco_expected_dir(AcoExpDir),
-    expected_suffix(ExpSuf),
+    param:test_aco_dir(TestAcoDir),
+    param:test_aco_expected_dir(AcoExpDir),
+    param:expected_suffix(ExpSuf),
     atomic_list_concat([PName, InExt],InFileName),
     atomic_list_concat([PName, ExpSuf, OutExt], ExpFileName),
     atomic_list_concat([TestAcoDir, InFileName], '/', FullInFile),

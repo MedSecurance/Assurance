@@ -2,8 +2,9 @@
 
 :- module(etb, [etb/0,etb/1,etb/4,etb_reset/0,etb_reset/1]).
 :- use_module([
-       'com/command','com/param','com/procs','com/ui'
+       'com/command', 'com/procs','com/ui'
   ]).
+:- use_module(com/param, [setparam/2]).
 :- use_module(models_api/common).
 :- use_module(models_api/configuration).
 :- use_module(models_api/model).
@@ -207,11 +208,15 @@ initialize_all :-
 	param:setparam(initialized,true).
 
 etb_reset :- 
-    shell('make -s clean'), % just use makefile unless it's a problem in some env
+	% just use makefile unless it is a problem in some environments
 	% TODO following currently not resulting in a perfect reset, using make clean
-	% etb_reset(repos),
-	% etb_reset(cap),
-	true.
+	%	etb_reset(repos),
+	%	etb_reset(cap),
+    detach_evidence_repository,
+    detach_assurance_repository,
+    shell('make -s clean'),
+	attach_evidence_repository,
+    true.
 
 etb_reset(all) :- !,
 	etb_reset,
@@ -230,6 +235,9 @@ etb_reset(evidence) :- reset_evidence_repository.
 
 % Test
 %
+self_test_all(Ts) :-
+        test:self_test(Ts).
+
 self_test_all :-
 	test:self_test,
 	true.
