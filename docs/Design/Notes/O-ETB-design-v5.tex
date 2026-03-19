@@ -1,0 +1,1451 @@
+\documentclass[12pt,twoside,a4paper]{article}
+% \usepackage{graphicx} % for images
+\usepackage{authblk}
+
+\usepackage{mathtools}
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true, % Set to true to color links instead of red boxes
+    linkcolor=blue,   % Color of internal links (sections, TOC)
+    filecolor=magenta,
+    urlcolor=cyan,
+    citecolor=blue
+}
+
+\usepackage[margin=1in]{geometry}
+
+\usepackage[british]{babel}
+\makeatletter
+\newcommand{\eudate}{\number\day\space
+  \ifcase\month\or
+  January\or February\or March\or April\or May\or June\or
+  July\or August\or September\or October\or November\or December\fi
+  \space\number\year}
+\makeatother
+
+\usepackage{fancyhdr}
+\setlength{\headheight}{14pt}
+\pagestyle{fancy}
+\fancyhf{} % clear all header/footer fields
+
+\lhead{O-ETB Design Notes}
+\chead{}
+\rhead{\eudate}
+
+\lfoot{MedSecurance / O-ETB}
+\cfoot{\thepage}
+\rfoot{Version 5}
+
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+\newcommand{\pipeline}{\textrightarrow}
+
+\setlength{\parskip}{0.4em}
+\setlength{\parindent}{0pt}
+
+\title{O-ETB Version 1.x\\Design Notes}
+\author{Rance DeLong\thanks{r.delong@opengroup.org}}
+\affil{The Open Group}
+\date{\eudate}
+
+\begin{document}
+
+\pagenumbering{roman}
+\thispagestyle{empty}
+
+\maketitle
+\addcontentsline{toc}{section}{Table of Contents}
+\tableofcontents
+\addcontentsline{toc}{section}{List of Figures}
+\listoffigures
+
+\clearpage
+
+\section*{Executive Summary}
+\addcontentsline{toc}{section}{Executive Summary}
+
+This work describes the co-evolution of a real assurance case for the Remote Patient Monitoring (RPM) use case and the structured tooling required to refine it in a disciplined, repeatable manner.
+
+The effort has resulted in a three-layer architecture separating method, structural transformation, and execution concerns.
+
+\subsection*{Objective}
+
+The objective is to enable method-driven, reproducible refinement of assurance cases using Kelly’s 6-Step Method, while preserving author intent and maintaining deterministic tooling behavior.
+
+\subsection*{Layered Architecture}
+
+\paragraph{Method Layer}
+The Kelly 6-Step Assistant encodes refinement discipline as a stateful process model. It identifies deficiencies (particularly Step~2 and Step~4 issues), recommends structural transformations (T1--T7), and prioritizes remediation using rule-based scoring. It is packaged as an Agent Skill to ensure portability and reproducibility.
+
+\paragraph{Transformation Layer}
+The ACO Workbench provides deterministic structural transformations over Assurance Case Outline artifacts. Transformations include evidence slimming (T1), introduction of dischargeable goals (T2), artifact role clarification (T3), evidence grounding (T4), basis articulation (T5), modularization (T6), and strategy insertion (T7). All transformations preserve semantics and follow minimal-diff discipline.
+
+\paragraph{Execution and Evidence Layer}
+The O-ETB core provides pattern instantiation, tool orchestration, provenance management, and CAP export. REPOSITORY remains the authoritative source of run records; CAP provides evaluator-facing snapshots. Optional MCP integration enables standardized tool exposure.
+
+\subsection*{Demonstrated Through RPM Use Case}
+
+The RPM assurance case (formerly BioAssist) served as the proving ground for:
+
+\begin{itemize}
+  \item Identifying recurring structural deficiencies,
+  \item Defining transformation families,
+  \item Refining deterministic ACO processing,
+  \item Demonstrating modularization at scale,
+  \item Developing a method-encoded refinement assistant.
+\end{itemize}
+
+Exemplars (E1122, E1121, E511) illustrate the transition from plausible argument structure to method-disciplined, reviewer-aligned assurance cases.
+
+\subsection*{Contribution}
+
+The contribution extends beyond tooling:
+
+\begin{enumerate}
+  \item Formalization of assurance-case refinement as a structured transformation system,
+  \item Encoding of Kelly’s method as an enforceable state model,
+  \item Separation of structural transformation from execution and provenance,
+  \item Packaging of methodological discipline as a portable Agent Skill.
+\end{enumerate}
+
+This architecture enables repeatable, scalable, and auditable development of assurance cases in safety- and security-critical domains.
+
+\clearpage
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+\section{Introduction}
+
+\section{ACO Workbench}
+
+\section{APL language}
+%Change ac\_pattern/3 (Name, Args, Goal) to ac\_pattern/4 (PatId, PatArgs, Goal)
+
+%Change goal/4 (Id, Desc, ContextList, GoalList)\\
+%to goal/5 (Id, Label, \_, ContextList, GoalList0
+
+\section{APL Argument pattern instantiation}
+\subsection{Identifier generation and naming during instantiation}
+\label{sec:aco-id-generation}
+
+This section describes how identifiers (IDs) appearing in Assurance Case Outlines (ACOs) are interpreted, transformed, and generated during pattern instantiation in O-ETB. The intent is to ensure that identifiers remain readable and traceable for users, while being unambiguous, stable, and suitable for repeated instantiation, transformation, and incremental re-execution by the tool.
+
+\subsubsection{Unit-scoped identifiers in ACO}
+\label{sec:aco-unit-scope}
+
+In the ACO language, identifiers declared in \emph{node headers} (e.g., \texttt{G0}, \texttt{S1}, \texttt{E10}, \texttt{M3}) are required to be unique only within the enclosing \emph{unit}. A unit is introduced by a \texttt{Case:} or \texttt{Module:} unit header.
+
+This unit-local scoping rule mirrors common authoring practice and aligns with the one-to-one correspondence between ACO and the industry-standard Goal Structuring Notation (GSN), in which identifiers are primarily used for local reference and human readability rather than global uniqueness.
+
+Identifiers declared in different units may therefore legally coincide.
+
+\subsubsection{Translation to patterns}
+\label{sec:aco-translation-patterns}
+
+Before instantiation occurs, each ACO unit is translated into an APL pattern. At this stage, identifiers are preserved exactly as authored. No attempt is made to enforce case-wide uniqueness during translation.
+
+For patterns authored directly in APL (without an ACO precursor), identifiers are taken exactly as provided by the pattern author and are treated in the same manner during instantiation.
+
+\subsubsection{Instantiation occurrences and instance identifiers}
+\label{sec:aco-instantiation-occurrences}
+
+Pattern instantiation is performed by the O-ETB instantiator, which interprets patterns as executable specifications that incrementally construct an instantiated assurance case in the REPOSITORY.
+
+Each time a pattern reference is instantiated, a distinct \emph{instantiation occurrence} is created. An instantiation occurrence corresponds to a specific execution step of the instantiator and is defined by:
+\begin{itemize}
+  \item the parent instantiation occurrence in which the call appears,
+  \item the relative structural position of the call within the parent pattern,
+  \item and the dynamic execution index of that call at that position.
+\end{itemize}
+
+For each instantiation occurrence, O-ETB allocates a fresh \emph{instance identifier} (\texttt{InstId}). Instance identifiers are opaque positive integers that are unique within the scope of a single instantiated assurance case.
+
+\subsubsection{Lifting unit-scoped IDs into case-wide scope}
+\label{sec:aco-id-lifting}
+
+When a pattern is instantiated, all node identifiers originating from that pattern (whether translated from ACO or authored directly in APL) are lifted from unit scope into case-wide scope by deriving new identifiers that incorporate the instance identifier of the instantiation occurrence.
+
+Conceptually, each node identifier is transformed as follows:
+\[
+\textit{NewId} = \textit{BaseId} \_ \textit{InstId}
+\]
+where:
+\begin{itemize}
+  \item \textit{BaseId} is the identifier as authored in the ACO or APL pattern, and
+  \item \textit{InstId} is the instance identifier allocated for the instantiation occurrence.
+\end{itemize}
+
+All nodes originating from the same instantiation occurrence share the same instance identifier suffix. This guarantees:
+\begin{itemize}
+  \item global uniqueness of identifiers in the instantiated case,
+  \item clear traceability from instantiated nodes back to their originating unit and occurrence,
+  \item and stable naming across repeated executions of the instantiator, provided the instantiation structure is unchanged.
+\end{itemize}
+
+\subsubsection{Multiple instantiations and repeated calls}
+\label{sec:aco-repeated-instantiations}
+
+If the same pattern is instantiated multiple times (for example, due to repeated module references, iteration constructs, or recursive use of patterns), each instantiation occurrence receives its own distinct instance identifier, even if the pattern identifier and actual arguments are identical.
+
+This ensures that structurally distinct parts of the instantiated assurance case are never conflated, while still allowing the tool to recognize opportunities for reuse and caching internally based on richer occurrence metadata.
+
+\subsubsection{User-visible behavior}
+\label{sec:aco-user-visible-ids}
+
+The identifiers produced by this scheme are the identifiers that appear in exported assurance cases (e.g., textual or HTML representations in CAP). Users are not required to provide any explicit disambiguation of identifiers beyond the unit-scoping rules of ACO.
+
+The instance identifier suffixes are generated entirely by the tool and reflect the structure of the instantiated assurance case. Their purpose is to ensure correctness, traceability, and efficient incremental processing, rather than to be manually authored or interpreted by users.
+
+
+\section{Case Instantiation Order and Export Semantics}
+\label{sec:case-instantiation-export}
+
+\subsection{Repository-scoped case model}
+\label{subsec:repository-scoped-case}
+
+In O-ETB, a \emph{case} is represented by an attached CASES repository, selected via:
+
+\begin{verbatim}
+current_assurance_repository/1
+\end{verbatim}
+
+At any time, exactly one CASES repository is active, and it contains \emph{only} the instances belonging to the current case. No instances from other cases are present.
+
+Case scoping is therefore achieved by \emph{repository attachment}, not by filtering within a shared global store.
+
+\subsection{Instantiation order as semantic structure}
+\label{subsec:instantiation-order-semantics}
+
+During instantiation, the ETB instantiator dynamically interprets APL patterns starting from a designated root (the ``trunk''). As patterns invoke other patterns, instances are created and asserted in the CASES repository.
+
+\paragraph{Key property}
+\begin{quote}
+\textbf{The \texttt{ac\_instance/5} facts are asserted in the exact order in which instantiation occurs.}
+\end{quote}
+
+This order has semantic meaning:
+
+\begin{enumerate}
+  \item The \textbf{first asserted instance} is the \textbf{root} of the instantiated assurance case.
+  \item Subsequent instances reflect the \textbf{dynamic execution trace} of the instantiator:
+  \begin{itemize}
+    \item parent patterns first,
+    \item then their children,
+    \item then grandchildren, and so on.
+  \end{itemize}
+  \item The repository therefore contains a \textbf{linearization of the construction of the case tree}.
+\end{enumerate}
+
+No additional indexing or graph reconstruction is required to identify either the case root or the causal order of instantiation.
+
+\subsection{Export semantics derived from this model}
+\label{subsec:export-semantics}
+
+Given this model, the correct export semantics are:
+
+\begin{enumerate}
+  \item \texttt{export\_case/2} operates on the \textbf{currently attached CASES repository}.
+  \item All \texttt{ac\_instance/5} facts in that repository belong to the case.
+  \item The \textbf{first instance} is treated as the \textbf{root} of the case.
+  \item Export proceeds by:
+  \begin{itemize}
+    \item rendering the root instance as the main case artifact, and
+    \item rendering remaining instances as auxiliary artifacts (e.g., per-instance HTML/DOT files).
+  \end{itemize}
+\end{enumerate}
+
+This design deliberately avoids:
+
+\begin{itemize}
+  \item PatternId-based filtering,
+  \item subtree reconstruction,
+  \item ad-hoc graph traversal during export.
+\end{itemize}
+
+Instead, export relies on two stable invariants:
+
+\begin{itemize}
+  \item \textbf{repository scoping}, and
+  \item \textbf{assertion order}.
+\end{itemize}
+
+\subsection{Diagnostic instances and completeness}
+\label{subsec:diagnostic-instances}
+
+Instances created for diagnostic purposes (e.g., null instances for missing patterns) are legitimate members of the CASES repository. Their presence:
+
+\begin{itemize}
+  \item supports traceability and debugging, and
+  \item preserves a faithful record of the instantiation process.
+\end{itemize}
+
+Whether such instances are shown in user-level exports is a \textbf{presentation policy}, not a repository or instantiation concern.
+
+\subsection{Design principle}
+\label{subsec:design-principle-instantiation}
+
+This approach embodies a central ETB design principle:
+
+\begin{quote}
+\textbf{Execution order is semantic data.}  
+The instantiator’s dynamic behavior is not merely procedural; it is part of the assurance evidence and must be preserved, not normalized away.
+\end{quote}
+
+\section{Resets}\label{sec:resets}
+A reset command is executed as follows:
+\begin{itemize}
+    \item The O-ETB command $reset.$ is first recognized by the command module which passes it on as $etb:etb\_reset/0$ defined in the $etb$ module.
+    \item $etb:etb\_reset$ calls: $$evidence:detach\_evidence\_repository$$ and $$assurance:detach\_assurance\_repository$$ to assure that the in-memory persistent data is flushed.
+    \item $etb:etb\_reset$ does a complete reset simply by invoking $$make~\text{-}s~clean$$ using the $makefile$ definition of the $clean$ target to remove and initialize files in both: $$REPOSITORY/CASES$$ and $$REPOSITORY/EVIDENCE$$ directories (currently no action is taken on $REPOSITORY/OUTLINES$).
+    \item After the $make~clean$ operation the evidence repository is reattached with $$attach\_evidence\_repository$$ since there is only one evidence repository that should always be accessible to O-ETB.
+\end{itemize}
+There are also entry points in module $etb$ for $etb\_reset/1$ with the argument taking the possible values: $all$, $cap$, $repos$, $cases$, and $evidence$.
+The different values for the argument have the following effects:
+\begin{itemize}
+    \item $all$ - causes $etb\_reset/0$ to be invoked.
+    \item $cap$ - causes $export:reset\_CAP/0$ to be invoked.
+    \item $repos$ - causes the invocation of: $$etb\_reset(cases)$$
+    and $$etb\_reset(evidence)$$ to be invoked.
+    \item $cases$ - causes $assurance:reset\_assurance\_repository$ to be invoked.
+    \item $evidence$ - causes $evidence:reset\_evidence\_repository$ to be invoked.
+\end{itemize}
+The predicate $assurance:reset\_assurance\_repository$ uses "make" with the target $clean\_cases$ \emph{after} calling: $$assurance:detach\_assurance\_repository$$
+
+The predicate $evidence:reset\_evidence\_repository$ uses "make" with the target $clean\_evidence$ \emph{after} calling: $$evidence:detach\_evidence\_repository$$
+To restore access to the evidence repository it also invokes: $$evidence:attach\_evidence\_repository$$ \emph{after} calling $make$.
+
+The predicate $export:reset\_CAP$  uses $make$ with the target $clean\_cap$.
+
+The use of $make$ from within O-ETB process, while creating an external dependency, does guarantee consistency of the reset whether it is performed in O-ETB or outside the application as a $make$ command by having the $makefile$ provide the sole definition of the various $clean$ operations.
+
+
+\section{Shared Argument Reuse and \texttt{ac\_shared\_goal\_ref}}
+
+Large assurance cases frequently contain arguments that are intentionally relied upon in more than one place. In such situations, duplicating the same argument structure and evidence obscures author intent, complicates maintenance, and risks inconsistency. To address this, O-ETB supports explicit argument sharing via the \texttt{ac\_shared\_goal\_ref} construct.
+
+\subsection{Intentional Sharing vs. Accidental Duplication}
+
+Sharing in O-ETB is an explicit authoring decision. It denotes that the \emph{same assurance claim}, supported by the \emph{same justification and evidence}, is intentionally relied upon in multiple locations in the case. This is distinct from accidental duplication, where similar argument structures arise independently without an explicit commitment to identity.
+
+The use of \texttt{ac\_shared\_goal\_ref} establishes such intentional identity.
+
+\subsection{Semantic Nature of Shared Goals}
+
+The \texttt{ac\_shared\_goal\_ref} construct represents an \emph{equivalence (identity) relation} over assurance arguments. It asserts that multiple occurrences in the argument structure refer to a single shared argument instance. This identity relation is distinct from dependency relations such as \texttt{supports} or \texttt{in\_context\_of}.
+
+While identity entails shared dependency relationships (e.g., the shared argument supports each of its parent goals), \texttt{ac\_shared\_goal\_ref} does not itself assert a dependency. Rather, dependency edges are induced by the placement of the shared reference within the parent argument structures.
+
+\subsection{Reuse Scope and Validity}
+
+A shared argument instance must be valid in each parent context in which it is referenced. Importantly, this does not require the parent contexts to be identical. Instead, it requires that:
+
+\begin{quote}
+All assumptions and dependencies of the shared argument are satisfied in each parent context.
+\end{quote}
+
+To support this, each shared goal is associated with a \emph{reuse key}, defined as the minimal set of properties that must be identical for the claim and its supporting evidence to remain valid. Typical reuse keys are based on contracts, certified artifacts, qualified tools or processes, or platform configurations, together with their versions.
+
+\subsection{Post-hoc Identification of Sharing Opportunities}
+
+Opportunities for sharing are often discovered during case evolution or review, rather than during initial authoring. O-ETB therefore permits post-hoc transformation of independently instantiated argument subtrees into shared goals. This supports realistic development workflows in which different authors contribute independently and harmonization occurs later.
+
+\subsection{Relationship to Evidence Execution}
+
+Shared argument identity entails a single logical evidence instance within a case. This is complementary to evidence idempotency mechanisms, which ensure that evidence production processes are not re-executed unnecessarily across repeated runs when inputs have not changed.
+
+\subsection{Summary}
+
+In summary, \texttt{ac\_shared\_goal\_ref}
+denotes intentional reuse of a single concrete argument subtree.
+The first occurrence defines the shared subtree, and all subsequent occurrences are non-instantiating aliases that rely on that same argument subtree.
+It improves clarity, maintainability, and analytical soundness by making identity explicit, while preserving flexibility through well-defined reuse scopes.
+
+\section{Intentional Sharing of Argument Instantiations}
+\label{sec:shared-argument-instantiations}
+
+\subsection{Motivation}
+
+During the evolution of large assurance cases, it is common for equivalent or identical argument structures to arise independently in different branches of the case. This duplication is often not intentional at first and may only be recognized during later review or consolidation. When left unaddressed, such duplication can lead to:
+
+\begin{itemize}
+  \item redundant instantiation of argument structures,
+  \item repeated execution or collection of the same evidence,
+  \item unnecessary growth in case size and complexity, and
+  \item reviewer confusion when multiple arguments appear distinct but are, in fact, intended to be the same.
+\end{itemize}
+
+The goal of intentional sharing is to allow an author to explicitly state that multiple parts of an assurance case rely on the \emph{same} argument, supported by the same justification and evidence, without duplicating that argument structure.
+
+\subsection{Conceptual Model}
+
+An intentionally shared argument is not a new ontological entity. Fundamentally, it is a concrete instantiation of an existing argument pattern with a particular set of bound arguments. Sharing does not introduce a new kind of argument; rather, it introduces a way to \emph{reuse the identity} of an already-instantiated argument subtree.
+
+Thus, a shared argument:
+\begin{itemize}
+  \item is produced by pattern instantiation,
+  \item has a single concrete goal/strategy/evidence subtree,
+  \item may be referenced from multiple parent goals, and
+  \item enforces single-execution semantics for its evidence.
+\end{itemize}
+
+This distinguishes intentional sharing from:
+\begin{itemize}
+  \item accidental duplication (multiple independent instantiations), and
+  \item explicit relation sentences (e.g., \texttt{supports}, \texttt{in\_context\_of}), which assert semantic relationships but do not establish identity.
+\end{itemize}
+
+\subsection{Design Objectives}
+
+The design of intentional sharing is guided by the following objectives:
+
+\begin{itemize}
+  \item Preserve the existing pattern instantiation model and execution semantics.
+  \item Avoid introducing a second, parallel instantiation mechanism.
+  \item Keep the internal vocabulary minimal and conceptually clean.
+  \item Maintain precise occurrence identity for navigation, diagnostics, and traceability.
+  \item Adhere to the Principle of Least Astonishment: the system should behave as a knowledgeable assurance author would expect based on the artifacts they authored.
+\end{itemize}
+
+\subsection{Key Design Decision}
+
+The central design decision is that intentional sharing is modeled as:
+
+\begin{quote}
+\emph{A pattern instantiation with an additional sharing attribute and associated identity registry.}
+\end{quote}
+
+Operationally:
+\begin{itemize}
+  \item The first occurrence of a shared argument causes instantiation of the pattern.
+  \item Subsequent occurrences do not instantiate; they act as aliases to the same concrete subtree.
+  \item Each occurrence retains its own occurrence identity and parent context.
+\end{itemize}
+
+This approach treats sharing as an optimization over multiple instantiations of the same pattern with the same arguments, rather than as a distinct construction mechanism.
+
+\subsection{Authoring Model}
+
+At the ACO level, intentional sharing is expressed tersely, consistent with the outline style:
+
+\begin{verbatim}
+shared(Name, Args)
+\end{verbatim}
+
+The mapping from a shared name to the underlying pattern is declared explicitly in the same ACO unit:
+
+\begin{verbatim}
+shared_def(Name, PatternId)
+\end{verbatim}
+
+This declaration-based approach ensures that:
+\begin{itemize}
+  \item sharing intent is author-controlled and explicit,
+  \item the mapping travels with the ACO artifact, and
+  \item sharing can be introduced incrementally as the case evolves.
+\end{itemize}
+
+Use of \texttt{shared/2} without a corresponding declaration is permitted during authoring and translation but must be resolved before instantiation.
+
+\subsection{Instantiation Semantics (Deferred)}
+
+During instantiation, shared arguments require a global registry for the duration of a run. Conceptually, this registry maps a \emph{sharing key} (derived from the shared name and bound arguments) to a single concrete instantiation.
+
+The instantiation semantics are as follows:
+\begin{itemize}
+  \item The first encountered occurrence of a given sharing key defines the shared argument instance.
+  \item All subsequent occurrences become non-instantiating aliases.
+  \item Each alias induces an ordinary support relationship from the shared argument root to its parent.
+\end{itemize}
+
+Occurrence identity and instantiation identity remain distinct.
+
+\subsection{Export and Diagnostics Implications}
+
+Shared arguments must be clearly distinguishable in exports and diagnostics:
+\begin{itemize}
+  \item Shared references should be visibly marked.
+  \item Unmapped or unresolved shared references must be reported explicitly.
+  \item No silent inference of sharing is permitted.
+\end{itemize}
+
+Presentation layers may choose compact or expanded views, but the underlying identity semantics remain intact.
+
+\subsection{Trade-offs and Deferred Work}
+
+While the design is conceptually clean, its implementation is non-trivial. It requires:
+\begin{itemize}
+  \item careful handling of occurrence ordering,
+  \item interaction with iterators and execution paths,
+  \item robust diagnostics, and
+  \item a suite of automatable regression tests.
+\end{itemize}
+
+Given current project priorities, particularly the development and leadership of partner assurance cases, implementation of intentional sharing is deferred.
+
+\subsection{Status}
+
+The design for intentional sharing of argument instantiations is complete and recorded here. Implementation is intentionally postponed until adequate development time and test infrastructure are available.
+
+
+\section{ACO Transformations}
+This material has been merged into Section~\ref{sec:formal_def} as an overview to the formal transformation definitions.
+
+
+\section{AI-based 6-Step Method Agent}
+A need arose while working on the Remote Patient Monitoring (RPM) use case as we sought to apply Kelly’s Six-Step Method to develop and mature the assurance case.
+
+\subsection{Implementing a tool within a general AI chat bot}
+We are assembling a paste-in initialization record for an AI chat bot (currently using ChatGPT 5.2) to get it to act as a “Kelly’s 6-Step Assistant Tool” that could be used in conjunction with the ACO Workbench (the new O-ETB subsystem that provides assurance case outline (ACO) functionality). My idea was to provide a package that anyone with access to ChatGPT could use to initialize a fresh instance of ChatGPT on the user’s own account to recreate an AC evaluator and transformation recommender “tool.”  (Of course other AI agents could be used in the future, but we would initially use only a single AI agent to limit the amount of testing we would have to do, and to achieve consistent results.) This “tool” would be treated as part of the ACO extensions to O-ETB.
+
+\subsection{Motivation for the approach}
+This idea emerged while contemplating how to extend the simple syntax and semantic checks that were already being done in the O-ETB/ACO extension to provide “more intelligent” recommendations that would help the AC author to follow the 6-Step method. Beyond merely indicating the applicability of structural transformations, by applying well-defined ACO syntactic structures, and objective rules, it is necessary for the system to *understand* what the NL text in the AC is saying to assess whether the objectives of the steps are being achieved and what changes are necessary to effect those steps. The extensions would couple AC assessment metrics computations with AC transformations that would yield new AC states that incrementally improve the metric assessment.
+
+\subsection{Implementation alternatives}
+The problem perceived is that while achieving this deeper “understanding” is possible algorithmically, it would be a torturous path to follow to incrementally develop and refine the needed rules and algorithms. What would be ideal is to have AI-based NL understanding *within* the ACO Workbench to use in conjunctions with rules to drive the 6-Step method, metrics, and transformations. The interim approach to achieve the NL understanding capabilities “within” the Workbench was to factor-out an AI-based tool that would understand ACs, our representations, transformations and metrics available in the Workbench, the GSN standard and Kelly’s method. Such a tool could be used in conjunction with an O-ETB/ACO session or standalone.
+
+\subsection{Chosen implementation approach}
+The problem is reduced to getting an AI chat bot, which is capable of NL processing, to *act* like a *tool* rather than like an unpredictable probabilistic generator. We’ve been proceeding by defining the expected external tool function and providing a package of instructions and knowledge resources that a user could use to initialize a ChatGPT session and to have it review your AC and give suggestions on transformations to apply, guided by the 6-Step Method, that would shepherd the AC into a better state. After skimming the reference (https://agentskills.io/home) it seems to me as though our effort may be very similar to the “AI skills” concept referenced, and we look forward to learning more about it, and if our beliefs are borne out, learning from it and aligning our future efforts with it.
+
+\subsection{Packaging the Kelly 6-Step Assistant as an Agent Skill}
+
+The development of the Kelly 6-Step Assistant Tool has, until now, been framed primarily as an internal methodological extension of the ACO Workbench. However, the emerging \emph{Agent Skills} standard provides a natural and effective packaging and distribution mechanism for this work.
+
+The Kelly Assistant is designed to act as a deterministic assurance-case analysis tool. Its purpose is to encode and operationalize:
+
+\begin{itemize}
+  \item The Kelly 6-Step Method as a stateful process model,
+  \item Explicit identification of Step~2 (claim basis) and Step~4 (strategy basis) deficiencies,
+  \item A catalog of mechanical ACO transformations (T1--T7),
+  \item Structured diagnostic vocabulary and repeatable output templates,
+  \item Priority scoring to guide refinement effort.
+\end{itemize}
+
+In practical terms, the Assistant can be packaged as an Agent Skill containing:
+
+\begin{itemize}
+  \item A \texttt{SKILL.md} defining operating discipline, step-transition rules, and output formats,
+  \item Normative references (Kelly~1998/2001; Hawkins--Kelly~2009; GSN Standard; ACO specification),
+  \item The transformation catalog and recognition heuristics,
+  \item Worked exemplars (e.g., E1122, E1121, E511),
+  \item Defined diagnostic outputs such as
+  \[
+    (\text{NodeID}, \text{PriorityScore}, \text{KellyStepToStartWith}, \text{SuggestedTransformationFamily}).
+  \]
+\end{itemize}
+
+Adopting the Agent Skills format does not alter the intellectual core of the work; rather, it provides a standardized container for its distribution and reuse. The contribution extends beyond domain-specific prompting. It encodes:
+
+\begin{enumerate}
+  \item A step-constrained refinement process (enforcing valid Kelly step transitions),
+  \item A transformation algebra over ACO artifacts,
+  \item Metric-guided improvement of assurance-case structure and sufficiency.
+\end{enumerate}
+
+In this sense, the Skill format serves as the packaging layer, while the substantive contribution lies in formalizing the assurance-case refinement method itself. Future integration with an MCP server could expose executable ACO operations, with the Skill orchestrating method-compliant analysis and transformation recommendations.
+
+This approach allows the Kelly 6-Step Assistant to be reproducible, shareable, and extensible, while preserving methodological rigor and alignment with established assurance standards.
+
+\subsection{Conceptual Architecture}
+
+The proposed architecture separates method, transformation, and execution concerns into three logically distinct layers (Figure~\ref{fig:Conceptual architecture}). This separation is deliberate and reflects the need for determinism, auditability, and disciplined refinement of assurance cases.
+
+\subsubsection{Layer 1: Method Layer --- Kelly 6-Step Assistant (Agent Skill)}
+
+The top layer encodes the refinement method. It is implemented as a packaged Agent Skill that causes a general-purpose AI agent to behave as a deterministic assurance-case analysis tool.
+
+This layer is responsible for:
+
+\begin{itemize}
+  \item Enforcing Kelly’s 6-Step process as a stateful refinement model,
+  \item Identifying Step~2 (claim basis) and Step~4 (strategy basis) deficiencies,
+  \item Applying a controlled diagnostic vocabulary,
+  \item Producing repeatable analysis outputs,
+  \item Recommending specific structural transformations (T1--T7),
+  \item Prioritizing remediation using rule-based scoring.
+\end{itemize}
+
+The Method Layer does not mutate artifacts directly. It analyzes ACO-visible structures and produces transformation recommendations in a structured, deterministic form. It operates primarily over Assurance Case Outline (ACO) artifacts and does not depend on internal REPOSITORY state.
+
+\subsubsection{Layer 2: Transformation Layer --- ACO Workbench}
+
+The middle layer implements structural transformations that are deterministic and mechanically applied over ACO artifacts.
+
+It is realized as an extension to O-ETB providing structured ACO processing capabilities.
+Natural-language rewriting required by these transformations is generated either by deterministic templates or, optionally, by bounded LLM-assisted refinement that is restricted to designated node bodies and must provide traceability to the original text.
+
+Responsibilities include:
+
+\begin{itemize}
+  \item Parsing and canonicalizing ACO source,
+  \item Applying structural transformations (T1--T7),
+  \item Performing modularization (T6) with deterministic ordering,
+  \item Maintaining minimal-diff discipline,
+  \item Generating outline/skeleton views to support recognition,
+  \item Translating ACO to APL for instantiation.
+\end{itemize}
+
+This layer enforces structural correctness while preserving author intent. It performs no semantic reinterpretation beyond the explicit transformation definitions.
+
+\subsubsection{Layer 3: Execution and Evidence Layer --- O-ETB Core}
+
+The bottom layer provides execution, orchestration, and provenance management.
+
+Its responsibilities include:
+
+\begin{itemize}
+  \item Pattern instantiation,
+  \item Tool orchestration and execution,
+  \item Authoritative run-record storage in REPOSITORY,
+  \item Evidence artifact management,
+  \item Export to CAP for evaluator consumption,
+  \item Optional exposure of operations via MCP.
+\end{itemize}
+
+REPOSITORY remains the authoritative source of provenance. CAP is a snapshot export intended for evaluator-facing inspection and is intentionally isolated from mutable repository state.
+
+\subsubsection{Separation of Concerns}
+
+The layered structure ensures:
+
+\begin{itemize}
+  \item Method discipline is encoded independently of execution mechanisms,
+  \item Structural transformations are deterministic and auditable,
+  \item Tool execution and provenance management remain authoritative and reproducible,
+  \item Evaluator-facing artifacts are stable snapshots rather than live views of mutable repository state.
+\end{itemize}
+
+This separation supports the Principle of Least Astonishment\footnote{Daniel J. Edwards - A human-computer interaction should cause as little astonishment as possible to the human.}: authors reason about ACO artifacts; transformations preserve intent; execution layers do not introduce hidden semantic
+
+\begin{figure}[ht]
+\centering
+\begin{tabular}{|c|}
+\hline
+\textbf{Layer 1: Method Layer} \\
+Kelly 6-Step Assistant (Agent Skill) \\
+\small{Step discipline, scoring, T1--T7 recommendations} \\
+\hline
+$\Downarrow$ Diagnose / Recommend \\
+\hline
+\textbf{Layer 2: Transformation Layer} \\
+ACO Workbench (O-ETB Subsystem) \\
+\small{ACO parsing, transformations, modularization, outline views} \\
+\hline
+$\Downarrow$ Instantiate / Execute \\
+\hline
+\textbf{Layer 3: Execution \& Evidence Layer} \\
+O-ETB Core + REPOSITORY + CAP (+ optional MCP) \\
+\small{Pattern instantiation, tool runs, provenance, export} \\
+\hline
+\end{tabular}
+\caption{Layered architecture for method-driven assurance case refinement and execution.}
+\label{fig:Conceptual architecture}
+\end{figure}
+
+\section{ACO Transformations (T1--T7) Formal Definition}\label{sec:formal_def}
+
+\subsection{ACO Structural Model}
+
+An Assurance Case Outline (ACO) unit is modeled as a finite, rooted, ordered forest:
+
+\[
+U = (N, E, r)
+\]
+
+where:
+
+\begin{itemize}
+  \item $N$ is a finite set of nodes,
+  \item $E \subseteq N \times N$ is the parent--child relation,
+  \item $r \in N$ is the unit root (for \texttt{Case:} or \texttt{Module:}),
+  \item the induced graph is acyclic and ordered.
+\end{itemize}
+
+Each node $n \in N$ is a typed record:
+
+\[
+n = \langle type(n), id(n), label(n), body(n), kids(n) \rangle
+\]
+
+with:
+
+\[
+type(n) \in 
+\{\mathsf{Goal}, \mathsf{Strategy}, \mathsf{Evidence}, 
+\mathsf{Context}, \mathsf{Justification}, 
+\mathsf{Assumption}, \mathsf{ModuleRef}\}
+\]
+
+Let:
+
+\begin{itemize}
+  \item $parent(n)$ denote the unique parent of $n$,
+  \item $subtree(n)$ denote all descendants of $n$ including $n$,
+  \item $depth(n)$ denote its indentation depth,
+  \item $pos(n)$ denote its structural path within the unit.
+\end{itemize}
+
+Transformations operate at the ACO level only and must preserve:
+
+\begin{itemize}
+  \item acyclicity,
+  \item sibling order (except where explicitly rewritten),
+  \item node identifiers (unless creating new nodes),
+  \item minimal-diff discipline.
+\end{itemize}
+
+\subsection{Transformation Framework}
+
+Each transformation $T_i$ is defined as a partial function:
+
+\[
+T_i : U \rightharpoonup U'
+\]
+
+with structure:
+
+\[
+\frac{Obs_{T_i}(U,\theta) \quad Sel_{T_i}(U,\theta) = P}
+     {Rewrite_{T_i}(U,\theta,P) = U'}
+\]
+
+where:
+
+\begin{itemize}
+  \item $Obs_{T_i}$ is a deterministic suitability predicate,
+  \item $Sel_{T_i}$ selects participating nodes,
+  \item $Rewrite_{T_i}$ performs a mechanical tree rewrite,
+  \item $\theta$ is a binding environment for identifiers and extracted text.
+\end{itemize}
+
+Recognition and rewrite are strictly separated to ensure determinism and auditability.
+
+\subsection{T1 --- Evidence Node Slimming}
+
+\paragraph{Intent}
+Separate artifact reference from method and adequacy discourse.
+
+\paragraph{Observation}
+
+For $e$ with $type(e)=\mathsf{Evidence}$:
+
+\[
+Obs_{T1}(e) \iff
+\begin{cases}
+|body(e)| > L_1 \\
+\text{OR multiple discourse roles detected}
+\end{cases}
+\]
+
+Discourse roles are detected via token classes:
+
+\[
+\mathcal{R}_{method}, \mathcal{R}_{result}, \mathcal{R}_{adequacy}
+\]
+
+\paragraph{Rewrite}
+
+Replace $e$ with:
+
+\[
+e' = \langle \mathsf{Evidence}, id(e), label(e), ArtifactRef(body(e)) \rangle
+\]
+
+Introduce optional nodes:
+
+\[
+c = \langle \mathsf{Context}, id_c, \_, MethodText \rangle
+\]
+\[
+j = \langle \mathsf{Justification}, id_j, \_, AdequacyText \rangle
+\]
+
+Inserted adjacent to $e'$ under $parent(e)$.
+
+\paragraph{Effect}
+Evidence becomes an artifact anchor; sufficiency premises become explicit.
+
+\subsection{T2 --- Evidence-Discharging Goal Introduction}
+
+\paragraph{Intent}
+Eliminate abstraction gaps between abstract goals and concrete evidence.
+
+\paragraph{Observation}
+
+Given $e$ child of goal $g$:
+
+\[
+Obs_{T2}(g,e) \iff Abstract(g) \wedge Concrete(e)
+\]
+
+where abstraction and concreteness are detected via lexical classes.
+
+\paragraph{Rewrite}
+
+Introduce intermediate goal $g'$:
+
+\[
+g' = \langle \mathsf{Goal}, id_{g'}, label', body' \rangle
+\]
+
+Rewire:
+
+\[
+kids(g) := (kids(g) \setminus \{e\}) \cup \{g'\}
+\]
+\[
+kids(g') := \{e\}
+\]
+
+\paragraph{Effect}
+Evidence directly discharges its immediate parent goal.
+
+\subsection{T3 --- Artifact Role Reclassification}
+
+\paragraph{Intent}
+Distinguish system evidence from argument-construction artifacts.
+
+\paragraph{Observation}
+
+\[
+Obs_{T3}(g,e) \iff ArgumentArtifact(e) \wedge \neg SystemArtifact(e)
+\]
+
+\paragraph{Rewrite}
+
+Split $e$ (as in T1), relocate argument-specific material to:
+
+\[
+c = \langle \mathsf{Context}, id_c, \_, ArgumentProcessText \rangle
+\]
+
+attached to nearest strategy ancestor.
+
+\paragraph{Effect}
+Preserves role purity and prevents implicit semantic strengthening.
+
+\subsection{T4 --- Evidence Category Grounding}
+
+\paragraph{Intent}
+Make evidence categories operationally meaningful.
+
+\paragraph{Observation}
+
+\[
+Obs_{T4}(e) \iff Category(e) \wedge \neg FullyGrounded(e)
+\]
+
+\paragraph{Rewrite}
+
+Introduce context node:
+
+\[
+c_{cat} =
+\langle \mathsf{Context}, id_c, \_, 
+Category \Rightarrow ArtifactForm \Rightarrow Tool \Rightarrow Agent/Run \rangle
+\]
+
+\paragraph{Effect}
+Supports auditability and automation hooks.
+
+\subsection{T5 --- Basis Articulation (Kelly Steps 2 and 4)}
+
+\paragraph{T5a --- Claim Basis}
+
+\[
+Obs_{T5a}(g) \iff MissingStep2Basis(g)
+\]
+
+Insert:
+
+\[
+c_{basis} = \langle \mathsf{Context}, id_c, \_, Scope/Definitions/Assumptions \rangle
+\]
+
+\paragraph{T5b --- Strategy Basis}
+
+\[
+Obs_{T5b}(s) \iff MissingStep4Basis(s)
+\]
+
+Insert:
+
+\[
+j_{basis} = \langle \mathsf{Justification}, id_j, \_, Coverage/CompletenessRationale \rangle
+\]
+
+\paragraph{Effect}
+Externalizes semantic and sufficiency premises.
+
+\subsection{T6 --- Goal-to-Module Modularization}
+
+\paragraph{Overview}
+As assurance cases grow in size, a single monolithic argument structure becomes increasingly difficult to review, navigate, and evolve. Transformation T6 introduces a structural mechanism for decomposing an assurance case into explicit modules, while preserving the original argument semantics.
+
+T6 operates by converting selected goal subtrees into ACO modules and replacing the original goal nodes with module reference nodes. This transformation is purely structural: it does not alter the claims being made, the strategies used, or the evidence cited. Its purpose is to improve scalability, locality of reasoning, and reviewability.
+
+\paragraph{Unit-scoped semantics}
+Modularization is defined as a unit-scoped operation. A T6 transformation applies within a specific ACO unit (either the Case unit or a named Module unit), rather than implicitly ranging over the entire assurance case. This reflects the author’s workflow: modularization is typically performed while working within a particular unit that has grown too large to manage comfortably.
+
+Accordingly, O-ETB provides unit-scoped modularization commands, such as modularizing goals within the Case unit or within a specific module unit.
+
+\paragraph{Batch modularization and ordering}
+When T6 is applied to a list of goals within a unit, the transformation is performed in descendant-first (postorder) order with respect to the containment hierarchy of those goals in the unit. This ordering is required to ensure correctness: if an ancestor goal were modularized first, its descendant goals would no longer be present in the unit and could not be modularized as part of the same batch operation.
+
+This ordering rule applies only within a single batch modularization command. Across separate commands or authoring sessions, no global ordering constraint is imposed.
+
+\paragraph{Module references and definitions}
+At the original location of a modularized goal, T6 introduces a module reference node using the ACO module invocation syntax. The module reference explicitly denotes an invocation, even when no parameters are present, to avoid ambiguity.
+
+A corresponding module definition is introduced as a new Module unit. The root of the module is the original goal node, including its full subtree. The goal’s identity and semantics are preserved; only its structural location changes.
+
+\paragraph{Rationale}
+By making modularization explicit and mechanical, T6 supports incremental restructuring of assurance cases without semantic drift. It enables authors to begin with a top-level modularization of the case and later modularize deeper substructures within newly created modules as the argument evolves.
+
+
+\paragraph{Rewrite}
+This transformation complements the other semantic and evidential transformations (T1–T5, T7) by addressing structural scale rather than argumentative content.
+Given selected goal roots $G = \{g_1,\dots,g_m\}$:
+
+\[
+\text{Apply in descending } depth(g_i)
+\]
+
+\begin{itemize}
+  \item Replace subtree($g$) with a ModuleRef node,
+  \item Create Module unit containing subtree($g$),
+  \item Preserve $id(g)$ within module scope.
+\end{itemize}
+
+\paragraph{Effect}
+Creates a new Module unit. Replaces relocated subtree with a module reference.
+
+
+\subsection{T7 --- Strategy Insertion}
+
+\paragraph{Intent}
+Ensure that each non-leaf goal has an explicit strategy node providing a stable location for Kelly Step~3 (strategy articulation) and enabling systematic insertion of Kelly Step~4 basis material (T5b).
+
+
+
+\paragraph{Observation}
+
+For $g$ with $type(g)=\mathsf{Goal}$:
+
+\[
+Obs_{T7}(g) \iff HasSupportChildren(g) \wedge \neg HasStrategyChild(g)
+\]
+
+where $HasSupportChildren(g)$ holds when $kids(g)$ contains at least one supporter node (e.g., $\mathsf{Goal}$, $\mathsf{Evidence}$, $\mathsf{Context}$, $\mathsf{Justification}$, $\mathsf{ModuleRef}$), and $HasStrategyChild(g)$ holds when $kids(g)$ contains a direct child $s$ with $type(s)=\mathsf{Strategy}$.
+
+\paragraph{Rewrite}
+
+Introduce a fresh strategy node $s$:
+
+\[
+s = \langle \mathsf{Strategy}, id_s, label_s, body_s, kids_s \rangle
+\]
+
+and rewire:
+
+\[
+kids_s := kids(g)
+\]
+\[
+kids(g) := \{s\}
+\]
+
+The identifiers and text of $s$ are generated deterministically:
+\begin{itemize}
+  \item $id_s$ is derived from $id(g)$ and the next available suffix letter ($a,b,c,\dots$),
+  \item $label_s$ is a stable placeholder strategy label,
+  \item $body_s$ is generated using deterministic templates and begins with an \texttt{AUTHOR CHECK:} prefix to indicate required author review.
+\end{itemize}
+
+\paragraph{Effect}
+Provides a uniform structural place for strategy information under each non-leaf goal, reduces Kelly Step~3 deficits, and enables local, deterministic insertion of Step~4 strategy basis material via T5b.
+
+\subsection{Deterministic Candidate Generation}
+
+Each transformation produces candidate structures:
+
+\[
+cand(T_i, target, participants, features, rationale)
+\]
+
+Candidate selection is rule-based; rewrite requires explicit invocation.
+
+\subsection{Implementation Architecture}
+
+For each $T_i$:
+
+\begin{itemize}
+  \item \texttt{observe\_t$i$(Unit, Candidates)}
+  \item \texttt{apply\_t$i$(Unit, Candidate, NewUnit)}
+\end{itemize}
+
+Recognition is separated from rewrite to maintain determinism and auditability.
+
+\subsection{Ordering Strategy}
+
+Recommended implementation order:
+
+\[
+T1 \rightarrow T2 \rightarrow T5 \rightarrow T4 \rightarrow T3
+\]
+
+This ordering minimizes semantic risk and maximizes structural clarity.
+
+\subsection{Correctness Constraints}
+
+All transformations must preserve:
+
+\begin{itemize}
+  \item Structural well-formedness,
+  \item Identifier stability,
+  \item Sibling ordering (except at rewrite locus),
+  \item LF-only formatting,
+  \item Minimal-diff discipline.
+\end{itemize}
+
+\subsection{Summary}
+
+The transformation calculus formalizes assurance-case refinement as:
+
+\[
+U_0 \xrightarrow{T_{i_1}} U_1 \xrightarrow{T_{i_2}} \dots \xrightarrow{T_{i_k}} U_k
+\]
+
+where each $T_i$ is deterministic, local, and auditable.  
+This provides the foundation for automated refinement within the ACO Workbench while preserving author intent and alignment with Kelly’s 6-Step Method.
+
+
+\section{Deterministic Candidate Ranking and Body Text Synthesis}
+
+Several transformations (notably T1, T2, and T7) require the Workbench to introduce or relocate natural-language body text. The current implementation distinguishes clearly between:
+
+\begin{enumerate}
+  \item \textbf{Deterministic structural rewrites} of the ACO tree (node insertion, deletion, re-parenting, and indentation-managed rewriting), and
+  \item \textbf{Deterministic body-text synthesis} used to populate the bodies of newly introduced nodes in a conservative, review-oriented manner.
+\end{enumerate}
+
+The current approach is designed to be usable without LLM support while maintaining minimal-diff discipline and explicit author control.
+
+\subsection{Observe--Rank--Transform workflow}
+
+The ACO Workbench follows a three-stage workflow:
+
+\begin{enumerate}
+  \item \textbf{Observe} --- for each transformation $T_i$, a deterministic observation predicate generates a set of candidates.
+  \item \textbf{Rank} --- candidates are scored using a simple Kelly-inspired deficit vector and a churn estimate to prioritize the next refinement step.
+  \item \textbf{Transform} --- a selected candidate is rewritten mechanically, preserving all lines outside the rewrite locus byte-for-byte.
+\end{enumerate}
+
+This separation ensures that recommendation and mutation are not conflated and supports tool-like behavior.
+
+\subsection{Kelly deficit scoring}
+
+Candidate ranking uses a small vector of deficits aligned to Kelly’s method:
+
+\begin{itemize}
+  \item $k2$ --- missing or weak claim basis (Step~2),
+  \item $k3$ --- missing or implicit strategy articulation (Step~3),
+  \item $k4$ --- missing or implicit strategy basis (Step~4),
+  \item $churn$ --- estimated disruption due to rewrite scope.
+\end{itemize}
+
+Scores are used to prioritize remediation effort, not to judge overall case quality.
+
+\subsection{\texttt{AUTHOR CHECK:} convention and conservative synthesis}
+
+All deterministically generated or relocated prose is explicitly marked as requiring author review using the prefix:
+
+\begin{quote}
+\texttt{AUTHOR CHECK:}
+\end{quote}
+
+This convention is used in two ways:
+
+\begin{enumerate}
+  \item \textbf{Placeholders} --- when the Workbench cannot confidently synthesize a dischargeable claim or strategy explanation, it emits a generic author-check prompt.
+  \item \textbf{Rule-based synthesis} --- when recognizable patterns are present in the surrounding goal/evidence text, the Workbench emits conservative sentences derived from that text (e.g., extracting a subject from a parent goal and predicates from evidence bodies).
+\end{enumerate}
+
+The purpose of the convention is to preserve author intent and prevent silent semantic strengthening: the Workbench may restructure and suggest, but the author remains responsible for accepting or revising the newly introduced text.
+
+\subsection{Relationship to bounded LLM refactoring}
+
+The deterministic synthesis described here is sufficient for structural demonstration and initial review workflows. However, empirical use on the RPM case shows that higher-quality prose often requires disassembly and reassembly of evidence text beyond simple templates. The next section therefore introduces bounded LLM-assisted semantic refactoring as an optional enhancement that improves rhetorical quality while preserving structural determinism and auditability.
+
+
+\section{Bounded LLM-Assisted Semantic Refactoring}
+
+\subsection{Rationale}
+
+Structural transformations (T1--T7) operate deterministically over the Assurance Case Outline (ACO) tree. However, several transformations (notably T1, T2, and T5) require non-trivial rewriting of natural-language content when splitting, relocating, or introducing nodes. 
+
+Empirical experimentation on the Remote Patient Monitoring (RPM) assurance case demonstrated that purely templated rewriting often produces structurally correct but rhetorically weak results. In particular, effective transformation requires:
+
+\begin{itemize}
+  \item Disassembling composite evidence prose into semantically distinct roles (artifact, method, result, adequacy),
+  \item Selecting fragments appropriate to new node types,
+  \item Reassembling fragments coherently under new rhetorical constraints,
+  \item Explicitly identifying gaps rather than silently inferring missing content.
+\end{itemize}
+
+To support this requirement without sacrificing determinism, we introduce \emph{Bounded LLM-Assisted Semantic Refactoring}.
+
+\subsection{Architectural Principle}
+
+Structural transformation and semantic rewriting are strictly separated:
+
+\begin{enumerate}
+  \item \textbf{Phase A (Deterministic Structural Rewrite)}  
+        The ACO Workbench performs tree rewrites mechanically and deterministically. Node identities, relationships, and insertion points are fully defined by transformation rules.
+
+  \item \textbf{Phase B (Bounded Semantic Refactoring)}  
+        An LLM may be invoked to rewrite designated node bodies, subject to explicit structural and semantic constraints.
+\end{enumerate}
+
+The LLM is never permitted to:
+\begin{itemize}
+  \item Create, delete, or re-type nodes,
+  \item Modify parent/child relationships,
+  \item Introduce new factual claims not supported by the original text,
+  \item Alter identifiers or metadata.
+\end{itemize}
+
+The transformation logic remains authoritative; the LLM assists only with controlled semantic refactoring.
+
+\subsection{Formal Refactoring Contract}
+
+Let $U$ be the original unit and $U'$ the result of a deterministic structural rewrite. Let $S \subseteq N'$ be the set of nodes whose bodies may be rewritten.
+
+A bounded semantic refactoring is defined as:
+
+\[
+Refine : (U, U', S, P) \rightarrow U''
+\]
+
+where:
+
+\begin{itemize}
+  \item $S$ is the explicitly enumerated set of editable nodes,
+  \item $P$ is a fixed prompt template version,
+  \item $U''$ differs from $U'$ only in $body(n)$ for $n \in S$.
+\end{itemize}
+
+\[
+\forall n \notin S, \quad body_{U''}(n) = body_{U'}(n)
+\]
+
+\[
+\forall n \in S, \quad type(n), id(n), kids(n), parent(n) \text{ remain unchanged}
+\]
+
+\subsection{Traceability Constraint}
+
+For each rewritten node $n \in S$, the LLM must return:
+
+\begin{itemize}
+  \item $body_{new}(n)$,
+  \item $trace\_map(n)$: a mapping of each newly generated sentence to supporting fragments from $body_{original}(n_{source})$,
+  \item $gaps(n)$: explicit statements of unsupported assumptions or missing criteria.
+\end{itemize}
+
+Formally:
+
+\[
+trace\_map(n) = \{ (s_i, f_i) \mid s_i \in Sentences(body_{new}(n)),\ f_i \subseteq body_{original} \}
+\]
+
+No sentence may appear in $body_{new}(n)$ without either:
+
+\begin{itemize}
+  \item A cited supporting fragment $f_i$, or
+  \item An explicit designation as a structured placeholder.
+\end{itemize}
+
+\subsection{Transformation-Specific Contracts}
+
+\paragraph{T1 (Evidence Node Slimming)}
+
+Editable nodes:
+\[
+S = \{ e', c, j \}
+\]
+
+The LLM must:
+
+\begin{itemize}
+  \item Extract artifact anchor text into $e'$,
+  \item Move method/process text into $c$,
+  \item Move adequacy rationale into $j$,
+  \item Preserve explicit artifact identifiers (e.g., xref).
+\end{itemize}
+
+\paragraph{T2 (Evidence-Discharging Goal Introduction)}
+
+Editable nodes:
+\[
+S = \{ g' \}
+\]
+
+The LLM must:
+
+\begin{itemize}
+  \item Formulate a dischargeable intermediate goal claim,
+  \item Ensure the claim is strictly entailed by the associated evidence,
+  \item Avoid strengthening beyond the original evidence.
+\end{itemize}
+
+\paragraph{T5 (Basis Articulation)}
+
+Editable nodes:
+\[
+S = \{ c_{basis}, j_{basis} \}
+\]
+
+The LLM must:
+
+\begin{itemize}
+  \item Explicitly articulate scope, definitions, and assumptions (Step 2),
+  \item Articulate coverage and sufficiency rationale (Step 4),
+  \item Identify unresolved completeness gaps where appropriate.
+\end{itemize}
+
+\subsection{Determinism and Versioning}
+
+Each refactoring invocation records:
+
+\begin{itemize}
+  \item Original body hash,
+  \item Structural transformation identifier,
+  \item Prompt template version $P$,
+  \item LLM model identifier,
+  \item Output body hash,
+  \item Traceability map.
+\end{itemize}
+
+This ensures that semantic rewriting remains auditable and reproducible.
+
+\subsection{Fallback Mode}
+
+If LLM refinement is disabled, deterministic template-based bodies are generated. These provide structural correctness but may lack rhetorical clarity. This mode ensures that transformations remain executable in environments without LLM support.
+
+\subsection{Separation of Concerns}
+
+This architecture preserves:
+
+\begin{itemize}
+  \item Structural determinism (ACO Workbench),
+  \item Method discipline (Kelly 6-Step Assistant),
+  \item Semantic clarity (bounded LLM refactoring),
+  \item Provenance authority (REPOSITORY),
+  \item Evaluator stability (CAP snapshot).
+\end{itemize}
+
+The LLM is thus treated not as an autonomous author, but as a constrained semantic refactoring engine operating within formally defined transformation boundaries
+
+\clearpage
+\section{Action Layer and Constructor Basis}
+
+The transformation framework described above is now complemented by an \emph{action layer} that treats both forward-building constructors and structure-improving rewrites as explicit, inspectable workbench actions.
+This layer is implemented separately from \texttt{aco\_transforms} in order to keep the transformation module focused on concrete tree rewrites while allowing the emerging action theory, candidate generation, ranking, and diagnostic logic to evolve in a cleanly separated module.
+
+\subsection{Canonical action representation}
+
+The common currency of the action layer is the fully specified action term:
+\begin{quote}\ttfamily
+action(Name, Kind, Target, Params)
+\end{quote}
+where \texttt{Name} identifies the operation, \texttt{Kind} distinguishes constructor from rewrite (and potentially other kinds in the future), \texttt{Target} identifies the locus of application (the form of which depends upon the operation), and \texttt{Params} contains operation-specific parameters.
+
+The chosen ordering gives the action name first position for efficient indexing and natural dispatch, while retaining the full action object as the semantic unit that is observed, ranked, selected, applied, and reported.
+Keeping \texttt{Kind} within the action term avoids the maintenance burden and drift risk of a separate \texttt{action\_kind/2} table.
+
+\subsection{Candidates, observation, and ranking}
+
+Workbench recommendation logic operates over explicit candidates of the form:
+\begin{quote}\ttfamily
+candidate(Action, Score, Rationale, Diagnostics)
+\end{quote}
+Observation functions generate a set of currently applicable constructor and rewrite candidates for a given ACO configuration.
+Ranking functions then order those candidates using pluggable evaluation policies.
+
+The current design deliberately supports both deterministic evaluation functions and future intelligent evaluation and advisory capabilities.
+This approach provides a stable deterministic baseline behavior that can serve as a primary or fallback position while allowing richer alternatives to be introduced without changing the action or candidate vocabulary.
+
+\subsection{Constructor basis for assurance case construction}
+
+A central concept in the ACO Workbench is the notion of a basis set of constructors that makes it possible to build any well-formed assurance case configuration from an initially empty configuration.
+The intended progression is:
+\begin{enumerate}
+  \item Start from an empty case configuration.
+  \item Apply \texttt{add\_goal} to create the first top-level goal.
+  \item Enable further local constructors such as \texttt{add\_strategy}, \texttt{add\_subgoal}, \texttt{add\_context}, \texttt{add\_justification}, \texttt{add\_assumption}, and \texttt{add\_evidence}.
+  \item Once sufficient structure exists, enable rewrite-style transformations such as T1--T7 to improve or reorganize the argument structure.
+\end{enumerate}
+
+Primitive constructors are intentionally simple.
+For example, \texttt{add\_strategy} should add a strategy node but not also restructure the subtree beneath it as such a structural rewrite is handled separately by transform T7.
+Likewise, \texttt{add\_evidence} should attach evidence without also normalizing or introducing a discharge goal; such improvement remains the role of transform T1 or T2.
+This separation preserves a clean distinction between construction, improvement, and guidance based on methodology and metrics.
+
+\subsection{Targets and goal nesting}
+
+The target vocabulary retains both direct node targets and pairwise targets.
+In particular, the \texttt{pair/2} target form, first used in conjunction with the T2 transform, remains important for operations that conceptually act over a relation, insertion boundary or the roots of parallel structures rather than a single node.
+
+Direct goal nesting is also retained as a valid construction step through a first-class \texttt{add\_subgoal} constructor.
+This is methodologically important because an author will often decompose a goal into child goals before deciding to introduce an explicit strategy node between the parent and those subgoals.
+T7 then provides a principled structural rewrite for that later clarifying step.
+
+\subsection{Diagnostics and reporting}
+
+The action layer also provides a natural locus for a more systematic diagnostic messaging architecture.
+Rather than limiting diagnostics to parser or validator messages, the Workbench can report:
+\begin{itemize}
+  \item which actions are currently applicable,
+  \item why a candidate is applicable,
+  \item which deficits or opportunities motivated its recommendation,
+  \item what structural edits were actually performed, and
+  \item which invariants were revalidated after application.
+\end{itemize}
+This diagnostic vocabulary still needs to be fleshed out in concrete schema form, but the architectural place for doing so is now clear.
+
+\subsection{Relation to GSN and APL completeness}
+
+The immediate action-layer work is being undertaken in parallel with a broader objective: ACO must be able to express, either directly or through a combination of primitive constructs, the set of APL constructs that are currently valid and useful in the O-ETB pipeline.
+This will require revisiting the relationship among:
+\begin{itemize}
+  \item GSN-derived structures,
+  \item ACO notation and constructors,
+  \item ACO-to-APL translation, and
+  \item the existing pattern corpus under \texttt{KB/PATTERNS} and the earlier \texttt{gsnml} conversions to APL.
+\end{itemize}
+In the near term this includes support for iterator-like and other structural abstraction mechanisms that are already meaningful at the APL level but not yet well represented in ACO.
+Longer term it should also reconcile ACO development with GSN structural abstraction mechanisms and the modular/pattern-oriented representations already present in the O-ETB knowledge base.
+
+\section{Iterator Validation Boundaries and Extensible Iterand Semantics}
+\label{sec:iterator-validation-boundaries}
+
+This section records an important architectural distinction for iterator-bearing constructs in ACO and APL, so that subsequent implementation work does not collapse several different concerns into a single mechanism.
+
+\subsection{Motivation}
+
+ACO is being extended toward fuller practical coverage of the APL constructs already used in O-ETB patterns and assurance case generation.
+A particularly important class of constructs is the family of iterator-bearing strategy forms used to express repeated argument structure over a collection of entities, flows, hazards, modes, transitions, and similar designators.
+
+Examples already present in the existing O-ETB/APL ecosystem include iterator designators such as:
+\begin{quote}\ttfamily
+nodes(S),\quad subjects(Policy),\quad processes(Policy),\quad ss\_flows(Policy),\\
+ipc\_flows(Policy),\quad hazards(Policy),\quad modes(Subject),\quad transitions(Subject),\\
+list(Values),\quad expand(X)
+\end{quote}
+
+These designators raise a subtle issue of architectural responsibility.
+The ACO processor must be able to parse and translate an iterator-bearing construct reliably, but it need not itself \emph{execute} the iterator against a model, tool output, or knowledge base.
+
+\subsection{Three distinct notions of well-formedness}
+
+The design should explicitly distinguish the following three levels:
+
+\begin{enumerate}
+  \item \textbf{ACO-level syntactic well-formedness} \\
+  At this level, the concern is whether the iterator-bearing ACO syntax is sufficiently definite to be parsed and translated deterministically.
+  In particular, the \texttt{<iterand>} field must be syntactically well-formed enough to be recognized as a term-valued designator rather than arbitrary prose.
+
+  \item \textbf{APL-level semantic well-formedness} \\
+  At this level, the concern is whether the parsed iterand term denotes a known and properly formed APL iterator/designator.
+  This is stronger than mere syntactic well-formedness, but weaker than actual execution.
+  For example, \texttt{hazards(Policy)} may be recognized as a valid iterator designator form even if the current environment does not yet know how to enumerate the hazards of the given policy.
+
+  \item \textbf{Instantiation-level operational realizability} \\
+  At this level, the concern is whether the iterator can actually be evaluated in the current environment, using the available models, tools, knowledge bases, or cached analysis artefacts.
+  This is where actual expansion occurs.
+\end{enumerate}
+
+These three levels should not be conflated.
+
+\subsection{Design consequence for ACO}
+
+The current design decision is that the \texttt{<iterand>} field in an iterator-bearing ACO construct may be \emph{semantically opaque} to the ACO processor, but it must still be \emph{syntactically definite} enough to translate reliably.
+
+Accordingly:
+
+\begin{itemize}
+  \item the ACO processor does \emph{not} need to execute iterator designators;
+  \item the ACO processor \emph{does} need to parse them into a term-like representation deterministically;
+  \item the resulting ACO\,$\rightarrow$\,APL translation must be semantically well-defined;
+  \item execution or expansion of the iterator remains a downstream concern.
+\end{itemize}
+
+This means that a term-valued representation of \texttt{<iterand>} is acceptable and desirable.
+
+\subsection{Architectural implication: an O-ETB validation API}
+
+To support the distinction between ACO-level parsing and downstream execution, O-ETB should expose an API that allows the ACO layer to ask whether a parsed iterand term is a known and properly formed APL iterator/designator.
+
+Conceptually, the interface would support a question of the form:
+
+\begin{quote}\ttfamily
+is\_this\_a\_known\_and\_well\_formed\_APL\_iterator\_designator(Term)?
+\end{quote}
+
+or, more explicitly,
+
+\begin{quote}\ttfamily
+apl\_iterand\_well\_formed(+Term,\,-Diagnostic)
+\end{quote}
+
+The purpose of such an API is \emph{validation}, not execution.
+In particular, it would allow the ACO processor to reject or warn about malformed iterator designators without taking on responsibility for enumerating their values.
+
+\subsection{Extensible provider architecture}
+
+A more general issue also arises.
+Many useful iterands do not refer merely to fixed built-in collections.
+Rather, they refer to:
+\begin{itemize}
+  \item special interfaces into \texttt{KB/MODELS},
+  \item outputs of analysis tools or model transformations,
+  \item derived artefacts such as hazards, modes, transitions, or flows, or
+  \item other project-specific sources of information about the system under scrutiny.
+\end{itemize}
+
+This suggests that iterator execution should eventually be mediated by an extensible provider architecture rather than being hard-wired monolithically inside a single instantiation module.
+
+The intended division of responsibilities is therefore:
+
+\begin{itemize}
+  \item \textbf{ACO layer:} parse iterator-bearing syntax and normalize the iterand into a term;
+  \item \textbf{APL/O-ETB validation layer:} determine whether the term is a known and properly formed iterator/designator;
+  \item \textbf{Instantiation/provider layer:} evaluate the iterator against the relevant model, tool, repository, or derived artefact source.
+\end{itemize}
+
+This architecture allows the assurance engineer, rather than necessarily the assurance case author, to configure and extend the available iterator primitives to suit the artefacts and tools available for a given project.
+
+\subsection{Implementation guidance}
+
+The implementation should preserve the following principles:
+
+\begin{itemize}
+  \item ACO should remain readable and author-oriented; it should not collapse into raw APL notation.
+  \item Iterator-bearing syntax should lower deterministically into an existing APL representation.
+  \item Validation should distinguish clearly among:
+  \begin{itemize}
+    \item syntactically well-formed iterators,
+    \item semantically well-formed APL iterator designators, and
+    \item operationally available iterator providers.
+  \end{itemize}
+  \item The eventual iterator/provider mechanism should be extensible and configurable by the assurance engineer.
+\end{itemize}
+
+\subsection{Status}
+
+This section records a design decision and architectural direction.
+It does not imply that the current implementation already provides the full validation API or provider architecture described above.
+Those remain explicit follow-on design and implementation tasks.
+
+\end{document}
