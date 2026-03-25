@@ -265,7 +265,7 @@ remove_trailing_dot(Line, Clean) :-
 /* Classified line record:
 
    cl_case(Line, Title, Scope)
-   cl_header(Line, Level, TypeAtom, IdOpt, LabelAtom)
+   cl_header(Line, Level, TypeAtom, IdOpt, LabelAtom, IterOpt)
    cl_body(Line, Level, Text)
    cl_relation(Line, Text)
    cl_blank(Line)
@@ -315,8 +315,13 @@ rewrite_inline_after_colon_line(Unit, S0, S1, S2, TypeWord, InlineText) :-
     % do not touch explicit relation lines
     \+ is_relation_text(RestTrim),
     starts_with_node_type(RestTrim, TypeWord),
-    % split on the first ':' (outside of any attempt to parse quoted labels)
-    sub_string(RestTrim, BeforeLen, 1, AfterLen, ":"),
+    % split on the final ':' so iterator-bearing strategies like
+    %   Strategy ... for each N:cat in nodes(S): body
+    % are handled correctly.
+    findall(BeforeLen-AfterLen,
+            sub_string(RestTrim, BeforeLen, 1, AfterLen, ":"),
+            ColonSplits),
+    last(ColonSplits, BeforeLen-AfterLen),
     AfterLen > 0,
     sub_string(RestTrim, 0, BeforeLen, _, Left0),
     sub_string(RestTrim, _, AfterLen, 0, Right0),
@@ -376,8 +381,8 @@ classify_line(IndentSpec, line(N, S0), Class) :-
     ->  Class = cl_blank(N)
     ;   maybe_case_header(S, Title, Scope)
     ->  Class = cl_case(N, Title, Scope)
-    ;   maybe_header(S, TypeAtom, IdOpt, LabelAtom)
-    ->  Class = cl_header(N, Level, TypeAtom, IdOpt, LabelAtom)
+    ;   maybe_header(S, TypeAtom, IdOpt, LabelAtom, IterOpt)
+    ->  Class = cl_header(N, Level, TypeAtom, IdOpt, LabelAtom, IterOpt)
     ;   Class = cl_body(N, Level, S)
     ).
 
@@ -444,7 +449,7 @@ split_title_scope(Content, Title, '') :-
     string_trim(Content, TitleStr),
     atom_string(Title, TitleStr).
 
-/* maybe_header(+Trimmed, -TypeAtom, -IdOpt, -LabelAtom)
+/* maybe_header(+Trimmed, -TypeAtom, -IdOpt, -LabelAtom, -IterOpt)
 
    Header syntax:  Type [ID] Label:
 
@@ -454,7 +459,7 @@ split_title_scope(Content, Title, '') :-
 */
 
 
-maybe_header(S, TypeAtom, IdOpt, LabelAtom) :-
+maybe_header(S, TypeAtom, IdOpt, LabelAtom, IterOpt) :-
     % Accept headers with possibly-quoted multi-word labels, e.g.:
     %   Context C0 "Tiny multi-unit demo":
     %   Strategy S0 "Decompose the top claim into security and operations":
@@ -473,16 +478,120 @@ maybe_header(S, TypeAtom, IdOpt, LabelAtom) :-
     ;   Rest0 = [Only]
     ->  % No explicit ID
         IdOpt = none,
-        LabelAtom = Only
+        maybe_header_iteropt(TypeAtom, Only, LabelAtom, IterOpt)
     ;   Rest0 = [IdToken0|LabelTokens]
     ->  strip_trailing_comma(IdToken0, IdClean),
         (   valid_id_token(IdClean)
         ->  IdOpt = some(IdClean),
-            join_tokens_as_label(LabelTokens, LabelAtom)
+            join_tokens_as_label(LabelTokens, Label0)
         ;   % No ID; label is everything after the type
             IdOpt = none,
-            join_tokens_as_label(Rest0, LabelAtom)
+            join_tokens_as_label(Rest0, Label0)
+        ),
+        maybe_header_iteropt(TypeAtom, Label0, LabelAtom, IterOpt)
+    ).
+
+
+maybe_header_iteropt(strategy, Label0, Label, IterOpt) :-
+    !,
+    split_strategy_label_and_iterator(Label0, Label, IterOpt).
+maybe_header_iteropt(_Type, Label, Label, none).
+
+split_strategy_label_and_iterator(Label0, Label, IterOpt) :-
+    atom_string(Label0, LabelStr0),
+    string_trim(LabelStr0, LabelStr),
+    findall(Pos, sub_string(LabelStr, Pos, _Len, _After, " for each "), Positions),
+    (   Positions == []
+    ->  Label = Label0,
+        IterOpt = none
+    ;   last(Positions, Pos),
+        sub_string(LabelStr, 0, Pos, _, Prefix0),
+        Start is Pos + 10,
+        sub_string(LabelStr, Start, _, 0, Suffix0),
+        string_trim(Prefix0, Prefix),
+        string_trim(Suffix0, Suffix),
+        (   Prefix == ""
+        ->  Label = Label0,
+            IterOpt = malformed(Suffix)
+        ;   parse_strategy_iterator_suffix(Suffix, IterOpt0)
+        ->  atom_string(Label, Prefix),
+            IterOpt = IterOpt0
+        ;   Label = Label0,
+            IterOpt = malformed(Suffix)
         )
+    ).
+
+parse_strategy_iterator_suffix(Suffix0, iterate(Var, Category, Iterand)) :-
+    string_trim(Suffix0, Suffix),
+    sub_string(Suffix, Pos, 4, _, " in "),
+    sub_string(Suffix, 0, Pos, _, Left0),
+    Start is Pos + 4,
+    sub_string(Suffix, Start, _, 0, Right0),
+    string_trim(Left0, Left),
+    string_trim(Right0, Right),
+    Right \= "",
+    sub_string(Left, ColonPos, 1, _, ":"),
+    sub_string(Left, 0, ColonPos, _, Var0),
+    CatStart is ColonPos + 1,
+    sub_string(Left, CatStart, _, 0, Cat0),
+    string_trim(Var0, VarS),
+    string_trim(Cat0, CatS),
+    valid_iterator_var_text(VarS),
+    atom_string(Var, VarS),
+    parse_designator_term(CatS, Category),
+    parse_designator_term(Right, Iterand).
+
+valid_iterator_var_text(S) :-
+    S \= "",
+    string_codes(S, [C|Cs]),
+    code_type(C, alpha),
+    forall(member(X, Cs), (code_type(X, alnum) ; X =:= 0'_)).
+
+parse_designator_term(S0, Term) :-
+    string_trim(S0, S),
+    S \= "",
+    catch(read_term_from_atom(S, Term0, [variable_names(Vars)]), _, fail),
+    bind_term_vars_to_name_atoms(Vars),
+    Term = Term0,
+    ground(Term).
+
+bind_term_vars_to_name_atoms([]).
+bind_term_vars_to_name_atoms([Name=Var|Rest]) :-
+    Var = Name,
+    bind_term_vars_to_name_atoms(Rest).
+
+iteropt_suffix_text(none, "").
+iteropt_suffix_text(malformed(_), "").
+iteropt_suffix_text(iterate(Var, Category, Iterand), Suffix) :-
+    atom_string(Var, VarS),
+    designator_text(Category, CatS),
+    designator_text(Iterand, IterS),
+    format(string(Suffix), " for each ~s:~s in ~s", [VarS, CatS, IterS]).
+
+designator_text(Term, S) :-
+    (   string(Term)
+    ->  S = Term
+    ;   atom(Term)
+    ->  atom_string(Term, S)
+    ;   number(Term)
+    ->  number_string(Term, S)
+    ;   Term == []
+    ->  S = "[]"
+    ;   is_list(Term)
+    ->  maplist(designator_text, Term, Parts),
+        atomic_list_concat(Parts, ',', Inner),
+        format(string(S), "[~w]", [Inner])
+    ;   compound(Term), functor(Term, ':', 2)
+    ->  arg(1, Term, A), arg(2, Term, B),
+        designator_text(A, AS), designator_text(B, BS),
+        format(string(S), "~s:~s", [AS, BS])
+    ;   compound(Term)
+    ->  functor(Term, F, N),
+        findall(AS, (between(1, N, I), arg(I, Term, A), designator_text(A, AS)), Parts),
+        atomic_list_concat(Parts, ',', Inner),
+        atom_string(F, FS),
+        format(string(S), "~s(~w)", [FS, Inner])
+    ;   term_string(Term, S)
     ).
 
 % Tokenize the part before the ':' in a header line.
@@ -556,16 +665,16 @@ collect_headers_and_bodies([], some(Current), HAcc, [Current|HAcc], MAcc, MAcc).
 collect_headers_and_bodies([cl_blank(_)|Rest], Current, HAcc, HOut, MAcc, MOut) :-
     collect_headers_and_bodies(Rest, Current, HAcc, HOut, MAcc, MOut).
 
-collect_headers_and_bodies([cl_header(N, Lev, Type, IdOpt, Label)|Rest],
+collect_headers_and_bodies([cl_header(N, Lev, Type, IdOpt, Label, IterOpt)|Rest],
                            none, HAcc, HOut, MAcc, MOut) :-
-    New = header(N, Lev, Type, IdOpt, Label, []),
+    New = header(N, Lev, Type, IdOpt, Label, IterOpt, []),
     collect_headers_and_bodies(Rest, some(New), HAcc, HOut, MAcc, MOut).
 
-collect_headers_and_bodies([cl_header(N, Lev, Type, IdOpt, Label)|Rest],
+collect_headers_and_bodies([cl_header(N, Lev, Type, IdOpt, Label, IterOpt)|Rest],
                            some(Current), HAcc, HOut, MAcc, MOut) :-
-    Current = header(_, _, _, _, _, _),
+    Current = header(_, _, _, _, _, _, _),
     HAcc1   = [Current|HAcc],
-    New     = header(N, Lev, Type, IdOpt, Label, []),
+    New     = header(N, Lev, Type, IdOpt, Label, IterOpt, []),
     collect_headers_and_bodies(Rest, some(New), HAcc1, HOut, MAcc, MOut).
 
 collect_headers_and_bodies([cl_body(N, Lev, Text)|Rest],
@@ -575,14 +684,14 @@ collect_headers_and_bodies([cl_body(N, Lev, Text)|Rest],
 
 collect_headers_and_bodies([cl_body(N, Lev, Text)|Rest],
                            some(Current), HAcc, HOut, MAcc, MOut) :-
-    Current = header(HN, HLev, HType, HIdOpt, HLabel, Body0),
+    Current = header(HN, HLev, HType, HIdOpt, HLabel, HIterOpt, Body0),
     (   Lev > HLev
     ->  Body1 = Body0,
         append(Body1, [(N, Text)], Body)
     ;   Body1 = Body0,
         append(Body1, [(N, Text)], Body)
     ),
-    NewCurrent = header(HN, HLev, HType, HIdOpt, HLabel, Body),
+    NewCurrent = header(HN, HLev, HType, HIdOpt, HLabel, HIterOpt, Body),
     collect_headers_and_bodies(Rest, some(NewCurrent), HAcc, HOut, MAcc, MOut).
 
 % ----------------------------------------------------------------------
@@ -595,7 +704,7 @@ build_nodes(Headers, Nodes, Messages) :-
     reverse(RevMsgs, Messages).
 
 build_nodes([], _Counter, NAcc, NAcc, MAcc, MAcc).
-build_nodes([header(Line, Level, Type, IdOpt, Label, BodyLines)|Rest],
+build_nodes([header(Line, Level, Type, IdOpt, Label, IterOpt, BodyLines)|Rest],
             Counter, NAcc, NOut, MAcc, MOut) :-
     (   IdOpt = some(IdAtom)
     ->  Id = IdAtom
@@ -603,8 +712,12 @@ build_nodes([header(Line, Level, Type, IdOpt, Label, BodyLines)|Rest],
     ),
     Counter1 is Counter + 1,
     body_lines_to_string(BodyLines, BodyStr),
-    Node = node(Id, Type, Label, BodyStr, Level, Line),
-    build_nodes(Rest, Counter1, [Node|NAcc], NOut, MAcc, MOut).
+    Node = node(Id, Type, Label, BodyStr, Level, Line, IterOpt),
+    ( IterOpt = malformed(Sfx)
+    -> MAcc1 = [malformed_strategy_iterator(Line, Sfx)|MAcc]
+    ;  MAcc1 = MAcc
+    ),
+    build_nodes(Rest, Counter1, [Node|NAcc], NOut, MAcc1, MOut).
 
 body_lines_to_string([], '').
 body_lines_to_string(Pairs, S) :-
@@ -624,7 +737,7 @@ build_edges_from_indent(Nodes, Edges, Messages) :-
     build_edges_from_indent_1(SortedByLine, [], [], Edges, [], Messages).
 
 build_edges_from_indent_1([], _Stack, EAcc, EAcc, MAcc, MAcc).
-build_edges_from_indent_1([node(Id, Type, _Label, _Body, Level, Line)|Rest],
+build_edges_from_indent_1([node(Id, Type, _Label, _Body, Level, Line, _IterOpt)|Rest],
                           Stack, EAcc, EOut, MAcc, MOut) :-
     adjust_stack(Level, Line, Stack, NewStack, ParentOpt, IndentMsg),
     (   ParentOpt == none
@@ -735,7 +848,7 @@ relation_section_unexpected_line(cl_body(N, Level, S0), relation_unexpected_nonr
 relation_section_unexpected_line(Other, relation_unexpected_line_in_relation_section(Other)).
 
 known_ids_in_unit(Nodes, KnownIds) :-
-    findall(Id, member(node(Id, _Type, _Label, _Body, _Level, _Line), Nodes), Ids0),
+    findall(Id, member(node(Id, _Type, _Label, _Body, _Level, _Line, _IterOpt), Nodes), Ids0),
     sort(Ids0, KnownIds).
 
 
@@ -1088,12 +1201,12 @@ compute_undeveloped_and_stats(
 
     % Undeveloped goals and modules: no supported_by/2 children at all
     findall(undeveloped_goal(Id, Label, Line),
-        ( member(node(Id, goal,   Label, _Bodyg, _Levg, Line), Nodes),
+        ( member(node(Id, goal,   Label, _Bodyg, _Levg, Line, _IterOptg), Nodes),
           \+ member(supported_by(Id, _), AllEdges)
         ),
         UndevGoals),
     findall(undeveloped_module(Id, Label, Line),
-        ( member(node(Id, module, Label, _Bodym, _Levm, Line), Nodes),
+        ( member(node(Id, module, Label, _Bodym, _Levm, Line, _IterOptm), Nodes),
           \+ member(supported_by(Id, _), AllEdges)
         ),
         UndevModules),
@@ -1155,7 +1268,7 @@ count_nodes_of_type(Type, Nodes, Count) :-
     include(node_of_type(Type), Nodes, Filtered),
     length(Filtered, Count).
 
-node_of_type(Type, node(_, Type, _, _, _, _)).
+node_of_type(Type, node(_, Type, _, _, _, _, _)).
 
 % reachable_in_tree(+Parent, +Child, +TreeEdges)
 % True if Child is reachable from Parent following indentation-derived tree edges.
@@ -1191,7 +1304,7 @@ compute_hierarchical_info(Nodes, Infos, Messages) :-
 compute_hierarchical_info_1([], _PrevLevel, _PrevPath,
                             InfosAcc, MsgAcc, InfosAcc, MsgAcc).
 compute_hierarchical_info_1(
-    [node(Id, Type, _Label, _Body, Level, Line)|Rest],
+    [node(Id, Type, _Label, _Body, Level, Line, _IterOpt)|Rest],
     PrevLevel, PrevPath,
     InfosAcc0, MsgAcc0,
     InfosOut, MsgOut
@@ -1315,7 +1428,7 @@ type_name(justification, "Justification").
 type_name(evidence,      "Evidence").
 type_name(module,        "Module").
 
-body_to_lines(_IndentSpec, _Level, "", []) :- !.
+body_to_lines(_IndentSpec, _Level, Body, []) :- (Body == '' ; Body == ""), !.
 body_to_lines(IndentSpec, Level, Body, Lines) :-
     split_string(Body, "\n", "\r", RawLines),
     exclude(=(""), RawLines, NonEmpty),
@@ -1345,7 +1458,7 @@ canonicalize_nodes(IndentSpec, CaseHeaderOpt, Nodes, IdMap, Lines) :-
 canonicalize_nodes_1([], _IndentSpec, _IdMap, []).
 
 canonicalize_nodes_1(
-    [node(Id, Type, Label, Body, Level, _Line)|Rest],
+    [node(Id, Type, Label, Body, Level, _Line, IterOpt)|Rest],
     IndentSpec, IdMap,
     LinesOut
 ) :-
@@ -1354,9 +1467,10 @@ canonicalize_nodes_1(
     atom_string(Label, LabelStr),
     atom_string(CanonId, CanonStr),
     indent_prefix(IndentSpec, Level, Prefix),
+    iteropt_suffix_text(IterOpt, IterSuffix),
     format(string(HeaderLine),
-           "~s~s ~s ~s:",
-           [Prefix, TypeWord, CanonStr, LabelStr]),
+           "~s~s ~s ~s~s:",
+           [Prefix, TypeWord, CanonStr, LabelStr, IterSuffix]),
     body_to_lines(IndentSpec, Level, Body, BodyLines),
     canonicalize_nodes_1(Rest, IndentSpec, IdMap, RestLines),
     append([HeaderLine|BodyLines], RestLines, LinesOut).
@@ -1394,7 +1508,7 @@ canonicalize_relations(Edges, RelLines) :-
 
 nodes_to_apl(Nodes, Edges, AplTerms) :-
     findall(block(Id, Type, Label, Body),
-            member(node(Id, Type, Label, Body, _Lev, _Line), Nodes),
+            member(node(Id, Type, Label, Body, _Lev, _Line, _IterOpt), Nodes),
             BlockTerms),
     append(BlockTerms, Edges, AplTerms).
 

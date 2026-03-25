@@ -21,6 +21,7 @@
     BodyList may contain:
         - goal/4
         - strategy/3
+        - strategy/4     (iterator-bearing strategy)
         - evidence/3
         - ac_pattern_ref/2     (pattern/module call)
 
@@ -415,6 +416,20 @@ pp_strategy(Stream, Indent, strategy(Id, Label, Claim, Contexts, Body)) :-
 	indent(Stream, Indent),
 	format(Stream, ")", []).
 
+pp_strategy(Stream, Indent, strategy(Claim, Iterator, Contexts, Body)) :-
+    format(Stream, "strategy(~q,~n", [Claim]),
+    Ind1 is Indent + 4,
+    indent(Stream, Ind1),
+    format(Stream, "~q,~n", [Iterator]),
+    indent(Stream, Ind1),
+    pp_list(Stream, Ind1, Contexts),
+    format(Stream, ",~n", []),
+    indent(Stream, Ind1),
+    pp_list(Stream, Ind1, Body),
+    nl(Stream),
+    indent(Stream, Indent),
+    format(Stream, ")", []).
+
 pp_strategy(Stream, Indent, strategy(Claim, Contexts, Body)) :-
     format(Stream, "strategy(~q,~n", [Claim]),
     Ind1 is Indent + 4,
@@ -483,6 +498,8 @@ pp_term(Stream, _Indent, ac_pattern_ref(Id, Label, Callee, Actuals)) :-
 
 pp_term(Stream, Indent, goal(Id, Claim, Ctx, Body)) :-
     pp_goal(Stream, Indent, goal(Id, Claim, Ctx, Body)).
+pp_term(Stream, Indent, strategy(Claim, Iterator, Ctx, Body)) :-
+    pp_strategy(Stream, Indent, strategy(Claim, Iterator, Ctx, Body)).
 pp_term(Stream, Indent, strategy(Claim, Ctx, Body)) :-
     pp_strategy(Stream, Indent, strategy(Claim, Ctx, Body)).
 pp_term(Stream, Indent, evidence(Cat, Desc, Ctx)) :-
@@ -508,8 +525,8 @@ print_apl_messages([M|Ms]) :-
 
 /*
 build_node_index(Nodes, NodesById) :-
-    findall(Id-node(Id,Type,Label,Body,Level,Line),
-            member(node(Id,Type,Label,Body,Level,Line), Nodes),
+    findall(Id-node(Id,Type,Label,Body,Level,Line,IterOpt),
+            member(node(Id,Type,Label,Body,Level,Line,IterOpt), Nodes),
             NodesById).
 
 lookup_node(Id, NodesById, Node) :-
@@ -522,10 +539,10 @@ build_node_index(Nodes, NodesById) :-
     reverse(NodesByIdRev, NodesById).
 
 build_node_index_([], Acc, Acc).
-build_node_index_([node(Id,Type,Label,Body,Level,Line)|Rest], Acc0, Acc) :-
+build_node_index_([node(Id,Type,Label,Body,Level,Line,IterOpt)|Rest], Acc0, Acc) :-
     (   memberchk(Id-_, Acc0)
     ->  Acc1 = Acc0              % duplicate Id: ignore later duplicates
-    ;   Acc1 = [Id-node(Id,Type,Label,Body,Level,Line)|Acc0]
+    ;   Acc1 = [Id-node(Id,Type,Label,Body,Level,Line,IterOpt)|Acc0]
     ),
     build_node_index_(Rest, Acc1, Acc).
 
@@ -533,7 +550,7 @@ lookup_node(Id, NodesById, Node) :-
     memberchk(Id-Node, NodesById).
 
 warn_duplicate_node_ids(Nodes, Messages) :-
-    findall(Id, member(node(Id,_,_,_,_,_), Nodes), Ids0),
+    findall(Id, member(node(Id,_,_,_,_,_,_), Nodes), Ids0),
     msort(Ids0, Ids),
     findall(Id, (append(_, [Id,Id|_], Ids)), Dups0),
     sort(Dups0, Dups),
@@ -570,7 +587,7 @@ contexts_of(Id, CtxMap, CtxIds) :-
     ).
 
 choose_root(Nodes, ChildMap, RootId, Messages) :-
-    findall(Id, member(node(Id,_,_,_,_,_), Nodes), AllIds0),
+    findall(Id, member(node(Id,_,_,_,_,_,_), Nodes), AllIds0),
     sort(AllIds0, AllIds),
     findall(C,
             ( member(_P-Children, ChildMap),
@@ -598,7 +615,7 @@ choose_root(Nodes, ChildMap, RootId, Messages) :-
 roots_of_interest(CandidateIds, Nodes, Filtered) :-
     findall(Id,
             ( member(Id, CandidateIds),
-              member(node(Id,Type,_,_,_,_), Nodes),
+              member(node(Id,Type,_,_,_,_,_), Nodes),
               (Type = goal ; Type = module)
             ),
             Interesting),
@@ -694,7 +711,7 @@ build_goal_tree(Id, NodesById, ChildMap, CtxMap,
 	->  Goal = goal(Id, '', 'Cyclic reference (omitted)', [], []),
         Visited = Visited0
     ;   lookup_node(Id, NodesById,
-				    node(Id, Type, LabelAtom, Body, _Level, _Line)),
+				    node(Id, Type, LabelAtom, Body, _Level, _Line, _IterOpt)),
         ( Type = goal ; Type = module ),
         !,
         Visited1 = [Id|Visited0],
@@ -708,7 +725,7 @@ build_goal_tree(Id, NodesById, ChildMap, CtxMap,
     ;
         Visited1 = [Id|Visited0],
         claim_text_from_body_or_id('', Id, ClaimText2),
-		lookup_node(Id, NodesById, node(Id, _Type2, LabelAtom, _Body2, _Level2, _Line2)),
+		lookup_node(Id, NodesById, node(Id, _Type2, LabelAtom, _Body2, _Level2, _Line2, _IterOpt2)),
         contexts_for_node(Id, NodesById, ChildMap, CtxMap, NodeCtx2),
         children_of(Id, ChildMap, ChildIds2),
         build_children_terms(ChildIds2, NodesById, ChildMap, CtxMap,
@@ -729,7 +746,7 @@ build_children_terms([], _NodesById, _ChildMap, _CtxMap, Visited, [], Visited).
 build_children_terms([ChildId|Rest], NodesById, ChildMap, CtxMap,
                      Visited0, [Term|Terms], VisitedOut) :-
     lookup_node(ChildId, NodesById,
-                node(ChildId, goal, _Label, _Body, _Lev, _Line)),
+                node(ChildId, goal, _Label, _Body, _Lev, _Line, _IterOpt)),
     !,
     build_goal_tree(ChildId, NodesById, ChildMap, CtxMap,
                     Visited0, Term, Visited1, []),
@@ -739,7 +756,7 @@ build_children_terms([ChildId|Rest], NodesById, ChildMap, CtxMap,
 build_children_terms([ChildId|Rest], NodesById, ChildMap, CtxMap,
                     Visited0, [Term|Terms], VisitedOut) :-
     lookup_node(ChildId, NodesById,
-                node(ChildId, module, LabelAtom, Body, _Lev, _Line)),
+                node(ChildId, module, LabelAtom, Body, _Lev, _Line, _IterOpt)),
     !,
     % Treat Module nodes as module references (pattern refs).
     % Accept both bracketed labels "[foo]" and plain labels "foo".
@@ -783,9 +800,9 @@ build_children_terms([ChildId|Rest], NodesById, ChildMap, CtxMap,
 build_children_terms([ChildId|Rest], NodesById, ChildMap, CtxMap,
                      Visited0, [Term|Terms], VisitedOut) :-
     lookup_node(ChildId, NodesById,
-				node(ChildId, strategy, LabelAtom, Body, _Lev, _Line)),
+				node(ChildId, strategy, LabelAtom, Body, _Lev, _Line, IterOpt)),
     !,
-		build_strategy_tree(ChildId, LabelAtom, Body, NodesById, ChildMap, CtxMap,
+		build_strategy_tree(ChildId, LabelAtom, Body, IterOpt, NodesById, ChildMap, CtxMap,
                         Visited0, Term, Visited1),
     build_children_terms(Rest, NodesById, ChildMap, CtxMap,
                          Visited1, Terms, VisitedOut).
@@ -793,7 +810,7 @@ build_children_terms([ChildId|Rest], NodesById, ChildMap, CtxMap,
 build_children_terms([ChildId|Rest], NodesById, ChildMap, CtxMap,
                      Visited0, [Term|Terms], VisitedOut) :-
     lookup_node(ChildId, NodesById,
-                node(ChildId, evidence, Label, Body, _Lev, _Line)),
+                node(ChildId, evidence, Label, Body, _Lev, _Line, _IterOpt)),
     !,
     build_evidence_term(ChildId, Label, Body, NodesById, ChildMap, CtxMap, Term),
     Visited1 = [ChildId|Visited0],
@@ -803,7 +820,7 @@ build_children_terms([ChildId|Rest], NodesById, ChildMap, CtxMap,
 build_children_terms([ChildId|Rest], NodesById, ChildMap, CtxMap,
                      Visited0, Terms, VisitedOut) :-
     lookup_node(ChildId, NodesById,
-                node(ChildId, Type, _Label, _Body, _Lev, _Line)),
+                node(ChildId, Type, _Label, _Body, _Lev, _Line, _IterOpt)),
     (Type = context ; Type = assumption ; Type = justification),
     !,
     build_children_terms(Rest, NodesById, ChildMap, CtxMap,
@@ -879,7 +896,7 @@ actual_from_string(S0, Atom) :-
     ; atom_string(Atom, S1)
     ).
 
-build_strategy_tree(Id, LabelAtom, Body, NodesById, ChildMap, CtxMap,
+build_strategy_tree(Id, LabelAtom, Body, IterOpt, NodesById, ChildMap, CtxMap,
                     Visited0, Strategy, VisitedOut) :-
     (   memberchk(Id, Visited0)
     ->  Strategy = strategy(Id, LabelAtom, 'Cyclic strategy (omitted)', [], []),
@@ -890,7 +907,10 @@ build_strategy_tree(Id, LabelAtom, Body, NodesById, ChildMap, CtxMap,
         children_of(Id, ChildMap, ChildIds),
         build_children_terms(ChildIds, NodesById, ChildMap, CtxMap,
                              Visited1, BodyTerms, VisitedOut),
-        Strategy = strategy(Id, LabelAtom, ClaimText, Ctx, BodyTerms)
+        (   IterOpt = iterate(_Var, _Category, _Iterand)
+        ->  Strategy = strategy(ClaimText, IterOpt, Ctx, BodyTerms)
+        ;   Strategy = strategy(Id, LabelAtom, ClaimText, Ctx, BodyTerms)
+        )
     ).
 
 build_evidence_term(Id, LabelAtom, Body, NodesById, ChildMap, CtxMap, Evidence) :-
@@ -912,7 +932,7 @@ contexts_for_node(Id, NodesById, ChildMap, CtxMap, ContextTerms) :-
     findall(CId,
             ( member(CId, ChildIds),
               lookup_node(CId, NodesById,
-                          node(CId, Type, _Label, _Body, _Lev, _Line)),
+                          node(CId, Type, _Label, _Body, _Lev, _Line, _IterOpt)),
               ( Type = context
               ; Type = assumption
               ; Type = justification
@@ -926,7 +946,7 @@ contexts_for_node(Id, NodesById, ChildMap, CtxMap, ContextTerms) :-
 build_context_terms([], _NodesById, []).
 build_context_terms([CtxId|Rest], NodesById, [Term|Terms]) :-
     lookup_node(CtxId, NodesById,
-				node(CtxId, Type, LabelAtom, Body, _Level, _Line)),
+				node(CtxId, Type, LabelAtom, Body, _Level, _Line, _IterOpt)),
 	context_term(Type, CtxId, LabelAtom, Body, Term),
     !,
     build_context_terms(Rest, NodesById, Terms).

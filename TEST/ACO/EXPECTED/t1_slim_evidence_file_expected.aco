@@ -1,0 +1,28 @@
+Case: T1 Slim Evidence - Minimal Regression
+Goal G0 top:
+  This case is a compact test for T1 (Evidence slimming): observe candidates and apply rewrite.
+
+  Goal G1 confidentialityInTransit:
+    Data in transit is protected against unauthorized disclosure.
+
+    Goal G11 tlsConfigured:
+      TLS is configured with modern versions and cipher suites.
+
+      Context C111a evidenceContext:
+        Artifact: comms_recommendation_report_client_cloud.pdf (xref: 10059).
+        The report identifies protocol versions and cipher suites and states that insecure downgrade is disabled.
+        Reviewer note: this evidence node is intentionally "fat" so T1 can split it deterministically.
+
+      Justification J111a evidenceJustification:
+        The report records that the configuration meets the tool’s confidentiality-in-transit acceptance criteria.
+
+      Evidence E111 tlsConfigurationScanReport:
+        Tool: IoMT Communications Recommendation Tool.
+
+    Goal G12 certificatesValid:
+      Certificates used for communications are valid and protected.
+
+      Evidence E121 certificateInventory:
+        Artifact: endpoint_certificate_inventory.csv (xref: 10060).
+        Inventory lists endpoints and certificate validity dates.
+

@@ -1,0 +1,1 @@
+[t2_cand(pair(goal('G10'),evidence('E101')),unit(unit(case,'T2 Insert Goal - Minimal Regression')),span(16,21),indent(4),parent_indent(2),features([parent_goal_abstract,has_tool_line])),t2_cand(pair(goal('G20'),evidence('E201')),unit(unit(case,'T2 Insert Goal - Minimal Regression')),span(24,28),indent(4),parent_indent(2),features([has_tool_line]))].

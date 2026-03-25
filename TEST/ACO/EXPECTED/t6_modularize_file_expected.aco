@@ -1,0 +1,567 @@
+Case: BioAssist - Assured Use
+Goal G0 bioassistAssuredUse:
+  BioAssist, when deployed in its intended IT and operating environment, provides acceptable protection of patients’ personal health and multimedia data and enables safe and effective care.
+
+  Assumption A1 secureInfrastructure:
+    The cloud provider and underlying infrastructure (virtualization, storage, networking) implement appropriate physical and infrastructure-level security controls.
+
+  Assumption A2 platformPatchingHardening:
+    Operating systems, databases, and middleware used by BioAssist are installed, configured, and kept patched according to defined security baselines.
+
+  Assumption A3 networkProtections:
+    The surrounding network environment provides basic protections (e.g., firewalling, routing, segmentation) consistent with the assumed threat model.
+
+  Assumption A4 trainedUsers:
+    Healthcare professionals and other staff using BioAssist follow organizational security policies and receive appropriate security awareness training.
+
+  Assumption A5 deviceHandlingPhysicalSecurity:
+    End-user devices (e.g., clinicians’ workstations, patient mobile phones) and local facilities are protected physically, according to organizational policies.
+
+  Assumption A6 credentialHandling:
+    Users keep their authentication credentials confidential and follow organizational rules for credential management (e.g., not sharing passwords).
+
+  Module M1 [confidentiality()]:
+    PHR and multimedia data in the BioAssist platform are adequately protected against unauthorized disclosure during collection, storage, and sharing.
+
+  Goal G2 integrityAndAuthenticity:
+    PHR and multimedia data in the BioAssist platform are protected against unauthorized modification, and their origin (patient, device, clinician, or external service) is authentic and traceable.
+
+    Strategy S2 integrityLifecycleDecomposition:
+      Decompose by data lifecycle (ingestion, storage and modification, provenance) and by auditability (logging and traceability).
+
+      Goal G21 secureDataIngestion:
+        Sensor, wearable, and manual input data is correctly and securely ingested.
+
+        Goal G211 authenticatedDeviceData:
+          Data received from sensors and wearables is verified as coming from authenticated devices or sources.
+
+          Goal G2111 deviceIdentityValidation:
+            Device identities or tokens are validated before data is ingested.
+
+            Evidence E2111 apiGatewayAndOnboardingReview:
+              Tool: Threat Vulnerability Risk Analysis Tool (TVRA).
+              A validated TVRA model includes device/wearable ingestion assets and the onboarding path used to establish device identity/credentials.
+              The exported TVRA Risk Treatment Plan records device/source authentication (token/credential validation prior to ingestion) as the applied treatment for spoofed-device and data-injection threats.
+
+        Goal G212 validatedClientInputs:
+          Client-side inputs (forms, questionnaires, uploaded images) are validated and protected against tampering or manipulation in transit.
+
+          Goal G2121 inputValidationAndIntegrityChecks:
+            Input validation and integrity checks exist for PHR fields and file uploads.
+
+            Evidence E2121 codeReviewAndSecurityTesting:
+              Tool: Ontology-based Knowledge Repository and Threat Vulnerability Risk Analysis Tool (TVRA).
+              A recorded ontology query result enumerates input-validation and secure-upload handling requirements for health-data forms, questionnaires, and multimedia uploads.
+              The exported TVRA threat list records relevant tampering/injection threats and the selected treatments; a completed verification record confirms that corresponding validation and integrity checks are implemented for each input channel.
+
+      Goal G22 controlledAndTraceableModification:
+        Stored PHR and multimedia data cannot be modified without authorization and traceability.
+
+        Goal G221 authorizedWriteOperations:
+          Write and modify operations on PHR data are restricted by authorization rules.
+
+          Goal G2211 roleBasedUpdatePermissions:
+            Only roles with explicit permission (e.g., patient, assigned clinician) are permitted to update specific PHR fields.
+
+            Evidence E2211 rbacPoliciesAndAuthorizationTests:
+              Tool: IoMT Model-Based Engineering Tool and Ontology-based Knowledge Repository.
+              The system model defines user/service roles and the write/modify permissions applicable to PHR fields and records.
+              A recorded ontology query result provides RBAC/least-privilege guidance; a role-permission matrix derived from the model exists and indicates that only explicitly permitted roles can update the relevant PHR fields.
+
+        Goal G222 loggedChanges:
+          Any changes to PHR entries and multimedia records are logged with who, when, and what was changed.
+
+          Goal G2221 comprehensiveAuditLogging:
+            Audit logs capture identifiers of user or service, timestamp, and affected records or fields.
+
+            Evidence E2221 logConfigurationReviewAndSampling:
+              Tool: Ontology-based Knowledge Repository and IoMT Model-Based Engineering Tool.
+              A recorded ontology query result enumerates audit-log content requirements for traceability (who/when/what, identifiers, timestamps, affected records/fields).
+              The system model includes the logging subsystem and event schema; an exported event/log schema artefact records that the required audit fields are captured for PHR and multimedia write/modify operations.
+
+      Goal G23 preservedDataProvenance:
+        Data provenance (who or what created or modified data) is preserved.
+
+        Goal G231 provenanceMetadataOnPhrItems:
+          Each PHR item carries metadata about its origin (patient, clinician, device, external service).
+
+          Goal G2311 schemaAndPopulationOfProvenanceFields:
+            The data schema includes provenance fields and they are consistently populated.
+
+            Evidence E2311 schemaReviewAndDataSampling:
+              Tool: IoMT Model-Based Engineering Tool.
+              The BioAssist data model/schema artefacts (including any generated artefacts) include explicit provenance metadata fields for each PHR item (originator type and identifier, timestamps, source system/device).
+              A recorded schema/export snapshot demonstrates these provenance fields exist and are consistently present for the relevant data entities.
+
+  Goal G3 availabilityAndReliability:
+    The BioAssist platform provides sufficient availability and reliability of PHR and shared data to enable safe and effective care delivery.
+
+    Strategy S3 availabilityResilienceBackupMonitoring:
+      Decompose into infrastructure resilience, backup and recovery, and monitoring and operational observability.
+
+      Goal G31 resilientCriticalServices:
+        Critical BioAssist services for PHR access and sharing are resilient to common failures.
+
+        Goal G311 redundantDeploymentForKeyServices:
+          There is redundancy (e.g., multi-zone or multi-node deployment) for key backend services and storage.
+
+          Goal G3111 failoverForCoreApisAndDatabases:
+            Deployment architecture includes failover for core APIs and databases.
+
+            Evidence E3111 architectureAndDeploymentReview:
+              Tool: IoMT Model-Based Engineering Tool.
+              The deployment/architecture model records redundancy for core PHR access and sharing services (e.g., multiple instances/zones and defined failover paths) for APIs, databases, and storage.
+              An exported architecture view from the model exists and documents the failover configuration for the identified critical services.
+
+        Goal G312 protectiveButNonBlockingSecurityControls:
+          Security controls (e.g., rate limiting, DDoS protection) protect against overloads without unduly preventing legitimate access.
+
+          Goal G3121 tunedRateLimitsAndFilters:
+            Rate limits and security filters are tuned and tested for realistic traffic patterns.
+
+            Evidence E3121 performanceAndSecurityTestResults:
+              Tool: Threat Vulnerability Risk Analysis Tool (TVRA) and IoMT Communications Recommendation Tool.
+              The exported TVRA threat list identifies overload/DDoS threats against the PHR access and sharing services and records rate limiting / DDoS protections as selected treatments.
+              An exported communications risk-assessment report exists for the exposed service interfaces and records concrete recommended rate-limit and filtering configurations consistent with the selected treatments.
+
+      Goal G32 recoverableData:
+        PHR and multimedia data are recoverable in case of failures or incidents.
+
+        Goal G321 regularBackups:
+          Regular backups of PHR databases and file storage are performed and retained according to policy.
+
+          Goal G3211 backupJobsInPlace:
+            Backup jobs exist for all relevant data stores and run as scheduled.
+
+            Evidence E3211 backupConfigAndLogs:
+              Tool: Ontology-based Knowledge Repository and IoMT Model-Based Engineering Tool.
+              A recorded ontology query result enumerates backup and retention expectations for personal health data (backup frequency, retention period, and recovery objectives).
+              The system model records backup jobs/components for each relevant data store and their schedules/retention parameters; a backup schedule specification exists and matches the queried expectations.
+
+        Goal G322 definedAndTestedRestorationProcedures:
+          Data restoration procedures are defined and tested.
+
+          Goal G3221 successfulRestoreTests:
+            At least one restore test has been successfully performed for PHR and multimedia data.
+
+            Evidence E3221 restoreTestReport:
+              Tool: Ontology-based Knowledge Repository and IoMT Model-Based Engineering Tool.
+              A recorded ontology query result enumerates restore-testing expectations (e.g., periodic restore verification aligned with recovery objectives).
+              A restore test report exists and references the modelled PHR database and multimedia storage assets, demonstrating that restoration can be completed within the stated recovery objectives.
+
+      Goal G33 timelyDetectionAndHandlingOfAvailabilityIssues:
+        Availability issues are detected and handled promptly.
+
+        Goal G331 monitoredKeyServices:
+          Key services are monitored (uptime, latency, error rates), with alerts on thresholds.
+
+          Goal G3311 monitoringDashboardsAndAlarmsInUse:
+            Monitoring dashboards and alarms exist and are actively used.
+
+            Evidence E3311 monitoringConfigurationReview:
+              Tool: Ontology-based Knowledge Repository and IoMT Model-Based Engineering Tool.
+              A recorded ontology query result enumerates monitoring and alerting best practices for service availability (uptime, latency, error rates, alert thresholds).
+              The system model records the monitoring components and the metrics/thresholds; an exported monitoring-configuration snapshot exists showing dashboards and alarms for the identified critical services.
+
+  Goal G4 securePatientControlledSharing:
+    BioAssist data-sharing mechanisms accurately enforce patient consent, authorization, and time limits, preventing unauthorized access to PHR and multimedia data.
+
+    Strategy S4 sharingPolicyEnforcementDecomposition:
+      Decompose into policy definition (how patients express sharing intent), policy enforcement (including group semantics), and temporal control and revocation (time-limited access and revocation), backed by testing and auditability.
+
+      Goal G41 clearPatientSharingPolicyDefinition:
+        Patients are able to define sharing policies in a clear and correct manner.
+
+        Goal G411 expressiveSharingUI:
+          User interfaces for sharing allow patients to clearly specify which PHR items/files to share, with which users/groups, and for how long.
+
+          Goal G4111 explicitRecipientAndScopeSelection:
+            The UI and workflow enable explicit selection of recipients (clinicians or organizations) and scope (PHR fields/files).
+
+            Evidence E4111 usabilityAndFunctionalTestEvidence:
+              Tool: Ontology-based Knowledge Repository.
+              A recorded ontology query result enumerates privacy and user-control requirements relevant to patient-managed data sharing (scope, recipient, and duration clarity).
+              A usability/functional verification record exists and demonstrates that the sharing UI enables explicit selection of recipients, data scope, and sharing duration consistent with the queried requirements.
+
+      Goal G42 correctEnforcementOfSharingPolicies:
+        Implemented sharing mechanisms enforce the specified policies without unauthorized access.
+
+        Goal G421 accessControlUsesIdentityAndSharingRules:
+          Access control logic checks both user identity and sharing rules for each access request.
+
+          Goal G4211 automatedSharingScenarioTests:
+            Automated tests cover typical and edge-case sharing scenarios (e.g., wrong user, revoked access).
+
+            Evidence E4211 functionalRegressionAndSecurityTests:
+              Tool: Threat Vulnerability Risk Analysis Tool (TVRA) and IoMT Model-Based Engineering Tool.
+              The validated TVRA model identifies the sharing-policy enforcement points (APIs/components) involved in PHR access via sharing links and groups.
+              A completed test/verification record exists and is derived from the modelled enforcement points and TVRA-identified unauthorised-access threats, demonstrating correct enforcement for typical and edge-case sharing scenarios.
+
+        Goal G422 correctGroupSharingSemantics:
+          Group sharing semantics (user groups/organizations) are correctly resolved and updated.
+
+          Goal G4221 timelyPropagationOfGroupChanges:
+            Changes in group membership are reflected promptly in access rights.
+
+            Evidence E4221 groupChangeSimulationTests:
+              Tool: Threat Vulnerability Risk Analysis Tool (TVRA) and IoMT Model-Based Engineering Tool.
+              The system model records group membership resolution as part of the sharing mechanism, and the TVRA analysis identifies stale-membership risks for shared access.
+              A completed simulation/verification record exists demonstrating that access rights are updated promptly after group membership changes for the modelled group-sharing mechanism.
+
+      Goal G43 strictEnforcementOfTimeLimitedAccess:
+        Time-limited access is strictly enforced.
+
+        Goal G431 shareTimestampsCheckedAtAccessTime:
+          For each share, start and end timestamps are stored and checked at access time.
+
+          Goal G4311 denialAfterExpiry:
+            Access requests after the expiry time are systematically denied.
+
+            Evidence E4311 expiryEnforcementTests:
+              Tool: IoMT Model-Based Engineering Tool and Threat Vulnerability Risk Analysis Tool (TVRA).
+              The system model records share start/end timestamps and access-time checks as part of the sharing enforcement mechanism.
+              A completed expiry-enforcement test record exists and demonstrates that requests after the recorded expiry time are denied, consistent with the time-bound access control treatment recorded in the TVRA Risk Treatment Plan.
+
+        Goal G432 consistentTimeAndTimeZoneHandling:
+          System time sources and time zone handling are well-defined to avoid timing ambiguities.
+
+          Goal G4321 specifiedAndImplementedTimeHandling:
+            Time synchronization and time-zone handling are specified and implemented consistently.
+
+            Evidence E4321 timeHandlingDesignAndTests:
+              Tool: Ontology-based Knowledge Repository and IoMT Model-Based Engineering Tool.
+              A recorded ontology query result enumerates expectations for time synchronisation and time-zone handling in security-relevant time-based controls.
+              The system model specifies the time source(s) and time-zone handling approach used for policy enforcement; a completed verification record confirms consistent implementation across the relevant services.
+
+      Goal G44 effectiveRevocationOfSharing:
+        Patients are able to revoke sharing, and such revocation is enforced and recorded.
+
+        Goal G441 uiSupportsViewingAndRevokingShares:
+          The UI allows patients to see active shares and revoke them.
+
+          Evidence E441 usabilityAndFunctionalEvidenceForRevocationUi:
+            Tool: Ontology-based Knowledge Repository.
+            A recorded ontology query result enumerates user-control and revocation expectations for patient-managed sharing (visibility of active shares and ability to revoke).
+            A usability/functional verification record exists demonstrating that patients can view active shares and revoke them through the client UI.
+
+        Goal G442 noAccessAfterRevocation:
+          After revocation, no further access occurs via the revoked share.
+
+          Evidence E442 postRevocationAccessTests:
+            Tool: Threat Vulnerability Risk Analysis Tool (TVRA).
+            The TVRA analysis identifies continued-access-after-revocation as a threat scenario for sharing mechanisms and records immediate revocation enforcement as the selected treatment.
+            A completed post-revocation verification record exists demonstrating that revoked shares cannot be used for further access once revocation is recorded.
+
+  Goal G5 regulatoryStandardsCompliance:
+    The handling of personal health and multimedia data by BioAssist complies with applicable healthcare data protection laws, regulations, and relevant security standards.
+
+    Strategy S5 complianceDecomposition:
+      Decompose into identification and mapping of applicable regulations, implementation of core legal and privacy obligations, and demonstration via risk assessment and documentation that the security controls in G1–G4 satisfy those obligations.
+
+      Module M51 [regulationsAndStandardsIdentified()]:
+        Applicable regulations and standards are identified and documented (e.g., GDPR, local health data laws, relevant security standards).
+
+      Goal G52 coreLegalObligationsImplemented:
+        Core legal obligations for personal health data are implemented (e.g., lawful basis, consent, data minimization, purpose limitation, data subject rights).
+
+        Goal G521 patientConsentMechanisms:
+          Mechanisms for obtaining and documenting patient consent are implemented and traceable.
+
+          Evidence E521 consentDesignReviewAndTests:
+            Tool: Ontology-based Knowledge Repository.
+            A recorded ontology query result enumerates consent and lawful-basis obligations applicable to BioAssist processing of personal health data.
+            A design and verification record exists demonstrating that BioAssist implements consent capture and audit logging consistent with the queried obligations.
+
+        Goal G522 dataSubjectRightsMechanisms:
+          Mechanisms exist to enable the exercise of data subject rights (access, rectification, and erasure).
+
+          Evidence E522 functionalTestsAndSupportProcedures:
+            Tool: Ontology-based Knowledge Repository.
+            A recorded ontology query result enumerates data-subject-rights obligations (access, rectification, erasure, portability, restriction) applicable to BioAssist.
+            A completed verification record exists demonstrating that BioAssist provides mechanisms and procedures to fulfil those rights for the processed PHR and multimedia data.
+
+      Goal G53 securityControlsAlignedWithRegulatoryRequirements:
+        Security controls described in G1–G4 are aligned with regulatory security requirements.
+
+        Goal G531 riskAssessmentLinksRisksToControls:
+          A security risk assessment has been performed and documented, linking identified risks to implemented controls.
+
+          Evidence E531 riskAssessmentReport:
+            Tool: Threat Vulnerability Risk Analysis Tool (TVRA).
+            An exported TVRA risk-analysis report exists for the validated BioAssist model, including a prioritised threat list and computed likelihood/impact/risk values.
+            An exported Risk Treatment Plan exists and records the selected treatments and residual risk values linking identified risks to implemented controls.
+
+        Goal G532 documentedTechnicalAndOrganizationalMeasures:
+          Documentation is maintained for technical and organizational measures to protect health data.
+
+          Evidence E532 securityPoliciesAndSops:
+            Tool: Ontology-based Knowledge Repository.
+            A recorded ontology query result enumerates expected technical and organisational measures for protecting personal health data (security and privacy controls, governance, incident response, etc.).
+            Security policy and SOP documents exist and are cross-referenced to the queried measures and to the BioAssist controls described in the assurance case.
+
+  Goal G6 trustworthyIomtIntegration:
+    Integration of sensors, wearable devices, and external cloud data sources into BioAssist does not undermine security or privacy, and data ingestion paths from these sources are trustworthy.
+
+    Strategy S6 iomtIntegrationDecomposition:
+      Decompose into trust in devices and data sources (onboarding and authentication), security of IoMT and external data APIs, and management of third-party provider risk.
+
+      Goal G61 trustedDataSourcesForPhr:
+        Only trusted devices and sources send data that becomes part of the PHR.
+
+        Goal G611 onboardingAndDeregistrationForDevicesAndSources:
+          There is a defined onboarding and de-registration process for devices and external data sources.
+
+          Evidence E611 deviceOnboardingProceduresAndLogs:
+            Tool: IoMT Model-Based Engineering Tool and Threat Vulnerability Risk Analysis Tool (TVRA).
+            The system model records the onboarding and de-registration workflow for devices and external data sources that can contribute data to the PHR.
+            The exported TVRA Risk Treatment Plan records device onboarding controls and credential lifecycle management as treatments for untrusted-device and spoofing threats; documented procedures and registration logs exist consistent with the model.
+
+        Goal G612 enforcedDeviceAndSourceAuthentication:
+          Device and source authentication is enforced, consistent with the mechanisms described under G2111.
+
+          Evidence E612 enforcedApiGatewayAndOnboardingReview:
+            Tool: Threat Vulnerability Risk Analysis Tool (TVRA).
+            The validated TVRA model identifies the ingestion API surfaces and the device/source authentication points used prior to accepting data into the PHR.
+            The exported TVRA threat/treatment outputs record gateway-enforced source authentication as the applied treatment for unauthenticated ingestion threats.
+
+      Goal G62 secureIomtAndExternalDataApis:
+        APIs used for data ingestion and external sharing enforce security controls consistent with internal ones.
+
+        Goal G621 authenticatedAndRateLimitedIomtApis:
+          All IoMT integration APIs use proper authentication and authorization and apply rate limiting.
+
+          Evidence E621 apiSpecificationsAndSecurityTests:
+            Tool: IoMT Model-Based Engineering Tool and IoMT Communications Recommendation Tool.
+            The system model (and any generated interface artefacts) records the security controls required for IoMT integration APIs (authentication, authorisation, and throttling).
+            An exported communications risk-assessment report exists for these integration APIs and records concrete secure-configuration recommendations consistent with the modelled controls.
+
+        Goal G622 noDirectExternalAccessToPhrDatabases:
+          No direct external access to internal PHR databases is allowed; access is only via controlled APIs.
+
+          Evidence E622 architectureAndNetworkSecurityReview:
+            Tool: IoMT Model-Based Engineering Tool and Threat Vulnerability Risk Analysis Tool (TVRA).
+            The architecture model records that external entities have no direct network path to the internal PHR databases; all access is mediated by controlled APIs.
+            The exported TVRA attack-path analysis records no feasible path from external sources to PHR database assets that bypasses the modelled API controls under the applied treatments.
+
+      Goal G63 managedThirdPartyCloudRisks:
+        Risks from third-party cloud data sources are managed.
+
+        Goal G631 contractsDefineThirdPartyObligations:
+          Data-sharing agreements and contracts define security and privacy obligations for external providers.
+
+          Evidence E631 contractsAndDpas:
+            Tool: Ontology-based Knowledge Repository.
+            A recorded ontology query result enumerates required privacy and security clauses for data sharing with external providers (DPA-oriented obligations and safeguards).
+            A completed contract-review checklist exists and records that the signed DPAs/contracts for each relevant external provider include the required clauses.
+
+        Goal G632 periodicSecurityAssessmentOfThirdParties:
+          Periodic security assessments of key third-party services are performed.
+
+          Evidence E632 vendorRiskAndSecurityReports:
+            Tool: Ontology-based Knowledge Repository and Threat Vulnerability Risk Analysis Tool (TVRA).
+            A recorded ontology query result enumerates vendor-risk assessment expectations (periodic assessment cadence, evidence types such as third-party audit reports).
+            A vendor-assessment record exists for each key third-party service and is referenced in the TVRA risk-treatment rationale for third-party risks affecting BioAssist.
+
+
+Module: confidentiality()
+
+  Goal G1 confidentiality:
+    PHR and multimedia data in the BioAssist platform are adequately protected against unauthorized disclosure during collection, storage, and sharing.
+
+    Strategy S1 confidentialityDecomposition:
+      Decompose by data state (in transit, at rest) and by access control for different user and service channels (patients, clinicians, internal services, external services).
+
+      Module M11 [clientCloudTransitConfidential()]:
+        Data in transit between clients and the BioAssist cloud is confidential.
+
+      Goal G12 dataAtRestConfidential:
+        PHR and multimedia data at rest in BioAssist cloud storage are confidential.
+
+        Goal G121 encryptedStorageForPHRAndMultimedia:
+          All PHR data and uploaded multimedia (images, test scans) stored in cloud databases and object storage are encrypted at rest.
+
+          Goal G1211 databaseEncryptionAtRestEnabled:
+            Encryption at rest is enabled and enforced on all PHR databases.
+
+            Evidence E1211 dbEncryptionConfigurationAudit:
+              Tool: IoMT Model-Based Engineering Tool and Threat Vulnerability Risk Analysis Tool (TVRA).
+              The system model contains the PHR database assets and annotates the selected at-rest protection mechanism (encryption enabled for the database storage layer).
+              The exported TVRA Risk Treatment Plan records encryption-at-rest as the applied treatment for at-rest disclosure threats on the PHR databases.
+
+          Goal G1212 objectStorageEncryptionAtRestEnabled:
+            Encryption at rest is enabled and enforced for object storage buckets containing PHR images and documents.
+
+            Evidence E1212 objectStorageEncryptionAudit:
+              Tool: IoMT Model-Based Engineering Tool and Threat Vulnerability Risk Analysis Tool (TVRA).
+              The system model contains the object storage assets holding PHR images/documents and records encryption-at-rest as an enabled protection mechanism.
+              The exported TVRA Risk Treatment Plan records encryption-at-rest as the applied treatment for at-rest disclosure threats on the PHR multimedia/object-storage assets.
+
+        Goal G122 secureKeyManagement:
+          Cryptographic key material is managed securely.
+
+          Goal G1221 keysManagedByKmsOrHsm:
+            Encryption keys are stored and handled using a dedicated key management service (KMS) or hardware security module (HSM) with appropriate access controls.
+
+            Evidence E1221 kmsHSMConfigurationReview:
+              Tool: IoMT Model-Based Engineering Tool and Ontology-based Knowledge Repository.
+              A recorded ontology query result enumerates key-management expectations (e.g., KMS/HSM use, access control, separation of duties).
+              The architecture model includes a dedicated key-management component (KMS/HSM) and associated access-control relationships consistent with the queried expectations.
+
+          Goal G1222 keyRotationImplemented:
+            Key rotation policies exist and are implemented according to defined schedules or triggers.
+
+            Evidence E1222 keyRotationEvidence:
+              Tool: Ontology-based Knowledge Repository and Threat Vulnerability Risk Analysis Tool (TVRA).
+              A recorded ontology query result enumerates key-rotation expectations for systems processing personal health data.
+              The exported TVRA Risk Treatment Plan includes a control strategy requiring key rotation on a defined schedule and/or triggers for key-compromise scenarios relevant to BioAssist.
+
+      Goal G13 authorizedAccessOnly:
+        Only authorized users and components can access PHR and multimedia data.
+
+        Goal G131 leastPrivilegeAccessToDataStores:
+          Access control policies restrict database and storage access to the minimal necessary services and roles.
+
+          Goal G1311 leastPrivilegeAccountsAndRoles:
+            Database accounts, service accounts, and roles follow least-privilege principles.
+
+            Evidence E1311 iamConfigurationAudit:
+              Tool: IoMT Model-Based Engineering Tool and Threat Vulnerability Risk Analysis Tool (TVRA).
+              The BioAssist system model enumerates service roles/accounts and their authorised access paths to PHR databases and multimedia storage.
+              The exported TVRA threat and treatment outputs record least-privilege access control as an applied mitigation for unauthorised-access threats against the modelled data stores.
+
+          Goal G1312 noUnjustifiedHighPrivilegeAccounts:
+            There are no “backdoor” accounts or generic high-privilege accounts without justification and monitoring.
+
+            Evidence E1312 accountInventoryAndPenetrationTestResults:
+              Tool: Ontology-based Knowledge Repository and Threat Vulnerability Risk Analysis Tool (TVRA).
+              A recorded ontology query result provides a checklist for privileged-account governance (no undocumented admin accounts; monitoring/justification for elevated privileges).
+              A completed account-inventory review record exists and aligns with the TVRA model’s assumed administrative roles and the treated privileged-misuse threats.
+
+        Goal G132 robustEndUserAccessControl:
+          End-user access to PHR data (patients and clinicians) is enforced by robust authentication and authorization mechanisms.
+
+          Goal G1321 secureUserAuthentication:
+            User authentication mechanisms (e.g., username/password, MFA where applicable) meet defined security requirements.
+
+            Evidence E1321 authenticationDesignAndSecurityTests:
+              Tool: Ontology-based Knowledge Repository and IoMT Model-Based Engineering Tool.
+              A recorded ontology query result enumerates authentication requirements applicable to patient/clinician access to personal health data (e.g., MFA policies where applicable, credential strength rules).
+              A design trace derived from the BioAssist model identifies the implemented authentication mechanisms and documents how the design satisfies the queried requirements.
+
+          Goal G1322 authorizationChecksOnAllPhrApis:
+            Authorization checks are implemented at all APIs that expose PHR or multimedia data.
+
+            Evidence E1322 codeReviewAndApiSecurityTests:
+              Tool: Ontology-based Knowledge Repository and Threat Vulnerability Risk Analysis Tool (TVRA).
+              A recorded ontology query result enumerates authorization-control requirements for APIs that expose PHR and multimedia data.
+              The TVRA model identifies the PHR-exposing API surfaces; a completed verification record maps each such API surface to an explicit authorization check consistent with the queried requirements.
+
+
+Module: clientCloudTransitConfidential()
+
+  Goal G11 clientCloudTransitConfidential:
+    Data in transit between clients and the BioAssist cloud is confidential.
+
+    Goal G111 strongTransportEncryptionForClients:
+      All communications between client applications (patient and clinician apps) and the BioAssist cloud endpoint use strong, up-to-date transport encryption.
+
+      Goal G1111 secureTlsConfiguration:
+        TLS (or equivalent) is implemented with strong cipher suites and protocol versions, and no insecure fallback is possible.
+
+        Evidence E1111 tlsConfigurationScanReport:
+          Tool: IoMT Communications Recommendation Tool.
+          An exported risk-assessment / recommendation report for the client-app / BioAssist-cloud channel exists and specifies strong transport encryption settings (protocol versions and cipher suites) with downgrade and insecure fallback disabled.
+          The report records that the assessed configuration meets the tool’s safe-configuration criteria for confidentiality in transit.
+
+      Goal G1112 validAndProtectedCertificates:
+        Certificates used for client-to-cloud communications are valid, not expired, issued by trusted CAs, and protected from misuse.
+
+        Evidence E1112 certificateManagementReview:
+          Tool: Ontology-based Knowledge Repository (query) and IoMT Model-Based Engineering Tool (system model inventory).
+          A recorded ontology query result enumerates certificate lifecycle and trust-anchor requirements for TLS-protected health-data services.
+          An endpoint-and-certificate inventory derived from the BioAssist system model exists, and a completed review record confirms that all client-to-cloud certificates are valid, trusted, and handled in accordance with the queried requirements.
+
+    Goal G112 secureExternalServiceTransit:
+      Data in transit between BioAssist services and external cloud data sources (sensors, wearables, other cloud APIs) is encrypted and authenticated.
+
+      Goal G1121 secureChannelsToExternalSources:
+        All outbound and inbound API calls to external sources use secure channels (e.g., TLS) and authenticated endpoints.
+
+        Strategy S1121 argueSecureTransitByModelAndPerInterfaceReports:
+          Argue secure external service transit by enumerating external interfaces in the BioAssist architecture/integration model and showing that each enumerated interface has a communications risk-assessment report recording encrypted channels and authenticated endpoints.
+
+          Context C1121 modelScope:
+            The BioAssist architecture/integration model is the authoritative design-time enumeration of external cloud data source interfaces used for ingestion.
+
+          Justification J1121 strategyBasis:
+            This strategy assumes that all external API calls to external sources correspond to modelled interfaces; that each modelled interface has an associated communications risk-assessment report; that encrypted channels with authenticated endpoints are sufficient to establish secure transit for this claim; and that the reported properties reflect the configured and deployed interface behavior for the assessed baseline.
+
+          Goal G1121a modelEnumeratesExternalInterfaces:
+            All relevant external cloud data source interfaces used by BioAssist are enumerated in the architecture/integration model.
+
+            Evidence E1121a architectureIntegrationModelExport:
+              Artifact: Export of the BioAssist architecture/integration model identifying external cloud data source interfaces used for ingestion.
+              Tool: IoMT Model-Based Engineering Tool.
+
+          Goal G1121b eachEnumeratedInterfaceIsEncrypted:
+            Each enumerated external interface is recorded as using encrypted channels with authenticated endpoints in the communications risk-assessment reports.
+
+            Evidence E1121b commsRiskAssessmentReportBundle:
+              Artifact: Communications risk-assessment reports for external cloud data source interfaces identified in the architecture/integration model.
+              Tool: IoMT Communications Recommendation Tool.
+
+      Goal G1122 noUnprotectedProtocolsForPHRData:
+        No sensitive PHR data is sent over unprotected or legacy protocols.
+
+        Goal G1122a externalDataFlowThreatsAnalyzed:
+          Threats to PHR data confidentiality during external data flows have been systematically identified and assessed.
+
+          Context C1122a tvraMethodContext:
+            TVRA is used in MedSecurance to analyze confidentiality threats and vulnerabilities associated with system data flows.
+
+          Justification J1122a tvraAdequacyRationale:
+            The TVRA process systematically enumerates threats and evaluates mitigations for identified data flows, providing a sound basis for confidentiality assessment.
+
+          Evidence E1122 tvraExternalDataFlowAnalysis:
+            Artifact: Threat and Vulnerability Risk Analysis (TVRA) report for BioAssist external PHR data flows.
+            Tool: Threat Vulnerability Risk Analysis Tool (TVRA).
+
+
+Module: regulationsAndStandardsIdentified()
+
+  Goal G51 regulationsAndStandardsIdentified:
+    Applicable regulations and standards are identified and documented (e.g., GDPR, local health data laws, relevant security standards).
+
+    Goal G511 regulatoryMappingDocument:
+      A regulatory mapping document exists that enumerates applicable regulations and maps their obligations to BioAssist controls.
+
+      Context C511_claimBasis:
+        Applicability is defined with respect to the BioAssist system scope, jurisdictions of deployment, and the handling of personal health and multimedia data; mapping an obligation to a control means identifying one or more BioAssist controls that collectively address the intent of that obligation.
+
+      Strategy S511 argueRegulatoryCoverageByOntologyAndMatrix:
+        Argue regulatory identification and obligation coverage by (i) deriving the set of applicable regulations and obligations from the project knowledge base and (ii) mapping each obligation to corresponding BioAssist controls in a reviewed compliance matrix.
+
+        Context C511_scopeAndAuthority:
+          The MedSecurance project knowledge base is the authoritative source for determining applicability of regulations and standards for personal health and multimedia data handling within the defined BioAssist system scope.
+
+        Justification J511_strategyBasis:
+          Basis for this strategy:
+          (a) completeness: the ontology query retrieves all regulations and obligations applicable to the BioAssist data types and operational context;
+          (b) correctness: the ontology encodes current and authoritative regulatory interpretations;
+          (c) correspondence: each retrieved obligation can be meaningfully mapped to one or more BioAssist controls;
+          (d) sufficiency: documented mappings provide an adequate basis for downstream compliance argumentation;
+          (e) assurance: review and sign-off by compliance/legal personnel provides confidence in the correctness of the mapping.
+
+        Goal G511a applicableRegulationsEnumerated:
+          All regulations and standards applicable to BioAssist are enumerated with their relevant obligations.
+
+          Evidence E511a ontologyQueryResult:
+            Artifact: Recorded ontology query result enumerating applicable regulations, standards, and obligations for BioAssist data handling.
+            Tool: Ontology-based Knowledge Repository.
+
+        Goal G511b obligationsMappedToControls:
+          Each applicable obligation is mapped to one or more BioAssist controls.
+
+          Evidence E511b complianceMappingMatrix:
+            Artifact: Compliance mapping matrix mapping regulatory obligations to BioAssist controls, reviewed and signed off by compliance/legal personnel.
+

@@ -1,0 +1,32 @@
+indent(2,space)
+Case: T2 Insert Goal - Minimal Regression
+/*
+  Minimal test for T2 (evidence-discharging goal insertion).
+  Expectation: Evidence E101 under abstract Goal G10 should be transformed into:
+    Goal G10:
+      Goal G101a evidenceDischarge(...):
+        Evidence E101 ...
+*/
+
+Goal G0 topClaim:
+  System property P holds.
+
+  Goal G10 abstractClaimNeedingDischarge:
+    Data in transit is secure.
+
+    Goal G101b evidenceDischarge(G10,E101):
+      AUTHOR CHECK: Data in transit is secure. is encrypted in transit.
+      AUTHOR CHECK: Data in transit is secure. uses authenticated endpoints.
+
+      Evidence E101 commsReportEvidence:
+        Tool: Example Tool.
+        Artifact: Example report bundle.
+        The report records that channels are encrypted and endpoints authenticated.
+
+  Goal G20 alreadyDischargeable:
+    The specific report bundle exists and is traceable.
+
+    Evidence E201 traceableArtifact:
+      Tool: Example Tool.
+      Artifact: Report bundle id RB-123.
+

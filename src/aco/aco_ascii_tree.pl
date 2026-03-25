@@ -268,8 +268,8 @@ ascii_unit_boundary_module(Name, Formals, Lines) :-
 
 % Index = index(NodesById, ChildMap)
 build_tree_index(Nodes, TreeEdges, index(NodesById, ChildMap)) :-
-    findall(Id-node(Id,Type,Label,Body,Level,Line),
-            member(node(Id,Type,Label,Body,Level,Line), Nodes),
+    findall(Id-node(Id,Type,Label,Body,Level,Line,IterOpt),
+            member(node(Id,Type,Label,Body,Level,Line,IterOpt), Nodes),
             NodesById),
     findall(P-C,
             ( member(supported_by(P,C), TreeEdges)
@@ -291,7 +291,7 @@ children_of(Id, index(NodesById,ChildMap), ChildIdsSorted) :-
     (   member(Id-Children0, ChildMap) -> ChildIds0 = Children0 ; ChildIds0 = [] ),
     findall(Line-ChildId,
             ( member(ChildId, ChildIds0),
-                member(ChildId-node(ChildId, _Type, _Label, _Body, _Level, Line), NodesById)
+                member(ChildId-node(ChildId, _Type, _Label, _Body, _Level, Line, _IterOpt), NodesById)
             ),
             LinePairs),
     keysort(LinePairs, SortedPairs),
@@ -306,7 +306,7 @@ roots_from_index(index(NodesById, ChildMap), RootIds) :-
             ChildIds0),
     sort(ChildIds0, ChildIds),
     findall(Id,
-            ( member(Id-node(Id,_,_,_,_,_), NodesById),
+            ( member(Id-node(Id,_,_,_,_,_,_), NodesById),
               \+ memberchk(Id, ChildIds)
             ),
             RootIds).
@@ -329,9 +329,9 @@ ascii_forest_rest([RootId|Rest], Index, Infos, Mode, AliasFlag, Lines) :-
     append(L0b, LRest, Lines).
 
 ascii_node_root(Id, Index, Infos, Mode, AliasFlag, LinesOut) :-
-    lookup_node(Id, Index, node(Id, Type, Label, Body, _Level, _Line)),
+    lookup_node(Id, Index, node(Id, Type, Label, Body, _Level, _Line, IterOpt)),
     member(hier_info(Id, CanonId, _T, _Lev, _L, _Path), Infos),
-    ascii_header_text(Type, CanonId, Id, Label, Mode, AliasFlag, HeaderCore),
+    ascii_header_text(Type, CanonId, Id, Label, IterOpt, Mode, AliasFlag, HeaderCore),
     HeaderLine = HeaderCore,
     children_of(Id, Index, ChildIds),
     ( ChildIds = [] -> BodyPrefix = "    " ; BodyPrefix = "│       " ),
@@ -347,9 +347,9 @@ ascii_children_root([ChildId|Rest], Index, Infos, Mode, AliasFlag, LinesOut) :-
     append(ChildLines, RestLines, LinesOut).
 
 ascii_node(Id, Index, Infos, Prefix, IsLast, Mode, AliasFlag, LinesOut) :-
-    lookup_node(Id, Index, node(Id, Type, Label, Body, _Level, _Line)),
+    lookup_node(Id, Index, node(Id, Type, Label, Body, _Level, _Line, IterOpt)),
     member(hier_info(Id, CanonId, _T, _Lev, _L, _Path), Infos),
-    ascii_header_text(Type, CanonId, Id, Label, Mode, AliasFlag, HeaderCore),
+    ascii_header_text(Type, CanonId, Id, Label, IterOpt, Mode, AliasFlag, HeaderCore),
     ( IsLast == true -> Connector = "└── " ; Connector = "├── " ),
     format(string(HeaderLine), "~s~s~s", [Prefix, Connector, HeaderCore]),
     children_of(Id, Index, ChildIds),
@@ -373,13 +373,49 @@ ascii_children([ChildId|Rest], Index, Infos, Prefix, Mode, AliasFlag, LinesOut) 
 % Header + body text with options
 % ----------------------------------------------------------------------
 
-ascii_header_text(Type, CanonId, OldId, Label, Mode, AliasFlag, Text) :-
+ascii_header_text(Type, CanonId, OldId, Label, IterOpt, Mode, AliasFlag, Text) :-
     ascii_type_letter(Type, Letter),
-    atom_string(Label, LabelStr),
+    atom_string(Label, LabelStr0),
+    iterator_suffix_text(IterOpt, IterSuffix),
+    string_concat(LabelStr0, IterSuffix, LabelStr),
     ( Mode = headers_only
     -> format(string(Text), "~w ~w ~s", [Letter, CanonId, LabelStr])
     ;  header_alias_suffix(OldId, CanonId, AliasFlag, AliasSuffix),
        format(string(Text), "~w ~w~s ~s", [Letter, CanonId, AliasSuffix, LabelStr])
+    ).
+
+iterator_suffix_text(none, "").
+iterator_suffix_text(malformed(_), "").
+iterator_suffix_text(iterate(Var, Category, Iterand), Suffix) :-
+    atom_string(Var, VarS),
+    designator_text(Category, CatS),
+    designator_text(Iterand, IterS),
+    format(string(Suffix), " for each ~s:~s in ~s", [VarS, CatS, IterS]).
+
+designator_text(Term, S) :-
+    (   string(Term)
+    ->  S = Term
+    ;   atom(Term)
+    ->  atom_string(Term, S)
+    ;   number(Term)
+    ->  number_string(Term, S)
+    ;   Term == []
+    ->  S = "[]"
+    ;   is_list(Term)
+    ->  maplist(designator_text, Term, Parts),
+        atomic_list_concat(Parts, ',', Inner),
+        format(string(S), "[~w]", [Inner])
+    ;   compound(Term), functor(Term, ':', 2)
+    ->  arg(1, Term, A), arg(2, Term, B),
+        designator_text(A, AS), designator_text(B, BS),
+        format(string(S), "~s:~s", [AS, BS])
+    ;   compound(Term)
+    ->  functor(Term, F, N),
+        findall(AS, (between(1, N, I), arg(I, Term, A), designator_text(A, AS)), Parts),
+        atomic_list_concat(Parts, ',', Inner),
+        atom_string(F, FS),
+        format(string(S), "~s(~w)", [FS, Inner])
+    ;   term_string(Term, S)
     ).
 
 header_alias_suffix(_OldId, _CanonId, off, "").
