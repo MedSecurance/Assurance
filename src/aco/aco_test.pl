@@ -17,7 +17,8 @@ aco_parser_regression_tests([
     tc_aco_parse_09, tc_aco_parse_10, tc_aco_parse_11, tc_aco_parse_12,
     tc_aco_parse_13, tc_aco_parse_14, tc_aco_parse_15, % tc_aco_parse_16,
     tc_aco_parse_17, tc_aco_parse_18, tc_aco_parse_19, tc_aco_parse_20,
-    tc_aco_parse_21, tc_aco_parse_22, tc_aco_parse_23, tc_aco_parse_24
+    tc_aco_parse_21, tc_aco_parse_22, tc_aco_parse_23, tc_aco_parse_24,
+    tc_aco_iter_25, tc_aco_iter_26, tc_aco_iter_27, tc_aco_iter_28
 ]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -30,6 +31,13 @@ tc_aco_string_apl_ok(SourceName, AcoString, ExpectedTerms) :-
     % normalized:  GotTerms == ExpectedTerms
     normalize_terms(ExpectedTerms, normalized_result(NonRelations, RelationsSorted, Diagnostics)),
     normalize_terms(GotTerms, normalized_result(NonRelations, RelationsSorted, Diagnostics)).
+
+
+% Pattern-translation success case: exact APL patterns, no parser/semantic errors.
+tc_aco_string_patterns_ok(SourceName, AcoString, ExpectedPatterns) :-
+    aco_apl:aco_string_to_apl_patterns(SourceName, AcoString, GotPatterns, Messages),
+    \+ tc_aco_has_error(Messages),
+    GotPatterns == ExpectedPatterns.
 
 % Error-presence case: exact APL-ish terms plus required error functors.
 tc_aco_string_apl_error(SourceName, AcoString, ExpectedTerms, RequiredErrorSigs) :-
@@ -82,6 +90,7 @@ tc_aco_message_is_error(relation_unexpected_header_in_relation_section(_, _)).
 tc_aco_message_is_error(relation_unexpected_nonrelation_in_relation_section(_, _, _)).
 tc_aco_message_is_error(relation_unexpected_line_in_relation_section(_)).
 tc_aco_message_is_error(indent_directive_error(_, _)).
+tc_aco_message_is_error(malformed_strategy_iterator(_, _)).
 
 is_relation_term(supported_by(_, _)).
 is_relation_term(in_context_of(_, _)).
@@ -398,3 +407,81 @@ tc_aco_parse_24 :-
         supported_by('G1', 'Aflat')
     ]).
 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 25-28: iterator-bearing strategy regression cases
+
+% 25. Positive iterator coverage: nodes/1 iterand in a strategy header.
+tc_aco_iter_25 :-
+    Aco = "Module: iter_nodes(S)
+Goal G1 top:
+  Body.
+  Strategy S1 decomp for each N:foundational_plane:node in nodes(S):
+    Strat body.
+    Goal G2 child:
+      Child body.
+",
+    Expected = [
+        ac_pattern(iter_nodes, [arg('S', identifier)],
+            goal('G1', top, 'Body.', [], [
+                strategy('Strat body.', iterate('N', foundational_plane:node, nodes('S')), [], [
+                    goal('G2', child, 'Child body.', [], [])
+                ])
+            ]))
+    ],
+    tc_aco_string_patterns_ok('<tc_aco_iter_25>', Aco, Expected).
+
+% 26. Positive iterator coverage: subjects/1 iterand in a strategy header.
+tc_aco_iter_26 :-
+    Aco = "Module: iter_subjects(Policy)
+Goal G1 top:
+  Body.
+  Strategy S1 decomp for each C:operational_plane:component in subjects(Policy):
+    Strat body.
+    Goal G2 child:
+      Child body.
+",
+    Expected = [
+        ac_pattern(iter_subjects, [arg('Policy', identifier)],
+            goal('G1', top, 'Body.', [], [
+                strategy('Strat body.', iterate('C', operational_plane:component, subjects('Policy')), [], [
+                    goal('G2', child, 'Child body.', [], [])
+                ])
+            ]))
+    ],
+    tc_aco_string_patterns_ok('<tc_aco_iter_26>', Aco, Expected).
+
+% 27. Positive iterator coverage: list/1 iterand demonstrates term-valued iterands.
+tc_aco_iter_27 :-
+    Aco = "Module: iter_list
+Goal G1 top:
+  Body.
+  Strategy S1 decomp for each X:item in list([a,b,c]):
+    Strat body.
+    Goal G2 child:
+      Child body.
+",
+    Expected = [
+        ac_pattern(iter_list, [],
+            goal('G1', top, 'Body.', [], [
+                strategy('Strat body.', iterate('X', item, list([a,b,c])), [], [
+                    goal('G2', child, 'Child body.', [], [])
+                ])
+            ]))
+    ],
+    tc_aco_string_patterns_ok('<tc_aco_iter_27>', Aco, Expected).
+
+% 28. Negative iterator coverage: malformed strategy iterator suffix (missing "in").
+tc_aco_iter_28 :-
+    Aco = "Goal G1 top:
+  Body.
+  Strategy S1 bad for each N:node nodes(S):
+    Strat body.
+",
+    Expected = [
+        block('G1', goal, top, 'Body.'),
+        block('S1', strategy, 'bad for each N:node nodes(S)', 'Strat body.'),
+        supported_by('G1', 'S1')
+    ],
+    tc_aco_string_apl_error('<tc_aco_iter_28>', Aco, Expected, [malformed_strategy_iterator/2]).
