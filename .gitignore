@@ -25,5 +25,6 @@ src/agents/*~
 src/com/*~
 src/models_api/*~
 docs/User-Manual/~$*
+TEST/ACO/*.apl
 IGNORE
 
