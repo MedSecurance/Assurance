@@ -221,7 +221,10 @@ is_module_unit_header(Line0, Name, Formals) :-
     parse_module_header_rhs(After, Name, Formals).
 
 parse_module_header_rhs(S, Name, Formals) :-
-    % Expect: name or name(Formal1,Formal2)
+    % Expect: name or name(Formal1,Formal2) where each formal is either
+    %   Name
+    % or
+    %   Name: category:qualified
     ( sub_string(S, P, _, _, "(")
     -> sub_string(S, 0, P, _, NameStr0),
        aco_core:string_trim(NameStr0, NameStr),
@@ -234,9 +237,28 @@ parse_module_header_rhs(S, Name, Formals) :-
       Formals = []
     ).
 
-formal_from_string(S0, FormalAtom) :-
+formal_from_string(S0, Formal) :-
     aco_core:string_trim(S0, S),
-    atom_string(FormalAtom, S).
+    (   split_formal_decl(S, NameS, CatS)
+    ->  atom_string(Name, NameS),
+        aco_core:parse_designator_term(CatS, Category),
+        Formal = arg(Name, Category)
+    ;   atom_string(Name, S),
+        Formal = Name
+    ).
+
+split_formal_decl(S, NameS, CatS) :-
+    sub_string(S, Pos, 1, _, ":"),
+    Pos > 0,
+    sub_string(S, 0, Pos, _, Name0),
+    Start is Pos + 1,
+    sub_string(S, Start, _, 0, Cat0),
+    aco_core:string_trim(Name0, NameS0),
+    aco_core:string_trim(Cat0, CatS0),
+    NameS0 \= "",
+    CatS0 \= "",
+    NameS = NameS0,
+    CatS = CatS0.
 
 parse_paren_list(S, Items) :-
     % S begins with '(' ... ')'
@@ -318,8 +340,8 @@ unit_to_pattern(SourceName, unit(module, module_header(Name,Formals), UnitText),
     choose_root(Nodes0, ChildMap, RootId, _RootMessages),
     % PatternId is module name
     PatternId = Name,
-    % Formal args -> APL-style arg(Name, identifier)
-    findall(arg(F, identifier), member(F, Formals), FormalArgs),
+    % Formal args -> APL-style arg(Name, Category), defaulting to identifier
+    findall(Arg, (member(F, Formals), formal_to_apl_arg(F, Arg)), FormalArgs),
     build_goal_tree(RootId, NodesById, ChildMap, CtxMap,
                     [], GoalTree, _VisitedFinal, []),
     Pattern = ac_pattern(PatternId, FormalArgs, GoalTree).
@@ -333,6 +355,11 @@ unit_text_source_name(SourceName, Kind, Hdr, _Text, SrcName) :-
         Hdr = module_header(N,_),
         format(atom(SrcName), '~w(module:~w)', [SourceName, N])
     ).
+
+
+formal_to_apl_arg(arg(Name, Category), arg(Name, Category)) :- !.
+formal_to_apl_arg(Name, arg(Name, identifier)).
+
 
 % ----------------------------------------------------------------------
 % Pretty-printing APL patterns
@@ -743,6 +770,48 @@ claim_text_from_body_or_id(Body, Id, ClaimText) :-
 
 build_children_terms([], _NodesById, _ChildMap, _CtxMap, Visited, [], Visited).
 
+% Structural abstractions
+build_children_terms([IfId,ElseId|Rest], NodesById, ChildMap, CtxMap,
+                     Visited0, [Term|Terms], VisitedOut) :-
+    lookup_node(IfId, NodesById, node(IfId, if, _IfLabel, _IfBody, _IfLev, _IfLine, IfIterOpt)),
+    lookup_node(ElseId, NodesById, node(ElseId, else, _ElseLabel, _ElseBody, _ElseLev, _ElseLine, _ElseIterOpt)),
+    !,
+    if_condition_term(IfIterOpt, Cond),
+    branch_term_for_if_wrapper(IfId, NodesById, ChildMap, CtxMap, Visited0, TrueBranch, _IgnoredNestedElse, Visited1),
+    branch_term_for_wrapper(ElseId, NodesById, ChildMap, CtxMap, Visited1, FalseBranch, Visited2),
+    Term = conditional(Cond, TrueBranch, FalseBranch),
+    build_children_terms(Rest, NodesById, ChildMap, CtxMap, Visited2, Terms, VisitedOut).
+
+build_children_terms([ChildId|Rest], NodesById, ChildMap, CtxMap,
+                     Visited0, [Term|Terms], VisitedOut) :-
+    lookup_node(ChildId, NodesById, node(ChildId, if, _IfLabel, _IfBody, _IfLev, _IfLine, IfIterOpt)),
+    !,
+    if_condition_term(IfIterOpt, Cond),
+    branch_term_for_if_wrapper(ChildId, NodesById, ChildMap, CtxMap, Visited0, TrueBranch, MaybeFalseBranch, Visited1),
+    (   MaybeFalseBranch = some(FalseBranch)
+    ->  Term = conditional(Cond, TrueBranch, FalseBranch)
+    ;   Term = conditional([cond(Cond, TrueBranch)])
+    ),
+    build_children_terms(Rest, NodesById, ChildMap, CtxMap, Visited1, Terms, VisitedOut).
+
+build_children_terms([ChildId|Rest], NodesById, ChildMap, CtxMap,
+                     Visited0, [Term|Terms], VisitedOut) :-
+    lookup_node(ChildId, NodesById, node(ChildId, conditionals, _Label, _Body, _Lev, _Line, _IterOpt)),
+    !,
+    children_of(ChildId, ChildMap, CondIds),
+    build_conditional_group_terms(CondIds, NodesById, ChildMap, CtxMap, Visited0, CondTerms, Visited1),
+    Term = conditional(CondTerms),
+    build_children_terms(Rest, NodesById, ChildMap, CtxMap, Visited1, Terms, VisitedOut).
+
+build_children_terms([ChildId|Rest], NodesById, ChildMap, CtxMap,
+                     Visited0, [Term|Terms], VisitedOut) :-
+    lookup_node(ChildId, NodesById, node(ChildId, alternatives, _Label, _Body, _Lev, _Line, _IterOpt)),
+    !,
+    children_of(ChildId, ChildMap, AltIds),
+    build_children_terms(AltIds, NodesById, ChildMap, CtxMap, Visited0, AltTerms, Visited1),
+    Term = alternatives(AltTerms),
+    build_children_terms(Rest, NodesById, ChildMap, CtxMap, Visited1, Terms, VisitedOut).
+
 build_children_terms([ChildId|Rest], NodesById, ChildMap, CtxMap,
                      Visited0, [Term|Terms], VisitedOut) :-
     lookup_node(ChildId, NodesById,
@@ -833,6 +902,56 @@ build_children_terms([ChildId|Rest], NodesById, ChildMap, CtxMap,
            [ChildId]),
     build_children_terms(Rest, NodesById, ChildMap, CtxMap,
                          Visited0, Terms, VisitedOut).
+
+if_condition_term(if(Cond), Cond) :- !.
+if_condition_term(_, true).
+
+branch_term_for_wrapper(WrapperId, NodesById, ChildMap, CtxMap, Visited0, Branch, VisitedOut) :-
+    children_of(WrapperId, ChildMap, ChildIds),
+    build_children_terms(ChildIds, NodesById, ChildMap, CtxMap, Visited0, Terms, VisitedOut),
+    branch_from_terms(WrapperId, Terms, Branch).
+
+branch_term_for_if_wrapper(IfId, NodesById, ChildMap, CtxMap,
+                           Visited0, TrueBranch, MaybeFalseBranch, VisitedOut) :-
+    children_of(IfId, ChildMap, ChildIds0),
+    split_else_child_ids(ChildIds0, NodesById, ThenIds, ElseIds),
+    build_children_terms(ThenIds, NodesById, ChildMap, CtxMap,
+                         Visited0, ThenTerms, Visited1),
+    branch_from_terms(IfId, ThenTerms, TrueBranch),
+    (   ElseIds = [ElseId]
+    ->  branch_term_for_wrapper(ElseId, NodesById, ChildMap, CtxMap,
+                                Visited1, FalseBranch, VisitedOut),
+        MaybeFalseBranch = some(FalseBranch)
+    ;   MaybeFalseBranch = none,
+        VisitedOut = Visited1
+    ).
+
+split_else_child_ids([], _NodesById, [], []).
+split_else_child_ids([ChildId|Rest], NodesById, ThenIds, [ChildId]) :-
+    lookup_node(ChildId, NodesById, node(ChildId, else, _Label, _Body, _Lev, _Line, _IterOpt)),
+    !,
+    ThenIds = Rest.
+split_else_child_ids([ChildId|Rest], NodesById, [ChildId|ThenRest], ElseIds) :-
+    split_else_child_ids(Rest, NodesById, ThenRest, ElseIds).
+
+branch_from_terms(_WrapperId, [Only], Only) :- !.
+branch_from_terms(WrapperId, [], goal(WrapperId, '', WrapperId, [], [])) :- !.
+branch_from_terms(WrapperId, Terms, goal(WrapperId, '', WrapperId, [], Terms)).
+
+build_conditional_group_terms([], _NodesById, _ChildMap, _CtxMap, Visited, [], Visited).
+build_conditional_group_terms([ChildId|Rest], NodesById, ChildMap, CtxMap, Visited0, CondTerms, VisitedOut) :-
+    lookup_node(ChildId, NodesById, node(ChildId, if, _Label, _Body, _Lev, _Line, IfIterOpt)),
+    !,
+    if_condition_term(IfIterOpt, Cond),
+    branch_term_for_wrapper(ChildId, NodesById, ChildMap, CtxMap, Visited0, Branch, Visited1),
+    CondTerms = [cond(Cond, Branch)|RestTerms],
+    build_conditional_group_terms(Rest, NodesById, ChildMap, CtxMap, Visited1, RestTerms, VisitedOut).
+build_conditional_group_terms([ChildId|Rest], NodesById, ChildMap, CtxMap, Visited0, CondTerms, VisitedOut) :-
+    lookup_node(ChildId, NodesById, node(ChildId, else, _Label, _Body, _Lev, _Line, _IterOpt)),
+    !,
+    build_conditional_group_terms(Rest, NodesById, ChildMap, CtxMap, Visited0, CondTerms, VisitedOut).
+build_conditional_group_terms([_ChildId|Rest], NodesById, ChildMap, CtxMap, Visited0, CondTerms, VisitedOut) :-
+    build_conditional_group_terms(Rest, NodesById, ChildMap, CtxMap, Visited0, CondTerms, VisitedOut).
 
 % Module reference label parsing:
 %   "[foo]"                    -> Callee=foo, Actuals=[]

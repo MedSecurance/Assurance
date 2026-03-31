@@ -18,7 +18,9 @@ aco_parser_regression_tests([
     tc_aco_parse_13, tc_aco_parse_14, tc_aco_parse_15, % tc_aco_parse_16,
     tc_aco_parse_17, tc_aco_parse_18, tc_aco_parse_19, tc_aco_parse_20,
     tc_aco_parse_21, tc_aco_parse_22, tc_aco_parse_23, tc_aco_parse_24,
-    tc_aco_iter_25, tc_aco_iter_26, tc_aco_iter_27, tc_aco_iter_28
+    tc_aco_iter_25, tc_aco_iter_26, tc_aco_iter_27, tc_aco_iter_28,
+    tc_aco_struct_29, tc_aco_struct_30, tc_aco_struct_31, tc_aco_struct_32,
+    tc_aco_struct_33, tc_aco_struct_34
 ]).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -485,3 +487,142 @@ tc_aco_iter_28 :-
         supported_by('G1', 'S1')
     ],
     tc_aco_string_apl_error('<tc_aco_iter_28>', Aco, Expected, [malformed_strategy_iterator/2]).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% 29-34: structural abstraction regression cases
+
+% 29. Positive alternatives coverage: explicit alternatives group under a strategy.
+tc_aco_struct_29 :-
+    Aco = "Module: alt_demo
+Goal G1 top:
+  Body.
+  Strategy S1 byCases:
+    Strat body.
+    Alternatives:
+      Goal G2 optionA:
+        A body.
+      Goal G3 optionB:
+        B body.
+",
+    Expected = [
+        ac_pattern(alt_demo, [],
+            goal('G1', top, 'Body.', [], [
+                strategy('S1', byCases, 'Strat body.', [], [
+                    alternatives([
+                        goal('G2', optionA, 'A body.', [], []),
+                        goal('G3', optionB, 'B body.', [], [])
+                    ])
+                ])
+            ]))
+    ],
+    tc_aco_string_patterns_ok('<tc_aco_struct_29>', Aco, Expected).
+
+% 30. Positive single guarded branch coverage: If C: lowers to conditional([cond(C,G)]).
+tc_aco_struct_30 :-
+    Aco = "Module: cond_single
+Goal G1 top:
+  Body.
+  Strategy S1 gated:
+    Strat body.
+    If eq(mode,normal):
+      Goal G2 nominal:
+        Nominal body.
+",
+    Expected = [
+        ac_pattern(cond_single, [],
+            goal('G1', top, 'Body.', [], [
+                strategy('S1', gated, 'Strat body.', [], [
+                    conditional([
+                        cond(eq(mode, normal), goal('G2', nominal, 'Nominal body.', [], []))
+                    ])
+                ])
+            ]))
+    ],
+    tc_aco_string_patterns_ok('<tc_aco_struct_30>', Aco, Expected).
+
+% 31. Positive grouped conditional coverage: Conditionals group lowers to conditional([...]).
+tc_aco_struct_31 :-
+    Aco = "Module: cond_group
+Goal G1 top:
+  Body.
+  Strategy S1 gated:
+    Strat body.
+    Conditionals:
+      If eq(mode,normal):
+        Goal G2 nominal:
+          Nominal body.
+      If eq(mode,degraded):
+        Goal G3 degraded:
+          Degraded body.
+",
+    Expected = [
+        ac_pattern(cond_group, [],
+            goal('G1', top, 'Body.', [], [
+                strategy('S1', gated, 'Strat body.', [], [
+                    conditional([
+                        cond(eq(mode, normal), goal('G2', nominal, 'Nominal body.', [], [])),
+                        cond(eq(mode, degraded), goal('G3', degraded, 'Degraded body.', [], []))
+                    ])
+                ])
+            ]))
+    ],
+    tc_aco_string_patterns_ok('<tc_aco_struct_31>', Aco, Expected).
+
+% 32. Positive if/else coverage: If ... Else ... lowers to conditional(C,Gt,Gf).
+tc_aco_struct_32 :-
+    Aco = "Module: cond_else
+Goal G1 top:
+  Body.
+  Strategy S1 gated:
+    Strat body.
+    If eq(mode,normal):
+      Goal G2 nominal:
+        Nominal body.
+      Else:
+        Goal G3 degraded:
+          Degraded body.
+",
+    Expected = [
+        ac_pattern(cond_else, [],
+            goal('G1', top, 'Body.', [], [
+                strategy('S1', gated, 'Strat body.', [], [
+                    conditional(eq(mode, normal),
+                                goal('G2', nominal, 'Nominal body.', [], []),
+                                goal('G3', degraded, 'Degraded body.', [], []))
+                ])
+            ]))
+    ],
+    tc_aco_string_patterns_ok('<tc_aco_struct_32>', Aco, Expected).
+
+% 33. Positive alternatives+conditionals coverage.
+tc_aco_struct_33 :-
+    Aco = "Module: alt_cond
+Goal G1 top:
+  Body.
+  Strategy S1 choose:
+    Strat body.
+    Alternatives:
+      If eq(mode,normal):
+        Goal G2 nominal:
+          Nominal body.
+      If eq(mode,degraded):
+        Goal G3 degraded:
+          Degraded body.
+",
+    Expected = [
+        ac_pattern(alt_cond, [],
+            goal('G1', top, 'Body.', [], [
+                strategy('S1', choose, 'Strat body.', [], [
+                    alternatives([
+                        conditional([cond(eq(mode, normal), goal('G2', nominal, 'Nominal body.', [], []))]),
+                        conditional([cond(eq(mode, degraded), goal('G3', degraded, 'Degraded body.', [], []))])
+                    ])
+                ])
+            ]))
+    ],
+    tc_aco_string_patterns_ok('<tc_aco_struct_33>', Aco, Expected).
+
+% 34. Positive conditional evaluator coverage: member/2 succeeds for matching values.
+tc_aco_struct_34 :-
+    instantiate:condition_holds(member(mode, [normal, degraded]), [arg(mode, identifier, normal)]).

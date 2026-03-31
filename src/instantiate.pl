@@ -443,11 +443,24 @@ bind_call_arguments([], [], _AArgs, []).
 
 bind_call_arguments([arg(Name, Category) | FArgs], [UName | Args], AArgs,
                     [arg(Name, Category, Value) | AArgsForCall]) :-
+    resolve_call_argument(UName, Category, AArgs, Value),
+    bind_call_arguments(FArgs, Args, AArgs, AArgsForCall).
+
+resolve_call_argument(UName, Category, AArgs, Value) :-
     (   member(arg(UName, Category, Value0), AArgs)
     ->  Value = Value0
-    ;   Value = UName
-    ),
-    bind_call_arguments(FArgs, Args, AArgs, AArgsForCall).
+    ;   (   member(arg(UName, OtherCategory, Value1), AArgs)
+        ->  ui:vformat('*** warning: unresolved symbolic actual ~q for expected category ~q; caller has category ~q. Using caller value anyway.~n',
+                       [UName, Category, OtherCategory]),
+            Value = Value1
+        ;   (   atom(UName)
+            ->  ui:vformat('*** warning: unresolved symbolic actual ~q for expected category ~q; using literal atom.~n',
+                           [UName, Category])
+            ;   true
+            ),
+            Value = UName
+        )
+    ).
 
 				% strategy_iterator_match(+Iterator, +AArgs, -AArgIt)
 
@@ -533,11 +546,32 @@ iterand_value_to_term(Term, Term).
 
 				% condition holds
 
-condition_holds( true, _AArgs ).
+condition_holds(true, _AArgs).
 
-condition_holds( eq(Name, Value), AArgs) :-
-	member( arg(Name, _, Value), AArgs).
+condition_holds(eq(Name, Value), AArgs) :-
+    member(arg(Name, _, Value), AArgs).
 
+condition_holds(neq(Name, Value), AArgs) :-
+    \+ member(arg(Name, _, Value), AArgs).
+
+condition_holds(has(Name), AArgs) :-
+    member(arg(Name, _, _), AArgs).
+
+condition_holds(member(Name, Values), AArgs) :-
+    member(arg(Name, _, Value), AArgs),
+    memberchk(Value, Values).
+
+condition_holds(not(C), AArgs) :-
+    \+ condition_holds(C, AArgs).
+
+condition_holds(and(C1, C2), AArgs) :-
+    condition_holds(C1, AArgs),
+    condition_holds(C2, AArgs).
+
+condition_holds(or(C1, C2), AArgs) :-
+    ( condition_holds(C1, AArgs)
+    ; condition_holds(C2, AArgs)
+    ).
 
 				%
 				%
@@ -619,20 +653,57 @@ instantiate_iterator_term(_AArgs, TokenP, TokenP).
 				%
 
 instantiate_text(TextP, AArgs, TextI, []) :-
-	split_string(TextP, TokensP), % split_string(TextP, ' ', ' ', TokensP),
-	maplist( instantiate_text_token(AArgs), TokensP, TokensI),
-	atomics_to_string(TokensI, ' ', TextI).
+	text_to_string(TextP, TextS0),
+	replace_all_placeholders(AArgs, TextS0, TextS1),
+        normalize_instantiated_text_spacing(TextS1, TextI).
 
-instantiate_text_token(AArgs, TokenP, TokenI) :-
-        member(AArg, AArgs),
-        aarg_name(AArg, Name),
-        string_concat('{', Name, X), string_concat(X, '}', Placeholder),
-        TokenP == Placeholder,
-        aarg_text_value(AArg, Value0),
-        value_to_string(Value0, TokenI),
-        !.
+% normalize_instantiated_text_spacing(+In, -Out)
+% Collapse runs of spaces/tabs within each line to a single space,
+% trim leading/trailing horizontal whitespace on each line,
+% and preserve line breaks.
+normalize_instantiated_text_spacing(In, Out) :-
+    split_string(In, "\n", "", Lines0),
+    maplist(normalize_instantiated_text_line, Lines0, Lines),
+    atomic_list_concat(Lines, '\n', Out).
 
-instantiate_text_token(_AArgs, TokenP, TokenP).
+normalize_instantiated_text_line(Line0, Line) :-
+    split_string(Line0, " \t", " \t", Parts),
+    atomic_list_concat(Parts, ' ', Line).
+
+
+text_to_string(TextP, TextS) :-
+	( string(TextP) -> TextS = TextP
+	; atom(TextP) -> atom_string(TextP, TextS)
+	; term_string(TextP, TextS)
+	).
+
+replace_all_placeholders(AArgs, TextS0, TextS) :-
+	findall(Name-ValueS,
+		( member(AArg, AArgs),
+		  aarg_name(AArg, Name),
+		  aarg_text_value(AArg, Value0),
+		  value_to_string(Value0, ValueS)
+		),
+		Pairs0),
+	sort(Pairs0, Pairs),
+	replace_all_placeholders_pairs(Pairs, TextS0, TextS).
+
+replace_all_placeholders_pairs([], TextS, TextS).
+replace_all_placeholders_pairs([Name-ValueS | Rest], TextS0, TextS) :-
+	string_concat('{', Name, X),
+	string_concat(X, '}', Placeholder),
+	replace_all_occurrences(TextS0, Placeholder, ValueS, TextS1),
+	replace_all_placeholders_pairs(Rest, TextS1, TextS).
+
+replace_all_occurrences(TextS0, Needle, Replacement, TextS) :-
+	( sub_string(TextS0, Before, _NeedleLen, After, Needle)
+	-> sub_string(TextS0, 0, Before, _, Prefix),
+	   sub_string(TextS0, _, After, 0, Suffix),
+	   string_concat(Prefix, Replacement, Tmp),
+	   string_concat(Tmp, Suffix, TextS1),
+	   replace_all_occurrences(TextS1, Needle, Replacement, TextS)
+	;  TextS = TextS0
+	).
 
 				%
 				%

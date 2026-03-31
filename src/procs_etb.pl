@@ -1,4 +1,57 @@
 % ETB-specific command procedures
+% instantiate a list of patterns using model 1.0 as system_examp and export
+
+% current tests
+proc(mils_system_inst, [
+	set_v(ModelId, '1.0'),
+	set_v(CaseId, mils_system_example),
+	load_model_v(ModelId, Policy, Platform, _Configuration),
+	set_v(AC,
+		[ 'foundational_plane'-[Platform],
+		'operational_plane'-[Policy],
+		'person'-['Alice', 'AC Patterns Definition'],
+		'person'-['Bob', 'ETB Development']
+		]),
+	instantiate_pattern_list(AC,CaseId),
+	export_case(CaseId,html),
+	detach_case
+]).
+
+proc(mils_op_only, [
+	set_v(ModelId, '1.0'),
+	set_v(CaseId, mils_op_only),
+	load_model_v(ModelId, Policy, _Platform, _Configuration),
+	instantiate_pattern(operational_plane,[Policy],CaseId),
+	export_case(CaseId,txt),
+	export_case(CaseId,html),
+	detach_case
+]).
+
+proc(mopv2_inst, [
+	aco_apl('../Tools/APL_to_ACO_operational_plane_executable_family_v2.aco','../Tools/APL_to_ACO_operational_plane_executable_family_v2a.apl'),
+	load_patterns('../Tools/APL_to_ACO_operational_plane_executable_family_v2a.apl'),
+	set_v(ModelId, '1.0'),
+	set_v(CaseId, mopv2a),
+	load_model_v(ModelId, Policy, _Platform, _Configuration),
+	instantiate_pattern(n_operational_plane,[Policy],CaseId),
+	export_case(CaseId,txt),
+	export_case(CaseId,html),
+	detach_case
+]).
+
+proc(mopv3, [
+	aco_apl('../Tools/APL_to_ACO_operational_plane_executable_family_v3.aco','../Tools/APL_to_ACO_operational_plane_executable_family_v3.apl'),
+	load_patterns('../Tools/APL_to_ACO_operational_plane_executable_family_v3.apl'),
+	set_v(ModelId, '1.0'),
+	set_v(CaseId, mopv3),
+	load_model_v(ModelId, Policy, _Platform, _Configuration),
+	instantiate_pattern(n_operational_plane,[Policy],CaseId),
+	export_case(CaseId,txt),
+	export_case(CaseId,html),
+	detach_case
+]).
+
+%%%%%%%%%%%%%%
 
 proc(rev_demo_mod, [
 	% reset,
@@ -288,22 +341,6 @@ proc(person_exp, [
 proc(qualified_person_inst, [
 	instantiate_pattern('qualified_person', ['Programming', 'Marius'], 'qual_person_examp'),
 	export_case(cap_qual_person,txt),
-	detach_case
-]).
-
-% instantiate a list of patterns using model 1.0 as system_examp and export
-proc(mils_system_inst, [
-	set_v(ModelId, '1.0'),
-	set_v(CaseId, mils_system_example),
-	load_model_v(ModelId, Policy, Platform, _Configuration),
-	set_v(AC,
-		[ 'foundational_plane'-[Platform],
-		'operational_plane'-[Policy],
-		'person'-['Alice', 'AC Patterns Definition'],
-		'person'-['Bob', 'ETB Development']
-		]),
-	instantiate_pattern_list(AC,CaseId),
-	export_case(CaseId,html),
 	detach_case
 ]).
 

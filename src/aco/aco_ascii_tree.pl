@@ -174,9 +174,28 @@ parse_module_header_rhs(S, Name, Formals) :-
       Formals = []
     ).
 
-formal_from_string(S0, FormalAtom) :-
+formal_from_string(S0, Formal) :-
     aco_core:string_trim(S0, S),
-    atom_string(FormalAtom, S).
+    (   split_formal_decl(S, NameS, CatS)
+    ->  atom_string(Name, NameS),
+        aco_core:parse_designator_term(CatS, Category),
+        Formal = arg(Name, Category)
+    ;   atom_string(Name, S),
+        Formal = Name
+    ).
+
+split_formal_decl(S, NameS, CatS) :-
+    sub_string(S, Pos, 1, _, ":"),
+    Pos > 0,
+    sub_string(S, 0, Pos, _, Name0),
+    Start is Pos + 1,
+    sub_string(S, Start, _, 0, Cat0),
+    aco_core:string_trim(Name0, NameS0),
+    aco_core:string_trim(Cat0, CatS0),
+    NameS0 \= "",
+    CatS0 \= "",
+    NameS = NameS0,
+    CatS = CatS0.
 
 parse_paren_list(S, Items) :-
     aco_core:string_trim(S, S1),
@@ -256,11 +275,16 @@ ascii_unit_boundary_case(Title, Scope, CaseHeaderOpt, Lines) :-
 ascii_unit_boundary_module(Name, Formals, Lines) :-
     ( Formals = [] ->
         format(string(H), "=== Module: ~w ===", [Name])
-    ;   findall(FS, (member(F,Formals), atom_string(F,FS)), FStrs),
+    ;   findall(FS, (member(F,Formals), formal_to_string(F,FS)), FStrs),
         atomic_list_concat(FStrs, ",", Args),
         format(string(H), "=== Module: ~w(~w) ===", [Name, Args])
     ),
     Lines = [H, ""].
+
+formal_to_string(arg(Name, Category), S) :- !,
+    term_string(Category, CatS),
+    format(string(S), "~w: ~s", [Name, CatS]).
+formal_to_string(Name, S) :- atom_string(Name, S).
 
 % ----------------------------------------------------------------------
 % Index and roots

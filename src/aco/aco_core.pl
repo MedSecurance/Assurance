@@ -265,7 +265,7 @@ remove_trailing_dot(Line, Clean) :-
 /* Classified line record:
 
    cl_case(Line, Title, Scope)
-   cl_header(Line, Level, TypeAtom, IdOpt, LabelAtom, IterOpt)
+   cl_header(Line, Level, TypeAtom, IdOpt, LabelAtom, MetaOpt)
    cl_body(Line, Level, Text)
    cl_relation(Line, Text)
    cl_blank(Line)
@@ -381,6 +381,8 @@ classify_line(IndentSpec, line(N, S0), Class) :-
     ->  Class = cl_blank(N)
     ;   maybe_case_header(S, Title, Scope)
     ->  Class = cl_case(N, Title, Scope)
+    ;   maybe_special_header(S, TypeAtom, IdOpt, LabelAtom, MetaOpt)
+    ->  Class = cl_header(N, Level, TypeAtom, IdOpt, LabelAtom, MetaOpt)
     ;   maybe_header(S, TypeAtom, IdOpt, LabelAtom, IterOpt)
     ->  Class = cl_header(N, Level, TypeAtom, IdOpt, LabelAtom, IterOpt)
     ;   Class = cl_body(N, Level, S)
@@ -491,6 +493,30 @@ maybe_header(S, TypeAtom, IdOpt, LabelAtom, IterOpt) :-
         maybe_header_iteropt(TypeAtom, Label0, LabelAtom, IterOpt)
     ).
 
+
+
+maybe_special_header(S0, TypeAtom, IdOpt, LabelAtom, MetaOpt) :-
+    strip_trailing_spaces(S0, S1),
+    (   S1 == "Alternatives:"
+    ->  TypeAtom = alternatives, IdOpt = none, LabelAtom = '', MetaOpt = none
+    ;   S1 == "Conditionals:"
+    ->  TypeAtom = conditionals, IdOpt = none, LabelAtom = '', MetaOpt = none
+    ;   S1 == "Else:"
+    ->  TypeAtom = else, IdOpt = none, LabelAtom = '', MetaOpt = none
+    ;   sub_string(S1, 0, _, _, "If "),
+        sub_string(S1, _, 1, 0, ":")
+    ->  sub_string(S1, 3, _, 1, Cond0),
+        string_trim(Cond0, CondS),
+        atom_string(LabelAtom, CondS),
+        TypeAtom = if,
+        IdOpt = none,
+        (   CondS == ""
+        ->  MetaOpt = malformed_if(CondS)
+        ;   parse_designator_term(CondS, CondTerm)
+        ->  MetaOpt = if(CondTerm)
+        ;   MetaOpt = malformed_if(CondS)
+        )
+    ).
 
 maybe_header_iteropt(strategy, Label0, Label, IterOpt) :-
     !,
@@ -715,6 +741,8 @@ build_nodes([header(Line, Level, Type, IdOpt, Label, IterOpt, BodyLines)|Rest],
     Node = node(Id, Type, Label, BodyStr, Level, Line, IterOpt),
     ( IterOpt = malformed(Sfx)
     -> MAcc1 = [malformed_strategy_iterator(Line, Sfx)|MAcc]
+    ; IterOpt = malformed_if(Sfx)
+    -> MAcc1 = [malformed_conditional_condition(Line, Sfx)|MAcc]
     ;  MAcc1 = MAcc
     ),
     build_nodes(Rest, Counter1, [Node|NAcc], NOut, MAcc1, MOut).
@@ -842,7 +870,7 @@ is_relation_candidate(cl_body(N, 0, S0), cl_relation(N, S)) :-
     !.
 is_relation_candidate(_, _) :- fail.
 
-relation_section_unexpected_line(cl_header(N, _Level, Type, _IdOpt, _Label), relation_unexpected_header_in_relation_section(N, Type)).
+relation_section_unexpected_line(cl_header(N, _Level, Type, _IdOpt, _Label, _Meta), relation_unexpected_header_in_relation_section(N, Type)).
 relation_section_unexpected_line(cl_body(N, Level, S0), relation_unexpected_nonrelation_in_relation_section(N, Level, S)) :-
     string_trim(S0, S).
 relation_section_unexpected_line(Other, relation_unexpected_line_in_relation_section(Other)).

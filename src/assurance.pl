@@ -3,6 +3,7 @@
 	   set_current_assurance_repository/1,
 	   current_assurance_repository/1,
 	   reset_assurance_repository/0,
+           detach_assurance_repository/0,
 	   init_assurance_repository/1,	  % +CaseId
 	   attach_assurance_repository/1, % +CaseId
 	   alloc_instid/1,            % -InstId (fresh per occurrence)

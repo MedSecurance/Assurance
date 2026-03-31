@@ -164,6 +164,25 @@ ac_format_txt_goal(Output, strategy(Claim, Context, Subgoals), Indent) :-
 	ac_format_txt_context(Output, Context, NewIndent),
 	ac_format_txt_goals(Output, Subgoals, NewIndent).
 
+ac_format_txt_goal(Output, alternatives(Goals), Indent) :-
+	format(Output, '~aalternatives (at least one)~n', [Indent]),
+	atomic_concat(Indent, '  ', NewIndent),
+	ac_format_txt_goals(Output, Goals, NewIndent).
+
+ac_format_txt_goal(Output, conditional(Cond, TrueGoal, FalseGoal), Indent) :-
+	format(Output, '~aconditional if ~q~n', [Indent, Cond]),
+	atomic_concat(Indent, '  ', Ind1),
+	format(Output, '~a[true]~n', [Ind1]),
+	atomic_concat(Ind1, '  ', Ind2),
+	ac_format_txt_goal(Output, TrueGoal, Ind2),
+	format(Output, '~a[false]~n', [Ind1]),
+	ac_format_txt_goal(Output, FalseGoal, Ind2).
+
+ac_format_txt_goal(Output, conditional(CondTerms), Indent) :-
+	format(Output, '~aconditionals~n', [Indent]),
+	atomic_concat(Indent, '  ', NewIndent),
+	ac_format_txt_cond_terms(Output, CondTerms, NewIndent).
+
 ac_format_txt_goal(Output, goal_ref(Id), Indent) :-
 	format(Output, '~agoal -> ~a~n', [ Indent, Id ] ).
 
@@ -230,6 +249,13 @@ ac_format_txt_goals(_Output, [], _Indent).
 ac_format_txt_goals(Output, [G | Goals], Indent) :-
 	ac_format_txt_goal(Output, G, Indent),
 	ac_format_txt_goals(Output, Goals, Indent).
+
+ac_format_txt_cond_terms(_Output, [], _Indent).
+ac_format_txt_cond_terms(Output, [cond(Cond, Goal)|Rest], Indent) :-
+	format(Output, '~aif ~q~n', [Indent, Cond]),
+	atomic_concat(Indent, '  ', Ind2),
+	ac_format_txt_goal(Output, Goal, Ind2),
+	ac_format_txt_cond_terms(Output, Rest, Indent).
 
 
 				% ac_format_txt_context(+Output, +Context, +Indent)
@@ -380,6 +406,31 @@ ac_format_dot_goal(Output, ParentId, Depth, strategy(Claim, Context, Subgoals)) 
 	NextDepth is Depth + 1,
 	maplist(ac_format_dot_goal(Output, Id, NextDepth), Subgoals).
 	
+ac_format_dot_goal(Output, ParentId, Depth, alternatives(Goals)) :-
+	ac_format_dot_counter_next(C),
+	atomic_concat('alternatives_', C, Id),
+	format(Output, "~a [shape=diamond label=<<b>alternatives</b><br/><font point-size=\"9\">at least one</font>>]~n", [Id]),
+	format(Output, "~a -> ~a~n", [ParentId, Id]),
+	NextDepth is Depth + 1,
+	maplist(ac_format_dot_goal(Output, Id, NextDepth), Goals).
+
+ac_format_dot_goal(Output, ParentId, Depth, conditional(Condition, TrueGoal, FalseGoal)) :-
+	ac_format_dot_counter_next(C),
+	atomic_concat('conditional_', C, Id),
+	format(Output, "~a [shape=diamond label=<<b>if</b><br/>~q>]~n", [Id, Condition]),
+	format(Output, "~a -> ~a~n", [ParentId, Id]),
+	NextDepth is Depth + 1,
+	ac_format_dot_goal(Output, Id, NextDepth, TrueGoal),
+	ac_format_dot_goal(Output, Id, NextDepth, FalseGoal).
+
+ac_format_dot_goal(Output, ParentId, Depth, conditional(CondTerms)) :-
+	ac_format_dot_counter_next(C),
+	atomic_concat('conditionals_', C, Id),
+	format(Output, "~a [shape=diamond label=<<b>conditionals</b>>]~n", [Id]),
+	format(Output, "~a -> ~a~n", [ParentId, Id]),
+	NextDepth is Depth + 1,
+	ac_format_dot_cond_terms(Output, Id, NextDepth, CondTerms).
+
 ac_format_dot_goal(Output, ParentId, _Depth, goal_ref(Id) ) :-
 	format(Output, "~a -> ~a~n", [ParentId, Id]).
 
@@ -517,6 +568,22 @@ ac_format_dot_goal(Output, ParentId, Depth, evidence(Id, _Label, Category, Claim
 
 ac_format_dot_goal(Output, ParentId, Depth, evidence(Category, Claim, Context, XRef) ) :-
 	ac_format_dot_evidence(Output, ParentId, Depth, evidence(Category, Claim, Context, XRef)).
+ac_format_dot_cond_terms(_Output, _ParentId, _Depth, []).
+ac_format_dot_cond_terms(Output, ParentId, Depth, [cond(Cond, Goal)|Rest]) :-
+	ac_format_dot_counter_next(C),
+	atomic_concat('cond_', C, Id),
+	format(Output, "~a [shape=diamond label=~q]~n", [Id, Cond]),
+	format(Output, "~a -> ~a~n", [ParentId, Id]),
+	ac_format_dot_goal(Output, Id, Depth, Goal),
+	ac_format_dot_cond_terms(Output, ParentId, Depth, Rest).
+ac_format_dot_cond_terms(_Output, _ParentId, _Depth, []).
+ac_format_dot_cond_terms(Output, ParentId, Depth, [cond(Cond, Goal)|Rest]) :-
+	ac_format_dot_counter_next(C),
+	atomic_concat('cond_', C, Id),
+	format(Output, "~a [shape=diamond label=~q]~n", [Id, Cond]),
+	format(Output, "~a -> ~a~n", [ParentId, Id]),
+	ac_format_dot_goal(Output, Id, Depth, Goal),
+	ac_format_dot_cond_terms(Output, ParentId, Depth, Rest).
 
 
 				% ac_format_dot_evidence(+Output, +ParentId, +Depth, +Evidence)
@@ -927,6 +994,16 @@ ac_pattern_ref_node(PatternId, Args) :-
 goal_pattern_refs(ac_pattern_ref(PatternId, Args), PatternId, Args).
 goal_pattern_refs(ac_pattern_ref(_Id, _Label, PatternId, Args), PatternId, Args).
 goal_pattern_refs(ac_pattern_ref(_Id, _Label, PatternId, Args, _RefInfo), PatternId, Args).
+goal_pattern_refs(alternatives(Goals), PatternId, Args) :-
+    member(G, Goals),
+    goal_pattern_refs(G, PatternId, Args).
+goal_pattern_refs(conditional(_Cond, TrueGoal, FalseGoal), PatternId, Args) :-
+    ( goal_pattern_refs(TrueGoal, PatternId, Args)
+    ; goal_pattern_refs(FalseGoal, PatternId, Args)
+    ).
+goal_pattern_refs(conditional(CondTerms), PatternId, Args) :-
+    member(cond(_Cond, Goal), CondTerms),
+    goal_pattern_refs(Goal, PatternId, Args).
 
 goal_pattern_refs(goal(_Id, _Label, _Claim, _Ctx, Subgoals), PatternId, Args) :-
     member(G, Subgoals),
