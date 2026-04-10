@@ -1,0 +1,58 @@
+\subsubsection{HTML/SVG presentation of compact actual bindings}
+
+The same readability problem that motivated compact actual-binding rendering in TXT
+also arises in graphical exports. In particular, when large structured actual values are
+rendered directly inside DOT/SVG node labels, the resulting graphics become difficult
+to read and may expand horizontally in ways that obscure the assurance-case structure.
+
+Accordingly, graphical export should follow the same general design principle already
+adopted for TXT export:
+
+\begin{itemize}
+\item keep the main assurance-case presentation readable and structurally focused;
+\item present compact actual-binding identifiers inline where needed; and
+\item make the full bound values available separately in a clearly delimited details view.
+\end{itemize}
+
+For HTML export, the preferred presentation is:
+
+\begin{itemize}
+\item the main SVG or graph panel shows only compact IDs inline (for example, \#S1, \#N2),
+not full concrete terms;
+\item a side panel, expandable details view, or equivalent auxiliary pane presents the full
+actual-value legend;
+\item selecting or hovering over a compact ID in the surrounding HTML presentation may
+highlight the corresponding full value in the legend, but such interaction is a presentation
+enhancement rather than a semantic requirement.
+\end{itemize}
+
+For plain SVG output viewed outside an HTML container, the preferred presentation is:
+
+\begin{itemize}
+\item keep the node labels visually clean by showing only compact IDs inline;
+\item do not attempt to embed the full actual legend into the visible node labels; and
+\item if needed, emit the full legend separately as accompanying TXT/HTML material rather
+than burdening the SVG itself.
+\end{itemize}
+
+This approach has several advantages.
+
+\begin{itemize}
+\item It preserves the readability of the argument graph by preventing large concrete terms
+from dominating the node text.
+\item It keeps the graphical presentation aligned with the already adopted compact-ID model
+of TXT export.
+\item It preserves inspectability, because the full actual values remain available in a separate,
+explicit legend.
+\item It avoids overfitting the DOT/SVG layer to the pretty-printing of Prolog terms, which is
+not the primary purpose of the graphical view.
+\end{itemize}
+
+Operationally, this means that the graphical exporter should treat compact actual-binding
+IDs as the default inline representation for structured bound values, and should regard
+full-value presentation as a separate details-layer concern.
+
+\paragraph{Status.}
+This is a design decision and implementation direction. The current implementation
+already supports compact actual-binding rendering and a delimited legend in TXT export.
+A corresponding HTML/SVG details presentation remains future work.

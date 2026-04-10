@@ -1,0 +1,1801 @@
+\documentclass[11pt,twoside,a4paper]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{lmodern}
+\usepackage{setspace}
+\usepackage{xcolor}
+\usepackage{verbatim}
+\usepackage{longtable}
+\usepackage{array}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue
+}
+
+% use following setup for other non-deliverable docs
+% FROM HERE    (look for TO HERE)
+\usepackage[british]{babel}
+\makeatletter
+\newcommand{\eudate}{\number\day\space
+  \ifcase\month\or
+  January\or February\or March\or April\or May\or June\or
+  July\or August\or September\or October\or November\or December\fi
+  \space\number\year}
+\makeatother
+
+\usepackage{fancyhdr}
+\setlength{\headheight}{14pt}
+\pagestyle{fancy}
+\fancyhf{} % clear all header/footer fields
+
+\lhead{ACO v1.2 Specification}
+\chead{}
+\rhead{\eudate}
+
+\lfoot{MedSecurance / O-ETB}
+\cfoot{\thepage}
+\rfoot{Version 07}
+
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+\newcommand{\pipeline}{\textrightarrow}
+
+\setlength{\parskip}{0.4em}
+\setlength{\parindent}{0pt}
+
+\begin{document}
+
+\pagenumbering{roman}
+\thispagestyle{empty}
+
+\begin{center}
+{\LARGE \textbf{\textcolor{blue}{Assurance Case Outline v1.2 Specification}}}\\[0.5em]
+\eudate
+\end{center}
+
+A user-friendly, intuitive, indentation-based assurance case outline format designed for authors, supporting automatic transformation into an internal Node Model, APL (Assurance Pattern Language) blocks, and graphical representations.
+A prototype implementation for Assurance Case Outline (ACO) is part of the Open Evidential Tool Bus (O-ETB) developed for the EC MedSecurance Project.
+
+This v1.2 revision is a conservative evolution of v1.1. It preserves the look and feel of the ACO language previously defined, with modest refinements, while clarifying and extending the behaviour of the accompanying processor (canonicalisation, diagnostics, ASCII tree view), and formalising author guidance and assessment concepts that are already used operationally in the O-ETB workflow.
+\textcolor{blue}{Material newly introduced or substantially revised for v1.2 is highlighted in blue.}
+
+\bigskip
+\hrule
+\bigskip
+
+\clearpage
+\tableofcontents
+
+\clearpage
+\pagenumbering{arabic}
+\setcounter{page}{1}
+
+% TO HERE
+
+\clearpage
+\section{Purpose and Scope}
+
+This specification defines a structured textual ``Assurance Case Outline'' (ACO) language that is domain-independent and platform-neutral for authoring assurance case instances and modules. It extends toward the user the interface presented by the O-ETB, providing a gentle entry point to its use that does not involve the technical syntax of its Argument Pattern Language (APL).
+
+
+ACO is intended for use by assurance engineers and assurance case authors in conjunction with O-ETB, though it is not tied to O-ETB internals, but is compatible by translation with O-ETB's Argument Pattern Language (APL) concepts and with the GSN Community Standard where that does not conflict with the current O-ETB implementation.
+
+The ACO notation aims to balance:
+\begin{itemize}[leftmargin=2em]
+  \item Ease of authoring (minimal punctuation, close to ``normal'' outlines).
+  \item Readability (GSN-like, hierarchical structure).
+  \item Machine-interpretability (convertible to APL, DOT/Graphviz, and other formats).
+\end{itemize}
+
+The \textbf{ACO outline is a human-friendly avenue of access to assurance case automation provided by O-ETB}.
+APL and various visualisations are generated from it by the ACO Processor.
+
+In particular:
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{ACO is unambiguous enough} to be parsed into a precise internal representation (Node Model).
+  \item The Node Model is a precursor to, and can then be systematically mapped into, APL blocks and graphical representations.
+  \item The Node Model is also the place where checks, diagnostics, and transformations are performed.
+\end{itemize}
+
+Throughout this specification, reference is made to a front-end tool that parses,
+canonicalises, and analyses ACO outlines.
+We currently refer to this tool as the
+\emph{ACO Frontend}, and, where the
+context is clear, simply \emph{Frontend}.
+The Frontend is a \emph{reference implementation} of the present
+specification, intended to demonstrate the intended interpretation of the ACO
+language and to support authoring, diagnostics, and integration with downstream
+tooling.
+
+Envisioned extensions to the current ACO processor will give it further capabilities, distinct from those provided by the O-ETB ``backend,'' in support of the initial framing and iterative and incremental construction and refinement of assurance cases.
+Once those extensions have been implemented we plan to refer to them, along with the current ACO processor functions, as the ``ACO Workbench'' (or just ``Workbench'').
+
+The reference implementation of the Frontend:
+\begin{itemize}[leftmargin=2em]
+  \item parses ACO into the Node Model, assigning to each node a unique identifier (ID),
+  \item computes hierarchical IDs that reflect the indentation structure,
+  \item can canonicalise an ACO outline (systematically and consistently renumbering IDs), and
+  \item can quickly generate several ``ASCII tree views'' for easier inspection, comprehension and review.
+\end{itemize}
+
+\textcolor{blue}{Version 1.2 treats input assessment and author guidance as first-class concerns: the front-end is expected to compute and report a set of preliminary quality signals (e.g.\ undeveloped nodes, provisional evidence, uninstantiated nodes) that can be used both for expert review and for future ``wizard'' guidance for inexperienced authors as part of the Workbench.}
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Core Concepts}
+An assurance case outline is constructed of one or more Nodes.
+Each Node is represented as one or more text lines.
+Nodes are grouped into units that are either a Case or a Module.
+
+\subsection{Node Types}
+
+ACO adopts a minimal, GSN-inspired set of node types, that is also aligned with APL concepts:
+
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{Goal} --- a claim that must hold.
+  \item \textbf{Strategy} --- a structural combinator explaining how child nodes collectively
+        support a parent goal node (may be optional in early usage).
+  \item \textbf{Context} --- relevant facts, definitions, scope, and environmental conditions.
+  \item \textbf{Assumption} --- asserted conditions that are taken as given about another node.
+  \item \textbf{Justification} --- rationale explaining why an approach is acceptable.
+  \item \textbf{Evidence} --- an artefact or reference that directly discharges the goal it
+        supports.
+  \item \textbf{Module} --- a reference to a unit that encapsulates a goal and the
+        structure that supports it, serving as:
+  \begin{itemize}[leftmargin=1.5em]
+    \item a reusable argument fragment (possibly parameterised),
+    \item a component-level argument, or
+    \item an evidence-aggregation block.
+  \end{itemize}
+\end{itemize}
+
+\textcolor{blue}{In v1.2 revision 07, a further distinction is made between a top-level \texttt{Module:} unit header, which introduces a reusable module definition, and an in-tree \texttt{ModuleRef} occurrence, which invokes such a module within a local argument subtree. The specialised leaf form \texttt{GoalRef} is also recognised for local shared-goal reuse. These additions do not displace the core GSN-inspired node family, but they refine how module invocation and local structural aliasing are expressed in author-facing ACO.}
+
+\paragraph{Evidence, ModuleRef, and GoalRef Nodes} are \emph{leaf-level} elements of an assurance case, though different kinds of leaves.
+In particular:
+\begin{itemize}[leftmargin=2em]
+  \item an Evidence, ModuleRef, or GoalRef occurrence may appear as a child of a Goal or Strategy Node,
+  \item an Evidence or ModuleRef occurrence may contain body text describing the artefact, its provenance,
+        or how it supports the associated claim; a GoalRef occurrence is a compact alias form and normally has no body text, but
+  \item no Goal, Strategy, Context, Assumption, Justification, Evidence, ModuleRef, or GoalRef node
+        may appear beneath an Evidence, ModuleRef, or GoalRef occurrence in the outline,
+  \item Context, Assumption or Justifications related to evidence or module references should instead be attached to the parent of the Evidence, ModuleRef, or GoalRef occurrence.
+\end{itemize}
+
+An Evidence Node
+does not introduce further decomposition structure beneath itself in the ACO indentation tree and therefore
+\textbf{must not have child nodes} in the indentation structure (though it may have Body lines at one greater level of indentation).
+
+In accordance with established GSN practice, a ModuleRef occurrence in ACO is a leaf node with respect to the enclosing argument. Decomposition and supporting structure occur within the referenced module unit, not under the module reference itself.
+Modular arguments allow a complex argument to be decomposed into independent, reusable argument fragments.
+
+A GoalRef occurrence is also a leaf-level form. It does not introduce a new supporting subtree; rather, it denotes local reuse of an already established goal subtree within the same unit.
+
+An Evidence Node says, ``justification ends here,'' while a ModuleRef Node says, ``justification continues (or is completed) elsewhere,'' and a GoalRef Node says, ``the same supporting argument already established elsewhere in this unit is being intentionally reused here.''
+Tools should treat any attempt to introduce children under an Evidence, ModuleRef, or GoalRef occurrence as a
+structural error, or at least emit a strong warning in permissive modes.
+This restriction reflects the intended role of Evidence as a direct claim discharger
+rather than a decomposition construct.
+
+Additional specialised constructs (e.g.\ richer module structures, structural abstractions or domain-specific node flavours) can be introduced later, but the initial ACO v1.2 family focuses on these core types.
+
+\textcolor{blue}{(v1.2 clarification) Evidence nodes are intended to be leaf-level dischargers of a goal: they do not introduce further decomposition structure beneath themselves in the ACO indentation tree. Tools may warn (or treat as an error in strict modes) if an Evidence, ModuleRef, or GoalRef occurrence has children.}
+
+\subsection{Handling of Provisional Evidence}
+\label{sec:provisional-evidence}
+
+During the development of an assurance case it is common for evidence to exist in
+varying states of maturity. ACO explicitly supports this reality by allowing
+\emph{provisional evidence} to appear in an outline.
+
+Provisional evidence does not yet have a precisely defined validation method or a procedure for generating the artefact that is to serve as the evidence datum.
+Therefore, provisional evidence is not yet fully accepted as discharging
+the claim it supports, but is nevertheless recorded to guide development,
+planning, and review. Evidence nodes with evidence categories having provisional status are not considered to be fully developed.
+
+\paragraph{Representation in ACO.}
+Provisional status is not expressed through a distinct node type or specialised
+syntax. Instead:
+\begin{itemize}[leftmargin=2em]
+  \item provisional evidence is represented using ordinary \texttt{Evidence} nodes,
+  \item the provisional status of an evidence category is determined by the absence of its inclusion in a set of recognized evidence categories for which the validation method is well-defined,
+  \item the permissibility of the appearance of provisional evidence categories is determined by a configuration option of the tooling,
+  \item its provisional nature may be further conveyed through the short label, body text,
+        annotations, or tool-specific conventions, and
+  \item the core ACO syntax and indentation rules apply unchanged.
+\end{itemize}
+
+This design keeps the language syntax stable while allowing tools and workflows
+to interpret evidence maturity.
+
+\paragraph{Typical Provisional Categories.}
+Tools may recognise a number of provisional evidence categories, such as:
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{Planned} -- evidence expected to be produced in the future,
+  \item \textbf{Placeholder} -- a temporary stand-in used to reserve a position in the argument,
+  \item \textbf{Candidate} -- evidence under evaluation or review, and
+  \item \textbf{Accepted} -- evidence judged sufficient to support the associated claim.
+\end{itemize}
+
+These categories are indicative rather than normative; the ACO specification does
+not mandate specific labels or keywords for these characteristics.
+
+\paragraph{Semantic Interpretation.}
+From the perspective of the ACO language:
+\begin{itemize}[leftmargin=2em]
+  \item evidence having provisional and accepted evidence categories are structurally equivalent,
+  \item both kinds of evidence categories may appear as children of Goals, Strategies, or Modules, and
+  \item both contribute \texttt{supported\_by} relations in the Node Model.
+\end{itemize}
+
+However, tools should distinguish provisional evidence from accepted evidence when
+assessing the \emph{maturity} or \emph{completeness} of an assurance case.
+Also, when an ACO containing a provisional evidence node is translated into APL, in the instantiation of an assurance case from the resulting APL the resulting evidence block will carry the provisional status of the evidence and a validation procedure will not be invoked.
+
+\paragraph{Tool Responsibilities.}
+When a provisional evidence category is detected, tools should:
+\begin{itemize}[leftmargin=2em]
+  \item classify and report provisional evidence explicitly,
+  \item avoid treating provisional evidence as fully discharging a claim in
+        maturity assessments, and
+  \item support workflows in which provisional evidence is progressively replaced
+        or upgraded to an item belonging to a fully defined evidence category as the case evolves.
+\end{itemize}
+
+The presence of provisional evidence should not be treated as a structural error.
+It is an expected and useful feature during iterative assurance case development.
+
+\subsection{Node Header Syntax}
+
+Each node is introduced by a \textbf{header line}, followed by one or more indented \textbf{body lines}.
+
+The header has the general form:
+\begin{quote}
+\texttt{\textless Type\textgreater{} [ID] \textless shortLabel\textgreater:}
+\end{quote}
+
+where:
+
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{\textless Type\textgreater{}} is one of:
+  \begin{itemize}[leftmargin=1.5em]
+    \item \texttt{Goal}
+    \item \texttt{Strategy}
+    \item \texttt{Context}
+    \item \texttt{Assumption}
+    \item \texttt{Justification}
+    \item \texttt{Evidence}
+    \item \texttt{Module}
+  \end{itemize}
+
+  \item \texttt{[ID]} is an \textbf{optional} identifier, such as \texttt{G0}, \texttt{G1}, \texttt{C3}, \texttt{M2}, etc.
+  \begin{itemize}[leftmargin=1.5em]
+    \item If present, it is a single token (no spaces).
+    \item If absent, the header consists only of \texttt{\textless Type\textgreater{} \textless shortLabel\textgreater:}.
+  \end{itemize}
+
+  \item \texttt{\textless shortLabel\textgreater{}} is a concise human-oriented label that identifies the node.
+  It may be written in one of two forms:
+  \begin{itemize}[leftmargin=1.5em]
+    \item \textbf{Unquoted short label}: a single token with an initial alphabetic character and no spaces.
+    \begin{itemize}[leftmargin=1.5em]
+      \item CamelCase or snake\_case is recommended (e.g.\ \texttt{operationalPlane}, \texttt{componentBehaviour}, \texttt{plane\_definition}).
+    \end{itemize}
+    \item \textbf{Quoted short text}: a short quoted string enclosed in double quotes, allowing spaces.
+    \begin{itemize}[leftmargin=1.5em]
+      \item This form is intended for cases where a compact but readable phrase is preferable to an identifier-style token.
+    \end{itemize}
+  \end{itemize}
+
+  \item The header line \textbf{must end} with a colon (\texttt{:}). 
+  \textcolor{blue}{(v1.2 extension) This restriction has been relaxed to enable a compact and natural beginning of the Body text. Text following the colon is treated as the first line of the Body and effectively rewritten as such.}
+\end{itemize}
+
+\textcolor{blue}{Two specialised reference forms are additionally recognised in revision 07:}
+\begin{itemize}[leftmargin=2em]
+  \item \textcolor{blue}{\texttt{ModuleRef [ID] [<callExpr>]:} --- an in-tree module invocation. The bracketed call expression denotes the referenced module or pattern together with any actual arguments. A short explanatory body may follow in the ordinary way after the colon.}
+  \item \textcolor{blue}{\texttt{GoalRef <TargetId>} --- a compact local shared-goal reference. This is a leaf form, normally written without a trailing colon or body text. It denotes reuse of a goal subtree already established elsewhere in the same unit.}
+\end{itemize}
+
+Thus, the following header forms are all valid:
+
+\textbf{With ID and unquoted label}:
+\begin{verbatim}
+    Goal G0 operationalPlane:
+\end{verbatim}
+
+\textbf{With ID and quoted short text}:
+\begin{verbatim}
+    Goal G0 "Operational Plane Policy":
+\end{verbatim}
+
+\textbf{Without ID and unquoted label}:
+\begin{verbatim}
+    Context planeDefinition:
+\end{verbatim}
+
+\textbf{Without ID and quoted short text}:
+\begin{verbatim}
+    Context "Plane Definition":
+\end{verbatim}
+
+\textbf{Any of these with Body text following the colon, e.g.}:
+\begin{verbatim}
+    Goal G0 operationalPlane: The operational plan satisfies its {specification}.
+\end{verbatim}
+Parsing conventions (informal):
+
+\begin{itemize}[leftmargin=2em]
+  \item The first token is always the \textbf{Type}.
+  \item If the second token matches the pattern of an ID (e.g.\ \texttt{G<digit>+}, \texttt{C<digit>+}, \texttt{M<digit>+}, etc.), it is treated as the \textbf{ID}.
+  \item The \textbf{shortLabel} is then:
+  \begin{itemize}[leftmargin=1.5em]
+    \item the next single token, if unquoted, or
+    \item the complete quoted string, if the next non-whitespace character is a double quote.
+  \end{itemize}
+  \item Everything between the end of the shortLabel and the trailing colon \texttt{:} must be whitespace only.
+\end{itemize}
+
+Tools should preserve the shortLabel text as written (including spaces in the quoted form) when generating diagnostics, ASCII tree views, and downstream artefacts. Canonical identifiers derived from indentation are independent of the surface shortLabel representation.
+
+\subsection{Node Body Text}
+
+The header line is followed by one or more \textbf{indented body lines}, containing a natural-language description. \textcolor{blue}{As noted in the Node Header section above, there is an exception for the first (or only) line of the body to begin after the colon on the node header line.}
+
+Examples:
+\begin{verbatim}
+    Goal G0 operationalPlane:
+      The operational plane guarantees the {local policy} is met.
+
+    Context C0 planeDefinition:
+      The system model describes the plane and its {properties}.
+
+    ModuleRef M1 [componentBehaviour({component})]:
+      Behaviour of the {component} meets its local policy.
+\end{verbatim}
+
+Rules:
+\begin{itemize}[leftmargin=2em]
+  \item Body lines must be indented \textbf{more} than the header (one indentation level deeper).
+  \item Body text may span multiple lines.
+  \item Blank lines are allowed between nodes for readability, but should not break the structural semantics.
+  \item The first (or only) line of body text may appear following the colon on the associated node header line.
+\end{itemize}
+
+\subsection{Unit Headers vs.\ Node Headers}
+ACO distinguishes two kinds of ``headers'':
+
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{Unit headers} begin a new \emph{unit}:
+  \begin{itemize}[leftmargin=1.5em]
+    \item \texttt{Case: \dots}
+    \item \texttt{Module: \dots} (a module \emph{unit} header)
+  \end{itemize}
+  Unit headers are always written at indentation level~0 and they reset the unit-local scope of node identifiers (IDs).
+  \item \textbf{Node headers} declare nodes within the current unit (e.g.\ \texttt{Goal}, \texttt{Strategy}, \texttt{Context}, \texttt{Assumption}, \texttt{Justification}, \texttt{Evidence}, and \texttt{Module <ID> \dots :}).
+  Node headers may appear at any indentation level and do not start a new unit.
+\end{itemize}
+
+\textcolor{blue}{In revision 07, an in-tree reference to a module is introduced using the node header syntax with the type \texttt{ModuleRef}. The earlier local occurrence form using \texttt{Module} is still accepted for backward compatibility but is retained only as a compatibility alias. New outlines should use \texttt{ModuleRef}.}
+
+The general form of a module reference header is therefore:
+\begin{quote}
+\texttt{ModuleRef [ID] [<callExpr>]:}
+\end{quote}
+
+\textcolor{blue}{where \texttt{<callExpr>} is typically a module or pattern name with actual arguments, for example \texttt{[n\_foundational\_plane\_node(\{S\},\{N\})]}. The previous compatibility form \texttt{Module [ID] [<callExpr>]:} remains acceptable to the current processor but is no longer the preferred author-facing syntax.}
+
+where:
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{[ID]} is an optional identifier, subject to the same rules as for other node types.
+  \item \texttt{\textless shortLabel\textgreater{}} is the \emph{module name}, written either as an
+        unquoted single token or as a quoted short text, as described in Section~2.2.
+\end{itemize}
+
+Example:
+\begin{verbatim}
+ModuleRef M1 [componentBehaviour({component})]:
+  Behaviour of the {component} meets its local policy.
+\end{verbatim}
+
+or, using a quoted module name:
+\begin{verbatim}
+ModuleRef M1 [componentBehaviour({component})]:
+  Behaviour of the {component} meets its local policy.
+\end{verbatim}
+
+A ModuleRef occurrence participates in the indentation-defined structure in exactly the same way as other node types. By default:
+\begin{itemize}[leftmargin=2em]
+  \item a ModuleRef occurrence appearing as a child of a Goal contributes a
+        \texttt{supported\_by} relation, and
+  \item the referenced Module unit may itself have supporting children (e.g.\ sub-goals, strategies, or evidence),
+        subject to the general indentation rules.
+\end{itemize}
+
+Modules are \emph{optional} in an ACO outline: an assurance case may be written entirely
+without modules. However, whenever a module is introduced, it must be declared explicitly
+using a \texttt{Module:} unit header or a local \texttt{ModuleRef} occurrence as appropriate; there is no implicit or anonymous module construct.
+
+Although modules are often used to represent reusable argument fragments or patterns,
+ACO v1.2 does not distinguish syntactically between ``parameterized modules'' and other kinds
+of concrete modules that may be used solely to break up an assurance case into more manageable pieces for description or presentation. Any additional semantics related to reuse, instantiation, or parameterisation
+are handled by tooling and by downstream representations (such as APL), not by the
+surface ACO syntax itself.
+
+
+\subsection{Optional Case Unit Header}
+
+In larger and more developed outlines it is often useful to name the overall assurance case explicitly.
+ACO therefore supports an optional \emph{case header} at the top of a case unit, written
+in a simple free-text form:
+
+\begin{quote}
+\texttt{Case: \textless Title\textgreater{} - \textless Scope\textgreater}
+\end{quote}
+
+where:
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{\textless Title\textgreater{}} is a short human-readable name for the assurance case, and
+  \item \texttt{\textless Scope\textgreater{}} (optional) briefly summarises the scope, system boundary,
+        or context of the argument.
+\end{itemize}
+
+Variants such as \texttt{CASE: ...} are accepted. The separator between title and scope
+is a dash surrounded by spaces; if no dash is present, the entire text after
+\texttt{Case:} is treated as the title and the scope is treated as empty.
+
+The case header is \emph{metadata}, not a node in the argument graph:
+\begin{itemize}[leftmargin=2em]
+  \item it does not participate in \texttt{supported\_by} or \texttt{in\_context\_of} relations,
+  \item it does not affect indentation-based structure, and
+  \item it is not assigned a node identifier.
+\end{itemize}
+
+\paragraph{Absence of a Case Header.}
+If no \texttt{Case:} header is present, the ACO file is treated as describing an
+\emph{anonymous assurance case}. In this situation:
+\begin{itemize}[leftmargin=2em]
+  \item the outline is still fully valid ACO,
+  \item all nodes and relations are interpreted normally, and
+  \item the top-level nodes collectively constitute the case without an explicit name.
+\end{itemize}
+
+Tools should handle anonymous cases gracefully. In particular:
+\begin{itemize}[leftmargin=2em]
+  \item generated artefacts (e.g.\ reports, DOT titles, APL block sets) may use
+        a default or tool-generated case name,
+  \item diagnostics and statistics should not require the presence of a case header, and
+  \item the absence of a case header should not be reported as an error or warning.
+\end{itemize}
+
+The case header exists solely to improve clarity, traceability, and presentation.
+Its use is recommended for non-trivial assurance cases, but it is not mandatory.
+
+\subsection{Case Metadata, Modules, and Anonymous Cases}
+
+An ACO file may include a \texttt{Case:} header, one or more \texttt{Module} nodes, both, or neither.
+The appearances of these constructs are not mutually exclusive and serve different purposes.
+
+\paragraph{Case Header and Modules.}
+The \texttt{Case:} header, when present, provides a name and optional scope for the overall
+assurance case. Module headers, when present, provide structure within the case by encapsulating
+reusable or composite argument fragments.
+
+It is therefore valid for an ACO file to:
+\begin{itemize}[leftmargin=2em]
+  \item declare a case using a \texttt{Case:} header and contain one or more Module headers,
+  \item declare a case and contain no modules,
+  \item contain modules without declaring an explicit case header, or
+  \item contain neither a case header nor any module headers.
+\end{itemize}
+
+\paragraph{Anonymous Cases.}
+If no \texttt{Case:} header is present, the outline is interpreted as describing an
+\emph{anonymous assurance case}. In this situation:
+\begin{itemize}[leftmargin=2em]
+  \item the top-level nodes collectively define the case,
+  \item all structural and semantic rules apply unchanged, and
+  \item the absence of a case name has no effect on correctness or completeness.
+\end{itemize}
+
+\paragraph{Tool Interpretation.}
+Tools should treat the case header strictly as metadata:
+\begin{itemize}[leftmargin=2em]
+  \item it does not participate in the Node Model,
+  \item it does not constrain the presence or absence of Module units or ModuleRef occurrences, and
+  \item it should not be required for parsing, canonicalisation, or analysis.
+\end{itemize}
+
+When a Case: header is absent, tools may generate a default or derived case identifier and empty scope
+for presentation purposes (e.g.\ in reports or visualisations), but this is not
+treated as semantically significant.
+
+This separation allows ACO to support both named assurance cases and reusable,
+case-agnostic module libraries using a single uniform syntax.
+
+\subsection{Module Unit Header}
+
+ACO supports the explicit declaration of reusable or composite argument structures through
+\emph{Module} unit headers.
+The distinction between a module node header and a module unit header is to be stressed. The former is a \emph{reference} to a module while the latter introduces the \emph{definition} of a module.
+
+A Module encapsulates a goal together with the structure that supports it,
+and may represent, for example, a reusable argument fragment, a component-level argument,
+or an evidence-aggregation block.
+The occurrence of a \texttt{Module:} header is not itself a module-reference node, but rather metadata similar to a Case header.
+%
+
+\subsection{ModuleRef and GoalRef Nodes: Syntax and Semantics}
+\label{sec:module-semantics}
+
+ModuleRef nodes provide a way to invoke structured argument fragments within an
+ACO outline. They are particularly useful for reuse, decomposition by component or subsystem,
+and for managing large arguments. GoalRef provides the corresponding compact in-unit notation for reusing a goal subtree that has already been established locally.
+
+\paragraph{Syntax Recap.}
+A ModuleRef node is introduced using the reference header syntax:
+\begin{quote}
+\texttt{ModuleRef [ID] [<callExpr>]:}
+\end{quote}
+The syntactic rules for \texttt{[ID]} are the same as for other node types. The \texttt{<callExpr>} field is a term-like call designator rather than a free short label and is intended to lower deterministically into the corresponding APL pattern-reference form.
+
+\paragraph{Structural Semantics.}
+Semantically, a ModuleRef occurrence behaves as a specialised form of Goal support:
+\begin{itemize}[leftmargin=2em]
+  \item a ModuleRef occurrence denotes a referenced module whose root claim is intended to be supported internally,
+  \item its supporting structure is provided within the referenced module unit rather than as local indentation children, and
+  \item when a ModuleRef occurrence appears as a child of another node, it contributes a
+        \texttt{supported\_by} relation.
+\end{itemize}
+
+Thus, from the perspective of the Node Model, a ModuleRef occurrence participates in the same
+local support relations as a Goal-like child while remaining a leaf in the enclosing unit.
+
+\paragraph{Internal Structure.}
+A ModuleRef occurrence must not have local structural children. The referenced Module unit may of course contain children of any node type permitted by the general rules,
+including:
+\begin{itemize}[leftmargin=2em]
+  \item Goals or sub-goals,
+  \item Strategies explaining internal decomposition,
+  \item Contexts, Assumptions, and Justifications, and
+  \item Evidence nodes (subject to the restriction that Evidence nodes are leaves).
+\end{itemize}
+
+This allows a Module unit to encapsulate a complete argument fragment.
+
+\paragraph{Use and Interpretation.}
+ModuleRef and GoalRef are optional: an ACO outline need not use them at all. When they are used,
+their intended interpretation is:
+\begin{itemize}[leftmargin=2em]
+  \item to make the argument structure more explicit and manageable,
+  \item to support reuse of argument fragments across cases or components, and
+  \item to provide a natural boundary for later instantiation, parameterisation,
+        or mapping to downstream representations.
+\end{itemize}
+
+\textcolor{blue}{GoalRef has an additional local semantic constraint: the referenced goal identifier must denote a goal already established within the same unit. The current processor resolves GoalRef using that unit-local symbol table discipline. A future semantic check will further confirm that the assumptions and contexts required by the reused subtree are satisfied at each reuse site.}
+
+ACO v1.2 does not require the author to write internal ETB terms such as \texttt{goal\_ref/1} or \texttt{ac\_pattern\_ref/5}. Those are downstream forms handled by translation to APL and instantiation in O-ETB.
+
+\paragraph{Tool Considerations.}
+Tools should:
+\begin{itemize}[leftmargin=2em]
+  \item treat ModuleRef occurrences as first-class reference nodes in the argument graph,
+  \item include them in diagnostics and statistics,
+  \item allow ModuleRef occurrences to appear wherever a Goal could appear structurally, and
+  \item avoid imposing additional constraints not stated in this specification.
+\end{itemize}
+
+This deliberately lightweight treatment ensures that ModuleRef and GoalRef can be used
+flexibly while remaining compatible with both informal authoring workflows and
+more formal downstream analyses.
+
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Indentation-Based Structure}
+
+\subsection{Indentation Rules}
+
+Indentation is the primary way to represent structure and relationships in an outline.
+
+\begin{itemize}[leftmargin=2em]
+  \item Indentation uses \textbf{2 spaces per level} by default.
+  \begin{itemize}[leftmargin=1.5em]
+    \item Tabs are discouraged; tools should normalise to spaces or flag tabs.
+  \end{itemize}
+
+  \item A node header at indentation level \(k\) (\(k \geq 0\)):
+  \begin{itemize}[leftmargin=1.5em]
+    \item If \(k = 0\), it is a top-level node.
+    \item If \(k > 0\), it is structurally a \textbf{child} of the nearest preceding node header at indentation level \(k - 1\).
+  \end{itemize}
+
+  \item When the indentation decreases from level \(k\) to level \(j\):
+  \begin{itemize}[leftmargin=1.5em]
+    \item All preceding nodes at levels \(> j\) are considered ``closed''.
+    \item The new node at level \(j\) is attached (as child or sibling) appropriately in the tree implied by indentation level.
+  \end{itemize}
+
+  \item Indentation must never ``jump'' to a greater level by more than one level without passing through the intermediate levels. For example:
+  \begin{itemize}[leftmargin=1.5em]
+    \item Going directly from level 0 to level 3 is \textbf{invalid}.
+    \item This is treated as a structural error (see Section~\ref{sec:errors}).
+  \end{itemize}
+\end{itemize}
+
+\subsection{Default Relationship Semantics}
+
+From the indentation-defined tree, ACO derives \textbf{default relationships}.
+
+For a parent node \(P\) and a child node \(N\) (implied by indentation):
+\begin{itemize}[leftmargin=2em]
+  \item If \(N\) is of type Goal, Strategy, Evidence, Module, Assumption, or Justification:
+  \begin{itemize}[leftmargin=1.5em]
+    \item A default edge \texttt{supported\_by(P, N)} is added to the Node Model.
+  \end{itemize}
+
+  \item If \(N\) is of type Context:
+  \begin{itemize}[leftmargin=1.5em]
+    \item A default edge \texttt{in\_context\_of(P, N)} is added.
+  \end{itemize}
+\end{itemize}
+
+This means:
+\begin{itemize}[leftmargin=2em]
+  \item Authors do \textbf{not} need to explicitly spell out relations for the common tree-structured argument.
+  \item Non-tree or cross-cutting relations can be added explicitly using natural-language relation sentences (see Section~\ref{sec:nl-relations}).
+\end{itemize}
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Optional Natural-Language Relations}
+\label{sec:nl-relations}
+
+To improve readability and to express \textbf{non-hierarchical} (non-tree) relations, authors may add optional explicit relation sentences.
+
+These are written in a natural language style but parsed into relations over node IDs.
+
+\subsection{Supported Relations}
+
+The following patterns are accepted (case-insensitive, minor variations allowed).
+
+\textbf{Supported-by:}
+\begin{verbatim}
+    G0 is supported by G1, G2, C0 and M0.
+    G1, G2, C0 and M0 support G0.
+\end{verbatim}
+
+\textbf{In-context-of:}
+\begin{verbatim}
+    G0 is in context of C0.
+    C0 provides context for G0.
+\end{verbatim}
+
+Where:
+\begin{itemize}[leftmargin=2em]
+  \item Left-hand side and right-hand side refer to existing node IDs (e.g.\ \texttt{G0}, \texttt{C0}, \texttt{M0}).
+  \item The IDs must have been previously defined as node IDs in headers of the permissible types within the unit with which the explicit relation sentence is associated.
+\end{itemize}
+
+\textcolor{blue}{(v1.2 robustness) Implementations should accept comma-separated lists with a final conjunction (``and''), and should accept simple plural verb forms (e.g.\ ``provide context for'') as synonyms of the singular forms, as long as the intended relation type remains unambiguous.}
+
+\subsection{Semantics and Interaction with Indentation}
+
+\begin{itemize}[leftmargin=2em]
+  \item These explicit relation sentences \textbf{augment} the default relations implied by indentation. They may not contradict the default relations.
+  \item They may:
+  \begin{itemize}[leftmargin=1.5em]
+    \item explicitly reiterate links already implied by the hierarchy (e.g., to unambiguously clarify relations that may be difficult to identify upon inspection of the text due to vertical separation within the text), or
+    \item introduce additional support or context edges (e.g.\ providing relations that cut across branches of the tree).
+  \end{itemize}
+  \item The parser adds these relations into the Node Model as:
+  \begin{itemize}[leftmargin=1.5em]
+    \item \texttt{supported\_by(parent, child)}
+    \item \texttt{in\_context\_of(parent, context)}
+  \end{itemize}
+\end{itemize}
+
+Dangling references (IDs mentioned in explicit relation sentences that have no corresponding node header) are treated as \textbf{errors} (see Section~\ref{sec:errors}).
+
+
+\bigskip
+\hrule
+\bigskip
+
+
+\section{\textcolor{blue}{Node States}}
+
+\textcolor{blue}{ACO v1.2 distinguishes the following independent node states, which must be tracked separately:}
+
+\begin{itemize}[leftmargin=2em]
+  \item \textcolor{blue}{\textbf{Uninstantiated node}: a placeholder referencing a future concrete entity. Examples include:}
+  \begin{itemize}[leftmargin=1.5em]
+    \item \textcolor{blue}{an ``away goal'' that refers to an external module/case not yet imported,}
+    \item \textcolor{blue}{a module reference whose call expression or actual parameter bindings are not yet provided,}
+    \item \textcolor{blue}{an evidence node that names an evidence category but lacks a concrete evidence instance.}
+  \end{itemize}
+
+  \item \textcolor{blue}{\textbf{Undeveloped node}: a concrete node whose argumentation is incomplete. Examples include:}
+  \begin{itemize}[leftmargin=1.5em]
+    \item \textcolor{blue}{a goal with insufficient subgoals/evidence,}
+    \item \textcolor{blue}{a module that is present but has no internal supporting structure,}
+    \item \textcolor{blue}{an evidence node whose category is permitted but has no validation semantics.}
+  \end{itemize}
+\end{itemize}
+
+\textcolor{blue}{A node may be uninstantiated only, undeveloped only, or both. Tools must report these categories distinctly rather than collapsing them into a single ``missing'' or ``incomplete'' status.}
+
+
+\bigskip
+\hrule
+\bigskip
+
+
+\section{\textcolor{blue}{Evidence Semantics and Provisional Categories}}
+
+\textcolor{blue}{Within O-ETB, evidence is not merely a label: it has an intended semantic chain:}
+
+\begin{center}
+\textcolor{blue}{evidence category $\rightarrow$ validation method $\rightarrow$ agent/tool $\rightarrow$ status record}
+\end{center}
+
+\textcolor{blue}{An evidence node is \emph{fully developed} only when this chain is concretely established in the instantiated artefact repository.}
+
+\textcolor{blue}{ACO v1.2 introduces the notion of a \emph{provisional evidence category}: a category atom that is not yet defined in the evidence-category knowledge base but is permitted (non-fatal) under a reserved provisional entry. Operationally:}
+\begin{itemize}[leftmargin=2em]
+  \item \textcolor{blue}{If the evidence category named by an evidence node is not defined in \texttt{KB/\allowbreak EVIDENCE/\allowbreak categories.pl}, but the knowledge base contains a reserved provisional entry (e.g.\ \texttt{evidence\_category(provisional,\_Desc,\allowbreak\_Type,\allowbreak\_ValidationMethod)}), then the category is treated as \emph{provisional}.}
+  \item \textcolor{blue}{Evidence with a provisional category is conceptually plausible but has no validation semantics yet; therefore it is treated as \emph{undeveloped} (not merely ``missing data'') and must be surfaced to the author.}
+\end{itemize}
+
+\textcolor{blue}{The reference front-end should count and report provisional evidence occurrences distinctly from other undeveloped evidence situations.}
+
+
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Style and Clarity Guidelines}
+
+\subsection{Bodies of Goal and ModuleRef node headers}
+
+To keep the ACO both human-understandable and machine-interpretable:
+\begin{itemize}[leftmargin=2em]
+  \item Goal and Module bodies should state \textbf{claims}, not vague aspirations.
+  \item Avoid ambiguous terms such as:
+  \begin{itemize}[leftmargin=1.5em]
+    \item ``may'', ``might'', ``possibly'', ``etc.'', ``various'', ``as appropriate''.
+  \end{itemize}
+  \item Prefer measurable, testable statements, or at least well-scoped qualitative claims.
+\end{itemize}
+
+\subsection{Placeholders}
+
+Placeholders are written in \textbf{braces}:
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{\{component\}}, \texttt{\{local policy\}}, \texttt{\{properties\}}, \texttt{\{environment\}}, etc.
+\end{itemize}
+
+Rules:
+\begin{itemize}[leftmargin=2em]
+  \item Placeholders should be:
+  \begin{itemize}[leftmargin=1.5em]
+    \item introduced within the unit (e.g. as a formal parameter), or
+    \item conventional/common in the domain, or
+    \item introduced and explained in a suitable Context node.
+  \end{itemize}
+  \item Tools should emit \textbf{warnings} when:
+  \begin{itemize}[leftmargin=1.5em]
+    \item placeholders appear that are never defined or are obviously inconsistent.
+  \end{itemize}
+\end{itemize}
+
+\subsection{Naming Rules}
+
+\begin{itemize}[leftmargin=2em]
+  \item IDs (when used) must be \textbf{unique} within a single unit.
+  \begin{itemize}[leftmargin=1.5em]
+    \item Recommended: prefix by type initial (e.g.\ \texttt{G0}, \texttt{G1}, \texttt{C0}, \texttt{M2}, etc.).
+  \end{itemize}
+
+  \item \texttt{shortLabel} should:
+  \begin{itemize}[leftmargin=1.5em]
+    \item contain no spaces,
+    \item start with an alphabetic character
+    \item preferably use camelCase or snake\_case.
+  \end{itemize}
+
+  \item The combination of Type, optional ID, and label should make each node uniquely identifiable.
+\end{itemize}
+
+Although authors are free to choose IDs, it is often convenient to follow a dotted or underscored, outline-style convention that mirrors the indentation tree, e.g.\ \texttt{G1.}, \texttt{G1.1}, \texttt{G1.1.2},
+\texttt{G1}, \texttt{G1\_1}, \texttt{G1\_1\_2}. The reference ACO front-end can compute such hierarchical IDs automatically from the indentation structure and compare them with author-supplied IDs, issuing diagnostic messages if an explicit dotted or underscored ID does not match the structure implied by indentation.
+
+\subsection{Text Blocks}
+
+\begin{itemize}[leftmargin=2em]
+  \item All node body text must be indented beneath the header (one indent level greater), for example:
+\end{itemize}
+
+\begin{verbatim}
+Goal G1 componentBehaviour:
+  This is body text for G1.
+  It may span multiple lines.
+
+ModuleRef M1 [componentBehaviour({component})]:
+  Behaviour of the {component} meets its local policy.
+\end{verbatim}
+
+\begin{itemize}[leftmargin=2em]
+  \item Blank lines may be inserted for clarity, as long as they do not break the logical grouping of body text with its header.
+\end{itemize}
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Errors and Warnings}
+\label{sec:errors}
+
+The ACO processor parses .aco input files into the Node Model and performs consistency checks.
+As a result of these checks the processor can issue error and warning messages.
+
+\subsection{Errors (Syntax / Semantics / Structural)}
+
+The following conditions are treated as \textbf{errors}:
+
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{Duplicate and undefined node IDs}:
+  \begin{itemize}[leftmargin=1.5em]
+    \item The same ID used in more than one header line.
+    \item An ID that has not been defined in the unit is used in a relation sentence within the unit.
+  \end{itemize}
+
+  \item \textbf{Dangling references}:
+  \begin{itemize}[leftmargin=1.5em]
+    \item IDs used in explicit relation sentences that do not correspond to the ID of any well-formed node.
+  \end{itemize}
+
+  \item \textbf{Indentation jumps}:
+  \begin{itemize}[leftmargin=1.5em]
+    \item For example, going from level 0 directly to level 3 with no node at level 1 or 2.
+  \end{itemize}
+
+  \item \textbf{Unknown node types}:
+  \begin{itemize}[leftmargin=1.5em]
+    \item A header whose first token is not a recognised Type (Goal, Strategy, Context, Assumption, Justification, Evidence, or Module).
+  \end{itemize}
+
+  \item \textbf{Malformed headers}:
+  \begin{itemize}[leftmargin=1.5em]
+    \item Header lines missing the trailing (or separating) colon (\texttt{:}),
+    \item or with an ambiguous token sequence that cannot be parsed according to the rules in Section~2.2.
+  \end{itemize}
+\end{itemize}
+
+Such errors should prevent further processing until corrected.
+
+\subsection{Warnings (Ambiguity, undefined placeholders, undeveloped nodes)}
+
+The following conditions may trigger \textbf{warnings}:
+
+\begin{itemize}[leftmargin=2em]
+  \item Ambiguous wording in Goal/ModuleRef bodies (use of ``may'', ``etc.'', etc.).
+  \item Undefined placeholders in braces \texttt{\{\dots\}}.
+  \item Goals that have neither supporting children (by indentation) \textbf{nor} explicit supporting evidence or modules.
+\end{itemize}
+
+Goals with no supporting structure are considered \textbf{Undeveloped}.
+To handle of undeveloped goals:
+
+\begin{itemize}[leftmargin=2em]
+  \item Tools should:
+  \begin{itemize}[leftmargin=1.5em]
+    \item treat these as a distinct category (``Undeveloped goals/modules''), and
+    \item optionally also report them as warnings.
+  \end{itemize}
+  \item A report may, for example:
+  \begin{itemize}[leftmargin=1.5em]
+    \item print a dedicated list of \textbf{Undeveloped} for fast review, and
+    \item also include them in the warnings list.
+  \end{itemize}
+\end{itemize}
+
+The ACO processor also computes simple statistics such as:
+\begin{itemize}[leftmargin=2em]
+  \item total number of nodes and numbers by type (goals, strategies, contexts, assumptions, justifications, evidences, module references, and GoalRef occurrences),
+  \item numbers of \texttt{supported\_by} and \texttt{in\_context\_of} edges arising from indentation vs.\ explicit relation sentences,
+  \item counts of ``cross-branch'' relations where an explicit relation connects nodes that are not in an ancestor/descendant relationship in the indentation tree.
+\end{itemize}
+%
+\noindent\textbf{Note:} ``Explicit relation sentences'' refer only to author-written relation sentences, regardless of whether they restate edges already implied by indentation.
+``Cross-branch'' relations count only explicit relation edges that connect nodes that are not reachable via the indentation-derived tree edges (\texttt{supported\_by} and \texttt{in\_context\_of}).
+Module references are treated as graph expansion and do not contribute to cross-branch relation counts.
+
+
+These statistics are intended as feedback for authors and reviewers, not as part of the ACO language itself.
+
+In addition, the front-end can emit \emph{hierarchical ID diagnostics} for each node, indicating the canonical hierarchical ID derived from indentation and flagging any author-supplied dotted IDs that do not agree with that structure. Such diagnostics are warnings unless the user chooses to treat them as stricter constraints in a particular workflow.
+
+\textcolor{blue}{(v1.2 extension) Tools should also distinguish and report \emph{uninstantiated} nodes (placeholders referencing future concrete entities) separately from undeveloped nodes. Section~\ref{sec:assessment} defines these states more precisely and explains how they factor into assurance case assessment and guidance.}
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Worked Example --- Operational Plane Pattern}
+
+Below is a conformant example using only indentation-defined structure, plus some optional explicit relation sentences.
+
+\subsection{Outline Example}\label{sec:aco_example}
+
+\begin{verbatim}
+Goal G0 operationalPlane:
+  The operational plane guarantees the {local policy} is met.
+
+  Context C0 planeDefinition:
+    The system model describes the plane and its {properties}.
+
+  Goal G1 componentBehaviour:
+    Compositional behaviour of separate components ensures the local policy is met.
+
+    ModuleRef M1 [componentBehaviour({component})]:
+      Behaviour of the {component} meets its local policy.
+
+  Goal G2 compositionBehaviour:
+    Compositional behaviour of compositions ensures the local policy is met.
+
+    ModuleRef M2 [compositionBehaviour({composition})]:
+      Behaviour of the {composition} meets the local policy.
+
+  ModuleRef M0 [interface()]:
+    Interaction between components and compositions is as defined by the security
+    architecture interface.
+
+G0 is supported by G1, G2, M0.
+G0 is in context of C0.
+G1 is supported by M1.
+G2 is supported by M2.
+\end{verbatim}
+
+\subsection{Derived Node Model (Semantic Graph)}
+
+From this outline, the Node Model contains:
+
+\textbf{Nodes} (with type, ID, and label):
+\begin{verbatim}
+(G0, goal,    operationalPlane)
+(C0, context, planeDefinition)
+(G1, goal,    componentBehaviour)
+(G2, goal,    compositionBehaviour)
+(M1, module\_ref, componentBehaviour({component}))
+(M2, module\_ref, compositionBehaviour({composition}))
+(M0, module\_ref, interface())
+\end{verbatim}
+
+\textbf{Relationships} (edges):
+\begin{verbatim}
+supported_by(G0, G1)
+supported_by(G0, G2)
+supported_by(G0, M0)
+in_context_of(G0, C0)
+supported_by(G1, M1)
+supported_by(G2, M2)
+\end{verbatim}
+
+The Node Model is \textbf{the internal semantic representation} on which all further transformations (APL, diagrams, analysis) are based.
+
+A canonicalisation tool, given this outline, can derive a hierarchical ID for each node from the indentation structure (e.g.\ \texttt{G1.}, \texttt{G1.1}, \texttt{M1.1.1}) and produce a canonical ACO file in which all node IDs follow that scheme and are consistent with their position in the tree. Authors may then adopt that canonicalised ACO as the new baseline, discarding earlier ad hoc IDs.
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Mapping to Argument Pattern Language (APL)}
+
+The ACO notation itself is tooling-neutral, but it is designed to be systematically mapped to APL representation used by O-ETB.
+
+\subsection{General Mapping Principles}
+
+From the Node Model:
+\begin{itemize}[leftmargin=2em]
+  \item Each node becomes an APL \textbf{block} with:
+  \begin{itemize}[leftmargin=1.5em]
+    \item a block identifier (derived from the ID or a canonicalised label),
+    \item a block type (goal, strategy, context, assumption, justification, evidence, module),
+    \item a label and body text.
+  \end{itemize}
+
+  \item Each \texttt{supported\_by} edge becomes a corresponding \textbf{support} relation between blocks.
+
+  \item Each \texttt{in\_context\_of} edge becomes a corresponding \textbf{context} relation between blocks.
+\end{itemize}
+
+The precise syntax of APL is defined by the O-ETB User Manual and implementation.
+The mapping must be:
+\begin{itemize}[leftmargin=2em]
+  \item Deterministic: the same ACO outline always yields the same APL representation.
+  \item Information-preserving: all node text and relations present in ACO must be recoverable from APL.
+\end{itemize}
+
+\textcolor{blue}{(v1.2 Note.)
+Earlier drafts referred to a distinct ``pattern mode'' of operation. This concept is
+no longer part of the ACO model. ACO v1.2 uses a single, uniform representation based
+on node types and indentation-defined structure, without a separate pattern mode. What are known as patterns in APL are represented as Module definitions in ACO.}
+
+\textcolor{blue}{Module definitions and other structured argument fragments
+may be mapped by tools into APL pattern definitions or instantiated APL cases, depending
+on context. Such mappings are performed by the toolchain and are outside the scope of
+the ACO syntax defined in this specification.}
+
+\subsection{Example Translation to APL}
+
+The ACO example in Section~\ref{sec:aco_example} becomes the APL:
+
+\begin{verbatim}
+block(g0, goal,    operationalPlane,
+      "The operational plane guarantees the {local policy} is met.").
+block(c0, context, planeDefinition,
+      "The system model describes the plane and its {properties}.").
+block(g1, goal,    componentBehaviour,
+      "Compositional behaviour of separate components ensures the local
+       policy is met.").
+block(g2, goal,    compositionBehaviour,
+      "Compositional behaviour of compositions ensures the local policy
+       is met.").
+ac_pattern_ref(m1, componentBehaviour, componentBehaviour, [{component}]).
+ac_pattern_ref(m2, compositionBehaviour, compositionBehaviour, [{composition}]).
+ac_pattern_ref(m0, interface, interface, []).
+
+supported_by(g0, g1).
+supported_by(g0, g2).
+supported_by(g0, m0).
+in_context_of(g0, c0).
+supported_by(g1, m1).
+supported_by(g2, m2).
+\end{verbatim}
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Visualisation and Rendering}
+
+This section discusses visual representations related to ACO and its role in the
+broader toolchain. It is important to distinguish between what is provided directly
+by the ACO Frontend and what is provided by downstream tools.
+
+At present, the ACO Frontend does \emph{not} generate a direct Graphviz DOT rendering
+of an ACO outline. ACO focuses on parsing, canonicalisation, diagnostics, and the
+production of intermediate representations suitable for further processing.
+
+A DOT rendering of a complete assurance case is, however, provided by the O-ETB
+toolchain. In particular, the \texttt{export\_case} command in O-ETB produces a DOT
+representation of the \emph{final instantiated assurance case}, after all modules
+have been resolved, parameters instantiated, and case-level structure fixed.
+
+Accordingly:
+\begin{itemize}[leftmargin=2em]
+  \item ACO should be viewed as an authoring- and analysis-oriented front-end,
+        not as a visualisation engine.
+  \item Graphical views (such as DOT/Graphviz renderings) are generated from the
+        instantiated case produced by O-ETB, not directly from raw ACO outlines.
+\end{itemize}
+
+This separation allows ACO to remain lightweight and focused, while enabling
+high-quality visualisations at the appropriate stage of the assurance workflow.
+
+\paragraph*{Example DOT Rendering}
+
+For the example in Section~\ref{sec:aco_example}, a DOT rendering might be:
+
+\begin{verbatim}
+digraph OperationalPlane {
+  node [shape=box, style=rounded];
+
+  G0 [label="Goal G0: operationalPlane"];
+  C0 [label="Context C0: planeDefinition",
+      shape=note, style="rounded,dashed"];
+  G1 [label="Goal G1: componentBehaviour"];
+  G2 [label="Goal G2: compositionBehaviour"];
+  M1 [label="ModuleRef M1: componentBehaviour({component})"];
+  M2 [label="ModuleRef M2: compositionBehaviour({composition})"];
+  M0 [label="ModuleRef M0: interface()"];
+
+  G0 -> G1;
+  G0 -> G2;
+  G0 -> M0;
+  G0 -> C0 [style=dashed];
+  G1 -> M1;
+  G2 -> M2;
+}
+\end{verbatim}
+
+Styling (shapes, colours, fonts) is not part of the ACO spec, but visual conventions can help distinguish types (e.g.\ dashed edges for context).
+
+\textcolor{blue}{(v1.2 note) When cross-branch relations are present (via explicit relation sentences), a DOT exporter may choose to draw them using a distinct style (e.g.\ dotted or coloured edges), or may emit a separate report listing cross-branch relations, to avoid obscuring the primary indentation-derived tree.}
+
+\bigskip
+\hrule
+\bigskip
+
+
+
+\section{ACO Processor and Tooling Context}
+\label{sec:frontend}
+
+The ACO Processor (Frontend) is a reference implementation of this specification and is used in
+conjunction with the Open Evidential Tool Bus (O-ETB) in the MedSecurance Project.
+
+The purpose of the reference implementation is to demonstrate the intended interpretation
+of the ACO language, to support authoring and analysis workflows, and to provide a
+concrete basis for integration with downstream tooling. It is not intended to be the
+only possible implementation, nor to normalise constraints beyond those defined by this
+specification.
+
+\subsection{Parsing and Node Model Construction}
+
+The ACO Processor:
+\begin{itemize}[leftmargin=2em]
+  \item reads an ACO file (containing case and module units),
+  \item strips comments and normalises indentation,
+  \item identifies unit headers, node headers, bodies, and natural-language relation sentences,
+  \item constructs a flat list of nodes of the form
+    \texttt{node(Id, Type, Label, Body, Level, Line)}, and
+  \item builds the tree edges implied by indentation, plus any additional edges from explicit relation sentences.
+\end{itemize}
+
+The resulting Node Model is then available to downstream components (APL generation, DOT export, analysis).
+
+\subsection{Canonicalisation and Baseline ACO Files}
+
+The front-end provides a canonicalisation function that:
+\begin{itemize}[leftmargin=2em]
+  \item computes a hierarchical path for each node from the indentation tree (e.g.\ \([1]\), \([1,1]\), \([1,1,2]\)),
+  \item maps each path to a canonical ID using a type-specific prefix:
+    \begin{itemize}[leftmargin=1.5em]
+      \item \texttt{G} for goals,
+      \item \texttt{S} for strategies,
+      \item \texttt{C} for contexts,
+      \item \texttt{A} for assumptions,
+      \item \texttt{J} for justifications,
+      \item \texttt{E} for evidences,
+      \item \texttt{M} for modules,
+    \end{itemize}
+  \item rewrites all node headers to use these canonical IDs, and
+  \item rewrites all relation sentences so that they refer to the canonical IDs.
+\end{itemize}
+
+The output is a \emph{canonical ACO file} that:
+\begin{itemize}[leftmargin=2em]
+  \item remains valid ACO and is structurally equivalent to the original outline,
+  \item has IDs that are consistent with indentation and unique by construction, and
+  \item is suitable for adoption as a \emph{baseline} version of the outline going forward.
+\end{itemize}
+
+This makes it possible for authors to begin with ad hoc or ``flat'' IDs and then transition to a stable, canonical numbering scheme once the structure has stabilised.
+
+\subsection{Diagnostics and Statistics}
+\label{sec:diagnostics}
+
+In addition to parsing and structural checks, the ACO Frontend computes a set of
+lightweight diagnostics and summary statistics intended to support iterative
+authoring and quality review.
+
+These statistics are informational: they do not affect the semantics of the
+assurance case, but they provide useful signals about structure, completeness,
+and maturity.
+
+\paragraph{Structural Statistics.}
+The reference front-end also computes simple statistics over the parsed outline,
+including for example:
+\begin{itemize}[leftmargin=2em]
+  \item counts of nodes by type (Goals, Strategies, Contexts, Assumptions,
+        Justifications, Evidence, and Modules),
+  \item counts of edges by relation type (e.g.\ \texttt{supported\_by},
+        \texttt{in\_context\_of}),
+  \item the number of top-level nodes, and
+  \item basic tree-shape measures (such as maximum depth).
+\end{itemize}
+
+\paragraph{Evidence Maturity Statistics.}
+In addition to raw Evidence counts, the Frontend may classify the category associated with an Evidence node as:
+\emph{provisional evidence categories}, reflecting the maturity or status of the
+evidence artefact as indicated by its label, body text, or annotations.
+
+An evidence category with provisional status may include (but is not limited to):
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{Planned evidence} -- evidence that is identified but not yet available,
+  \item \textbf{Placeholder category} -- a temporary stand-in used during early development before the validation method and evidence-generating procedure has been defined,
+  \item \textbf{Candidate evidence} -- an artefact that may support the claim but has not
+        yet been fully assessed or accepted, and
+  \item \textbf{Accepted evidence} -- evidence judged sufficient to discharge the claim.
+\end{itemize}
+
+The precise criteria for these categories are tool- and workflow-dependent and are
+not fixed by the ACO surface syntax. However, when such categories are recognised,
+tools should:
+\begin{itemize}[leftmargin=2em]
+  \item report counts per provisional evidence category in the statistics summary, and
+  \item clearly distinguish provisional evidence from fully accepted evidence.
+\end{itemize}
+
+\paragraph{Use of Statistics.}
+Statistics and diagnostics are intended to:
+\begin{itemize}[leftmargin=2em]
+  \item help authors identify undeveloped or weakly supported parts of an argument,
+  \item support progress tracking over time, and
+  \item provide quick, high-level insight into the shape and maturity of an assurance case.
+\end{itemize}
+
+Statistics must never be treated as errors, and their absence or suppression
+(e.g.\ via command-line options) must not affect correctness.
+
+When parsing or canonicalising an ACO file, the tool can emit:
+\begin{itemize}[leftmargin=2em]
+  \item error messages for structural problems (as in Section~6),
+  \item warnings about undeveloped goals/modules and other quality issues,
+  \item a compact statistical summary (counts by node type, edge breakdowns, cross-branch relations), and
+  \item per-node hierarchical ID information, including:
+    \begin{itemize}[leftmargin=1.5em]
+      \item the canonical hierarchical ID inferred from indentation, and
+      \item a note if an author-supplied dotted ID does not match the canonical one.
+    \end{itemize}
+\end{itemize}
+
+These messages are intended to guide authors during iterative development of patterns and assurance cases.
+
+\subsection*{ASCII Tree View}
+
+For quick inspection at the command line, the front-end can generate an ASCII tree view of the parsed outline. A typical rendering might show:
+
+\begin{itemize}[leftmargin=2em]
+  \item one line per node,
+  \item indentation using spaces to reflect the structure,
+  \item a single-letter type code (\texttt{G}, \texttt{S}, \texttt{C}, \texttt{A}, \texttt{J}, \texttt{E}, \texttt{M}),
+  \item the canonical hierarchical ID, and
+  \item optionally, any author-supplied alias ID in angle brackets (e.g.\ \texttt{<G1>}) when it differs from the canonical ID.
+\end{itemize}
+
+Body text can also be shown, indented one level further than the header line. The ASCII tree view is not part of the ACO language, but it greatly improves usability when working with outlines in a terminal environment.
+
+\subsection*{Tree Verbosity Levels}
+
+The ASCII tree view can be rendered at three verbosity levels. Conceptually these form a scale:
+
+\begin{center}
+\begin{tabular}{llp{0.55\linewidth}}
+\textbf{Level} & \textbf{Name}     & \textbf{Body treatment} \\
+\hline
+0 & Skeleton  & no body text; only the structural outline (type code, ID, label) is shown. \\
+1 & Structure & body snippet only (space permitting); one short line of body text summarising each node. \\
+2 & Full      & full body text for each node, potentially spanning multiple lines. \\
+\end{tabular}
+\end{center}
+
+Level~2 (\emph{Full}) is the default for interactive use. The CLI may expose these levels via flags such as:
+
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{--tree-skeleton} (verbosity 0),
+  \item \texttt{--tree-structure} (verbosity 1),
+  \item \texttt{--tree-full} (verbosity 2, default).
+\end{itemize}
+
+The structural part of each line (tree glyphs, type code, canonical hierarchical ID, optional alias ID, label) is the same at all verbosity levels; only the amount of body text differs.
+
+\subsection*{Command-Line Interface (CLI)}
+
+The reference implementation is designed to play the role of a front-end in a toolchain, exposed as a command-line tool that we will refer to here as \texttt{aco}. The concrete executable name is not normative, but the following structure and options are.
+
+\subsubsection*{Subcommands (Informative)}
+
+Currently defined subcommands are:
+
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{aco parse} \\
+        Parse an ACO file, build the Node Model, and report errors, warnings, and statistics. This is the basic ``sanity check'' command.
+  \item \texttt{aco apl} \\
+        Translate an ACO file into the corresponding APL-style block representation.
+  \item \texttt{aco aplc} \\
+        Like apl, translate an ACO file into the corresponding APL-style block representation after canonicalizing it.
+  \item \texttt{aco canon} \\
+        Canonicalise an ACO file: compute hierarchical IDs from indentation, rewrite all node headers and relation sentences to use the canonical IDs, and emit a canonical ACO file.
+  \item \texttt{aco tree} \\
+        Produce an ASCII tree view of the outline, with configurable verbosity for body text.
+  \item \texttt{aco dot} \\
+        Export the Node Model as a DOT/Graphviz graph for visualisation. (Not currently implemented.)
+\end{itemize}
+
+A typical synopsis (informative) is:
+
+\begin{verbatim}
+aco parse [OPTIONS] FILE.aco
+aco apl   [OPTIONS] FILE.aco
+aco aplc  [OPTIONS] FILE.aco
+aco canon [OPTIONS] FILE.aco > FILE.canon.aco
+aco tree  [OPTIONS] FILE.aco
+aco dot   [OPTIONS] FILE.aco > FILE.dot
+\end{verbatim}
+
+\subsubsection*{General Options}
+
+Common options shared by several subcommands are:
+
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{-o PATH}, \texttt{--output=PATH} \\
+        Write output to \texttt{PATH} instead of standard output (where applicable).
+  \item \texttt{--quiet} \\
+        Suppress non-essential informational messages (statistics, summaries, etc.) while still reporting errors.
+  \item \texttt{--no-stats} \\
+        Disable printing of the statistics summary even when parsing succeeds.
+  \item \texttt{--no-hier-ids} \\
+        Disable printing of per-node hierarchical ID diagnostics (where such diagnostics would otherwise be shown).
+\end{itemize}
+
+Not all options are meaningful for all subcommands; the implementation should reject or ignore clearly inapplicable combinations with an explanatory message.
+
+\subsubsection*{ASCII Tree Verbosity Levels}
+
+For the \texttt{aco tree} subcommand, the tool supports three verbosity levels for showing node bodies in the ASCII tree view. These correspond to a simple ``verbosity scale'':
+
+\begin{center}
+\begin{tabular}{lll}
+\hline
+\textbf{Level} & \textbf{Flag}        & \textbf{Body shown in tree} \\
+\hline
+2 (default)    & \texttt{--full}      & full body (all body lines) \\
+1              & \texttt{--structure} & body snippet only (space permitting) \\
+0              & \texttt{--skeleton}  & no body (headers only) \\
+\hline
+\end{tabular}
+\end{center}
+
+The default behaviour corresponds to level 2 (\texttt{--full}). The other flags select progressively sparser output.
+
+\subsubsection*{Relation to Other Features}
+
+The CLI flags described above are intentionally minimal and independent of the core ACO language:
+
+\begin{itemize}[leftmargin=2em]
+  \item They do not change the semantics of ACO or the Node Model, only how information is presented in the ASCII tree or reports.
+  \item They are compatible with canonicalisation: for example, \texttt{aco canon} can be used first to normalise IDs, after which \texttt{aco tree} (with any verbosity setting) can be applied to the canonical file.
+  \item They are also compatible with the error and warning checks described earlier; verbosity levels control how much body text is shown, not whether problems are detected.
+\end{itemize}
+
+\subsubsection*{ETB interactive commands (Informative)}
+
+The functions exposed through the aco shell-level command are also exposed, though with slightly different syntax, through the ETB's command interpreter both in interactive and scripted modes.
+The syntax of the ETB versions of the ACO commands is documented in the ETB User Manual.
+
+\bigskip
+\hrule
+\bigskip
+
+\clearpage
+\section{Iterator-Bearing Strategies and Validation Boundaries}
+\label{sec:iterator-bearing-strategies}
+
+This section describes an extension that has now been implemented in the ACO processor to further exploit O-ETB APL capabilities.
+
+\subsection{Iterator-bearing Strategy syntax}
+
+A recent ACO extension is the ability to represent iterator-bearing Strategy nodes corresponding to iterator-bearing strategy forms already meaningful in APL.
+The syntax is:
+\begin{quote}\ttfamily
+Strategy [ID] <shortLabel> for each <Var>:<Category> in <Iterand>:
+\end{quote}
+
+For example:
+\begin{verbatim}
+Strategy S1 decomp for each N:foundational_plane:node in nodes(S):
+  Strat body.
+\end{verbatim}
+
+The intended interpretation is that:
+\begin{itemize}[leftmargin=2em]
+  \item the Strategy short label is the part preceding the reserved phrase \texttt{for each},
+  \item the iterator variable is \texttt{<Var>},
+  \item the iterator category or role is \texttt{<Category>}, and
+  \item the iterand designator is the term-valued field \texttt{<Iterand>}.
+\end{itemize}
+
+This direction is motivated by the need to express in ACO the iterator-bearing strategy forms already present in the APL pattern corpus.
+
+\subsection{Validation boundaries}
+
+Iterator-bearing syntax exposes an important architectural distinction among three different notions of well-formedness:
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{ACO-level syntactic well-formedness}: the iterator-bearing header must be definite enough to be parsed and translated deterministically.
+  \item \textbf{APL-level semantic well-formedness}: the resulting iterand term must be recognized as a known and properly formed APL iterator/designator under the current instantiation/provider-layer configuration.
+  \item \textbf{Instantiation-level operational realizability}: the instantiation layer must actually be able to enumerate or compute the values denoted by the iterand against the available models, tools, or derived artefacts.
+\end{enumerate}
+
+The ACO processor need not itself execute iterator designators.
+However, it must preserve enough syntactic structure to translate them into an APL form whose meaning is well-defined for the current O-ETB implementation.
+
+The implementation has been extended to recognize iterator-bearing Strategy headers and translate them into corresponding APL representations while preserving backward compatibility against an automated regression suite.
+
+\subsection{Term-valued iterands}
+
+The \texttt{<iterand>} field may remain semantically opaque to the ACO processor, but must still be syntactically definite enough to be passed through deterministically as a term-like designator.
+Thus, the processor may validate shape without performing execution.
+This allows ACO to remain readable while still covering a wider portion of the useful APL space.
+
+\subsection{Validation API and provider architecture direction}
+
+To support that boundary, a useful architectural direction is for O-ETB to expose an API that allows the ACO layer to ask whether a parsed iterand term is a known and properly formed APL iterator/designator under the current instantiation/provider-layer configuration.
+Actual execution or enumeration remains a downstream concern.
+In the longer term, we envision an extensible provider architecture in which the assurance engineer can tailor available iterator primitives to the models, tools, and derived artefacts available in a given project environment.
+
+\section{Module declarations, ModuleRef, and GoalRef}
+
+An important clarification now settled is the distinction between top-level module declarations and local reference occurrences within an argument subtree.
+
+\subsection{Module declarations}
+
+A top-level \texttt{Module:} unit header introduces a reusable module definition. It is metadata that begins a new unit, analogous in role to a \texttt{Case:} header. The body of that unit then contains the argument structure belonging to the module.
+
+\subsection{ModuleRef occurrences}
+
+By contrast, a local \texttt{ModuleRef} occurrence within a Goal/Strategy subtree denotes a pure module or pattern reference leaf. It is not itself the beginning of a new local supporting subtree. Children indented beneath such an occurrence are therefore structurally illegal in the stricter interpretation of the notation.
+
+The preferred local syntax is now:
+\begin{quote}
+\texttt{ModuleRef [ID] [<callExpr>]:}
+\end{quote}
+
+For example:
+\begin{quote}
+\texttt{ModuleRef M0 [n\_foundational\_plane\_node(\{S\},\{N\})]:}
+\end{quote}
+
+The earlier local occurrence form using \texttt{Module} is still accepted by the processor for backward compatibility, but new outlines should use \texttt{ModuleRef}.
+
+\subsection{GoalRef occurrences}
+
+A second local reference form is now recognised:
+\begin{quote}
+\texttt{GoalRef <TargetId>}
+\end{quote}
+
+This is a compact leaf form for local shared-goal reuse. It denotes that the author intends to rely on the same already-established goal subtree elsewhere in the same unit, rather than restating or reinstantiating that subtree.
+
+For example, if \texttt{Goal G4} has already been established within the enclosing unit, the author may later write:
+\begin{quote}
+\texttt{GoalRef G4}
+\end{quote}
+
+The local reference is intentionally author-facing and should not require the author to write the internal ETB term \texttt{goal\_ref/1}.
+
+\subsection{Processing semantics}
+
+The corresponding processing behaviour is now part of the reference implementation:
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{ModuleRef} lowers to the existing APL pattern-reference mechanism.
+  \item \texttt{GoalRef <TargetId>} lowers to the internal APL form \texttt{goal\_ref('<TargetId>')}.
+  \item \texttt{GoalRef} resolution is currently unit-local and is checked against the local symbol table discipline of the enclosing case or module unit.
+  \item A validity-check hook for shared-goal reuse has been inserted into the downstream execution path. In the current implementation this hook is present but conservative: it succeeds unconditionally, preserving the architectural seam for later refinement.
+\end{itemize}
+
+\subsection{Practical consequence for authors and tools}
+
+The effect of these additions is to align the ACO surface language more closely with the settled processing model:
+\begin{itemize}[leftmargin=2em]
+  \item \texttt{Module:} defines reusable module units.
+  \item \texttt{ModuleRef} invokes those units within a local argument subtree.
+  \item \texttt{GoalRef} reuses an already-established local goal subtree within the same unit.
+\end{itemize}
+
+These forms improve clarity for both authors and reviewers by separating definition, invocation, and local structural reuse into distinct author-facing notations.
+
+
+\section{Summary}
+
+This ACO v1.2 specification establishes:
+
+\begin{itemize}[leftmargin=2em]
+  \item A simple, readable indentation-based outline format for assurance cases.
+  \item A consistent header syntax that merges type, optional ID, and label.
+  \item Optional natural-language relation statements for non-hierarchical links.
+  \item Automated parsing from ACO into an internal Node Model.
+  \item Systematic mappings from the Node Model to:
+  \begin{itemize}[leftmargin=1.5em]
+    \item other structured representations of assurance cases and argument patterns, and
+    \item graphical representations such as DOT/Graphviz.
+  \end{itemize}
+  \item Direct generation of APL and graphical representations from a single textual source.
+\end{itemize}
+
+Version 1.1 documented:
+\begin{itemize}[leftmargin=2em]
+  \item optional case headers for naming and scoping an outline,
+  \item the use of hierarchical identifiers aligned with indentation structure,
+  \item the behaviour of a reference front-end (diagnostics, statistics, undeveloped checks),
+  \item canonicalisation of ACO files to produce structurally consistent, baseline-ready outlines, and
+  \item an ASCII tree view for enhanced visualization of the assurance case.
+\end{itemize}
+These features are intended to make ACO more usable in practice without changing the underlying language or the mapping to APL and graphs.
+
+\textcolor{blue}{Version 1.2 consolidates these capabilities as baseline practice and formalises the assessment and guidance vocabulary (undeveloped vs.\ uninstantiated, provisional evidence), along with an explicit view of where state lives across the ACO-to-APL-to-instantiation pipeline.}
+
+\bigskip
+\hrule
+\bigskip
+
+\section{Looking Forward}
+
+\textcolor{blue}{This section presents a \emph{design study} of assessment-related concepts and features associated with ACO. The material in this section describes intended and
+exploratory capabilities that are not yet implemented in the current ACO Frontend.
+The development of these and other capabilities will see the modest current Frontend evolve into an advanced ACO Workbench.}
+
+\textcolor{blue}{The purpose of this discussion is to outline how assessment information, evidence
+maturity, and argument status could be interpreted and exploited by future tools
+built on top of the current base. The concepts described here do not affect the core
+syntax or semantics of ACO v1.2 and should not be assumed to reflect existing
+Frontend behaviour unless explicitly stated.}
+
+\subsection{Future Extensions}
+\label{sec:future-extensions}
+
+The ACO specification is intentionally lightweight and focused on a stable
+and accessible language for authoring assurance case outlines. Nevertheless, a number
+of extensions are anticipated to support richer workflows and tighter tool
+integration.
+
+Possible future extensions include, but are not limited to, the following:
+
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{ACO Workbench.} \\
+        An integrated ACO workbench could combine editing support, live
+        diagnostics, statistics, ASCII tree views, and graphical visualisation into a
+        single interactive environment. This could include IDE plugins,
+        standalone graphical tools, or a web-based front-end built on top of the
+        ACO Workbench capabilities.
+
+  \item \textbf{Direct ACO to DOT rendering.} \\
+        A future version of the ACO Frontend may provide a direct translation
+        from ACO outlines to Graphviz DOT for rapid visualisation during
+        authoring. Such a rendering would be primarily intended for exploratory
+        use and quick inspection of ACO units under development, and would complement (not replace) the DOT
+        rendering of fully instantiated assurance cases provided by O-ETB.
+
+  \item \textbf{Richer evidence annotations.} \\
+        Tool-supported conventions for expressing evidence maturity, review
+        status, confidence levels, or traceability metadata, while preserving
+        the core ACO syntax.
+
+  \item \textbf{Enhanced mapping to downstream representations.} \\
+        More systematic and configurable mappings from ACO to APL and other
+        formal or semi-formal representations, assurance case interchange formats such as SACM\footnote{Structured Assurance Case Metamodel}, and parameterisation and
+        reuse mechanisms.
+
+  \item \textbf{Additional analyses and metrics.} \\
+        Support for more advanced structural or quality analyses over ACO
+        outlines, beyond the lightweight diagnostics defined in the current
+        specification.
+\end{itemize}
+
+These extensions are deliberately deferred to preserve the simplicity and to achieve a stable implementation
+of ACO v1.2. Their inclusion here signals likely evolution paths
+rather than commitments to specific features or timelines.
+
+\bigskip
+\hrule
+\bigskip
+
+
+\subsection{\textcolor{blue}{Assessment Purpose}}
+
+\textcolor{blue}{ACO is not only an authoring language: it is also the entry point for iterative improvement of the assurance case. Authors (and reviewers) require fast feedback about gaps and risks. To that end, the reference front-end should compute assessment signals that are:}
+\begin{itemize}[leftmargin=2em]
+  \item \textcolor{blue}{semantically grounded (derived from the Node Model and, when available, instantiated artefacts),}
+  \item \textcolor{blue}{vector-valued (multiple dimensions, not a single opaque score), and}
+  \item \textcolor{blue}{usable both in expert mode and for wizard-style author guidance.}
+\end{itemize}
+
+\subsection{\textcolor{blue}{Assessment and Incremental Improvement}}\label{sec:assessment}
+
+\subsubsection{\textcolor{blue}{Assessment Dimensions (Vector-Valued)}}
+
+\textcolor{blue}{Assessment of an assurance case is multi-dimensional. The following initial dimensions are recommended as a minimal vector for reporting:}
+
+\begin{enumerate}[leftmargin=2em]
+  \item \textcolor{blue}{\textbf{Structural completeness}}
+  \begin{itemize}[leftmargin=1.5em]
+    \item \textcolor{blue}{counts and ratio of developed vs.\ undeveloped goals/modules,}
+    \item \textcolor{blue}{fan-in/fan-out anomalies (optional heuristics),}
+    \item \textcolor{blue}{presence of disconnected or weakly connected subtrees (where applicable).}
+  \end{itemize}
+
+  \item \textcolor{blue}{\textbf{Evidence sufficiency}}
+  \begin{itemize}[leftmargin=1.5em]
+    \item \textcolor{blue}{counts of fully developed evidence nodes (when instantiated information is available),}
+    \item \textcolor{blue}{counts of provisional-category evidence,}
+    \item \textcolor{blue}{counts of goals lacking any evidence-closure path.}
+  \end{itemize}
+
+  \item \textcolor{blue}{\textbf{Argument sufficiency}}
+  \begin{itemize}[leftmargin=1.5em]
+    \item \textcolor{blue}{presence/absence of strategies where expected (style-dependent),}
+    \item \textcolor{blue}{depth and balance of decomposition (heuristic),}
+    \item \textcolor{blue}{reuse of repeated substructures (potential pattern candidates).}
+  \end{itemize}
+
+  \item \textcolor{blue}{\textbf{Assumption exposure}}
+  \begin{itemize}[leftmargin=1.5em]
+    \item \textcolor{blue}{number and placement of assumptions,}
+    \item \textcolor{blue}{proportion justified vs.\ unjustified (based on presence of justification nodes),}
+    \item \textcolor{blue}{assumptions supporting undeveloped goals.}
+  \end{itemize}
+
+  \item \textcolor{blue}{\textbf{Instantiation status}}
+  \begin{itemize}[leftmargin=1.5em]
+    \item \textcolor{blue}{counts of uninstantiated goals/modules (e.g.\ away goals, unresolved references),}
+    \item \textcolor{blue}{counts of instantiated but undeveloped nodes.}
+  \end{itemize}
+\end{enumerate}
+
+\textcolor{blue}{Implementations may compute additional dimensions, but these provide an initial stable vocabulary for reports and for future guidance automation.}
+
+\subsubsection{\textcolor{blue}{Confidence as a Derived Measure}}
+
+\textcolor{blue}{ACO does not assign ``confidence scores'' directly. Instead, confidence is treated as a derived composite measure that must be explainable in terms of the above dimensions. In particular, confidence weakens monotonically with:}
+\begin{itemize}[leftmargin=2em]
+  \item \textcolor{blue}{undeveloped goals and modules,}
+  \item \textcolor{blue}{provisional evidence, and}
+  \item \textcolor{blue}{excessive reliance on assumptions (especially unjustified assumptions).}
+\end{itemize}
+
+\textcolor{blue}{This approach aligns with confidence-based assurance case perspectives without introducing pseudo-quantitative numbers detached from semantics.}
+
+\subsubsection{\textcolor{blue}{Evolutionary / Search-Based Improvement Model}}
+
+\textcolor{blue}{The reference workflow treats assurance case development as a state-space exploration:}
+\begin{itemize}[leftmargin=2em]
+  \item \textcolor{blue}{\textbf{State}: the current case structure plus instantiation status plus assessment vector.}
+  \item \textcolor{blue}{\textbf{Transitions}: transformation operations (e.g.\ extract modules, replace repeated substructures with pattern references, instantiate provisional evidence categories, decompose undeveloped goals).}
+  \item \textcolor{blue}{\textbf{Evaluation}: compare candidate next steps using assessment deltas.}
+\end{itemize}
+
+\textcolor{blue}{This model supports both manual expert refactoring and guided ``wizard'' steps. It does not require AI, but it provides a disciplined interface for incorporating AI proposals in future versions.}
+
+\subsubsection{\textcolor{blue}{Author Guidance Modes}}
+
+\textcolor{blue}{Two guidance modes are anticipated:}
+
+\begin{itemize}[leftmargin=2em]
+  \item \textcolor{blue}{\textbf{Expert mode}: full diagnostics; full hint sets; manual selection and backtracking.}
+  \item \textcolor{blue}{\textbf{Wizard mode}: metrics-driven prioritisation (``next best step''); suppression of low-impact hints; explanations of why a step improves assessment.}
+\end{itemize}
+
+\textcolor{blue}{Wizard decisions must be driven by assessment gradients, not by hard-coded scripts.}
+
+\subsection{\textcolor{blue}{Visualisation Support and Levels}}
+
+\textcolor{blue}{Visualisation exists at two levels in the O-ETB workflow:}
+
+\begin{enumerate}[leftmargin=2em]
+  \item \textcolor{blue}{\textbf{ACO-level (authoring/workbench)}}
+  \begin{itemize}[leftmargin=1.5em]
+    \item \textcolor{blue}{ASCII tree view (including forest view) is the primary exploration UI while the case remains in ACO form.}
+    \item \textcolor{blue}{Skeleton mode and depth-limiting are recommended for large outlines.}
+    \item \textcolor{blue}{Clear markers should be used in reports for: uninstantiated nodes, undeveloped nodes, and provisional evidence.}
+  \end{itemize}
+
+  \item \textcolor{blue}{\textbf{APL/AC-level (post-instantiation)}}
+  \begin{itemize}[leftmargin=1.5em]
+    \item \textcolor{blue}{Graphviz renderings of instantiated cases (CAPs) are produced by downstream tooling (e.g.\ \texttt{export\_ac}) and may be the primary UI in pattern-first workflows.}
+    \item \textcolor{blue}{Assessment metrics must remain definable and inspectable on instantiated cases regardless of whether the case originated from ACO.}
+  \end{itemize}
+\end{enumerate}
+
+\subsection{\textcolor{blue}{Where State Lives in the Toolchain}}
+
+\textcolor{blue}{The persistent ``assurance case state'' is not a single object owned by the ACO front-end. Instead, it is a progression along the pipeline:}
+
+\begin{quote}\ttfamily\small\raggedright
+aco \pipeline [ACO-WORKBENCH] \pipeline aco \pipeline [ACO-to-APL] \pipeline apl \pipeline [INSTANTIATE]\\
+\pipeline repository(CASES,EVIDENCE) \pipeline [EXPORT\_AC] \pipeline cap(txt, html, svg)
+\end{quote}
+
+\textcolor{blue}{This can be modelled abstractly as:}
+\begin{center}
+\textcolor{blue}{$\langle$ [aco version sequence], final\_aco, apl, repo, cap $\rangle$}
+\end{center}
+
+\textcolor{blue}{At the file-system level, the repository is expected to hold at least:}
+\begin{verbatim}
+REPOSITORY/
+  CASES/      % instantiated ACs (case files, CAPs, exported artefacts)
+  EVIDENCE/   % evidence repository (artefacts, status records, provenance)
+  OUTLINES/   % ACO versions + workbench state
+\end{verbatim}
+
+\textcolor{blue}{Within \texttt{REPOSITORY/OUTLINES}, per-project/per-case trajectories may be maintained as:}
+\begin{verbatim}
+REPOSITORY/OUTLINES/<Project>/<CaseName>/
+  aco_v001.aco
+  aco_v002.aco
+  ...
+  aco_final.aco
+  state.pl
+\end{verbatim}
+
+\textcolor{blue}{The \texttt{state.pl} file is expected to record workbench state such as: current version pointer, transformation history, cached assessment vectors, and links to instantiated case identifiers under \texttt{CASES/}.}
+
+\subsection{\textcolor{blue}{Role of AI Assistance (Out of Scope for current efforts)}}
+
+\textcolor{blue}{AI-assisted transformation suggestions and learned guidance policies are future possibilities but are considered out of scope for v1.2 and the present Workbench implementation pursuits. However, v1.2 defines the assessment vocabulary that would govern any future AI assistance. In particular, AI suggestions must remain advisory and should be evaluated using the same assessment metrics as algorithmic hints.}
+
+\clearpage
+\section{Informative Note on the Emerging ACO Workbench Action Layer}
+
+The current ACO processor and notation defined in this specification are being extended in implementation toward a fuller ``ACO Workbench'' model in which both constructors and transformations are represented explicitly as workbench actions.
+This section is informative and forward-looking; it does not change the normative core syntax defined above.
+
+\subsection{Actions and candidates}
+
+A current implementation direction is to represent a concrete next-step operation as:
+\begin{quote}\ttfamily
+action(Name, Kind, Target, Params)
+\end{quote}
+and a recommended next step as:
+\begin{quote}\ttfamily
+candidate(Action, Score, Rationale, Diagnostics)
+\end{quote}
+This provides a common vocabulary for:
+\begin{itemize}[leftmargin=2em]
+  \item observing what can legally be done next,
+  \item ranking candidate next steps,
+  \item applying a selected operation, and
+  \item reporting both applicability and effect.
+\end{itemize}
+
+\subsection{Constructor basis from an initially empty outline}
+
+The Workbench direction now explicitly includes primitive constructors that allow an assurance case outline to be grown from an initially empty case shell.
+The expected progression is that the first applicable constructor is \texttt{add\_goal}, after which other local constructors become available, including:
+\begin{quote}\ttfamily
+add\_subgoal, add\_strategy, add\_context, add\_justification,\\
+add\_assumption, add\_evidence, add\_module, add\_module\_ref
+\end{quote}
+The primitive constructors are intended to remain simple and local.
+More elaborate structural improvements remain the role of explicit rewrite transformations such as T1--T7.
+
+\subsection{Targets and pairwise loci}
+
+The target vocabulary is expected to include both direct node targets and pairwise loci such as \texttt{pair/2} for operations that conceptually act over a relation or insertion boundary rather than a single node.
+Direct goal nesting also remains a valid development step so that a goal may first be decomposed into subgoals and only later clarified by the insertion of an explicit strategy node.
+
+\subsection{Current transformation family and diagnostics}
+
+The implemented and actively discussed transformation family now includes T1, T2, T6, and T7, with the remaining transformations to be brought into the same action-and-candidate framework.
+This in turn motivates a richer diagnostic messaging architecture in which the processor can explain:
+\begin{itemize}[leftmargin=2em]
+  \item why a candidate action is applicable,
+  \item what deficit or opportunity motivated its recommendation,
+  \item what edits were performed, and
+  \item what invariants were revalidated afterwards.
+\end{itemize}
+
+\subsection{Expressive completeness and structural abstractions}
+
+A near-term representational objective is to bring ACO closer to full practical coverage of the APL constructs currently used in O-ETB.
+In particular, iterator-like and other structural abstraction mechanisms already meaningful in APL should eventually have disciplined ACO representations.
+This also motivates renewed alignment among ACO, the ACO-to-APL translation, the translated MILS material, and the pattern corpus maintained under \texttt{KB/PATTERNS}.
+
+\end{document}
