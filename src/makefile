@@ -16,7 +16,7 @@ person-examp:	../BUILD/etb
 clean: clean_cap clean_repos
 
 clean_cap:
-	find ../CAP -depth -not \( -name "README.md" -or -name "CAP" -or -path "../CAP/iomt_system_example/*" -or -name "iomt_system_example.txt" -or -name "iomt_system_example" -or -path "../CAP/iso_system_example/*" -or -name "iso_system_example.txt" -or -name "iso_system_example" \) -delete
+	find ../CAP -mindepth 1 -not \( -name "README.md" -or -path "../CAP/iomt_system_example/*" -or -name "iomt_system_example.txt" -or -name "iomt_system_example" -or -path "../CAP/iso_system_example/*" -or -name "iso_system_example.txt" -or -name "iso_system_example" -or -path "../CAP/mils_system_example/*" -or -name "mils_system_example.txt" -or -name "mils_system_example" -or -path "../CAP/mils_found_only/*" -or -name "mils_found_only.txt" -or -name "mils_found_only" -or -path "../CAP/mils_op_only/*" -or -name "mils_op_only.txt" -or -name "mils_op_only" -or -path "../CAP/n_mils_found_only/*" -or -name "n_mils_found_only.txt" -or -name "n_mils_found_only" -or -path "../CAP/n_mils_op_only/*" -or -name "n_mils_op_only.txt" -or -name "n_mils_op_only" -or -path "../CAP/n_mils_system_example/*" -or -name "n_mils_system_example.txt" -or -name "n_mils_system_example" \) -delete
 
 clean_repos: clean_cases clean_evidence clean_outlines
 

@@ -214,10 +214,10 @@ instantiate_subgoal(goal(Id, LabelP, ClaimP, ContextP, BodyP), AArgs, Pos, KPath
 instantiate_subgoal(goal(Id, ClaimP, ContextP, BodyP), AArgs, Pos, KPath, SubgoalI, Log) :-
 	instantiate_goal(goal(Id, ClaimP, ContextP, BodyP), AArgs, Pos, KPath, SubgoalI, Log).
 
-instantiate_subgoal(goal_ref(Id), _AArgs, _Pos, KPath, goal_ref(IdArgs), []) :-
+instantiate_subgoal(goal_ref(Id), AArgs, Pos, KPath, goal_ref(IdArgs), []) :-
+	goal_ref_reuse_valid(Id, AArgs, Pos, KPath),
 	current_instid(InstId),
 	lift_id(Id, InstId, KPath, IdArgs).
-
 
 instantiate_subgoal(strategy(Id, LabelP, ClaimP, ContextP, BodyP), AArgs, Pos, KPath,
 		    strategy(IdArgs, LabelI, ClaimI, ContextI, BodyI), Log) :-
@@ -272,6 +272,7 @@ instantiate_subgoal(ac_pattern_ref(Id, LabelP, PatternId, Args), AArgs, Pos, KPa
 
 	Log = Log0,
 	!.
+
 
 % the following was replaced by the above
 % instantiate_subgoal(ac_pattern_ref(Id, LabelP, PatternId, Args), AArgs, Pos, KPath,
@@ -401,7 +402,14 @@ instantiate_subgoal(alternatives(GoalPList), AArgs, Pos, KPath, GoalIList, Log) 
                                 % to do - choose among alternatives
         instantiate_subgoal_list(GoalPList, AArgs, Pos, KPath, GoalIList, Log).
 
-								% instantiate_strategy_iterations(+IteratorMatches, +AArgs, +BodyP, +Pos, +KPath, -BodyI, -Logs)
+
+% The following predicate performs checks that the reuse of a goal is compatibile with its contexts
+% to be implemented
+%
+goal_ref_reuse_valid(_Id, _AArgs, _Pos, _KPath).
+
+
+			      	% instantiate_strategy_iterations(+IteratorMatches, +AArgs, +BodyP, +Pos, +KPath, -BodyI, -Logs)
 				%   IteratorMatches is a list of iterator-produced actual-argument terms.
 				%   Each expansion is distinguished by extending KPath with the 1-based
 				%   iterator index.

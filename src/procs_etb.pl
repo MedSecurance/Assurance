@@ -1,35 +1,33 @@
 % ETB-specific command procedures
-% instantiate a list of patterns using model 1.0 as system_examp and export
 
-% current tests
-proc(mils_system_inst, [
+% Tests of a set of new MILS argument patterns that should produce results comparable or
+% better than the results of comparable invocations of the previous collection of MILS patterns
+% in mils_system_example, mils_found_only and mils_op_only
+
+proc(n_mils_system_example, [
 	set_v(ModelId, '1.0'),
-	set_v(CaseId, mils_system_example),
+	set_v(CaseId, n_mils_system_example),
 	load_model_v(ModelId, Policy, Platform, _Configuration),
+	aco_apl('../Tools/APL_to_ACO_foundational_plane_executable_family_v2.aco','../Tools/APL_to_ACO_foundational_plane_executable_family_v2.apl'),
+	load_patterns('../Tools/APL_to_ACO_foundational_plane_executable_family_v2.apl'),	
+	aco_apl('../Tools/APL_to_ACO_operational_plane_executable_family_v3.aco','../Tools/APL_to_ACO_operational_plane_executable_family_v3.apl'),
+	load_patterns('../Tools/APL_to_ACO_operational_plane_executable_family_v3.apl'),
 	set_v(AC,
-		[ 'foundational_plane'-[Platform],
-		'operational_plane'-[Policy],
+		[ 'n_foundational_plane'-[Platform],
+		'n_operational_plane'-[Policy],
 		'person'-['Alice', 'AC Patterns Definition'],
 		'person'-['Bob', 'ETB Development']
 		]),
 	instantiate_pattern_list(AC,CaseId),
-	export_case(CaseId,html),
-	detach_case
-]).
-
-proc(mils_op_only, [
-	set_v(ModelId, '1.0'),
-	set_v(CaseId, mils_op_only),
-	load_model_v(ModelId, Policy, _Platform, _Configuration),
-	instantiate_pattern(operational_plane,[Policy],CaseId),
 	export_case(CaseId,txt),
-	export_case(CaseId,html),
-	detach_case
+	export_case(CaseId,html)
 ]).
 
-proc(mils_found_only, [
+proc(n_mils_found_only, [
+	aco_apl('../Tools/APL_to_ACO_foundational_plane_executable_family_v2.aco','../Tools/APL_to_ACO_foundational_plane_executable_family_v2.apl'),
+	load_patterns('../Tools/APL_to_ACO_foundational_plane_executable_family_v2.apl'),
 	set_v(ModelId, '1.0'),
-	set_v(CaseId, mils_found_only),
+	set_v(CaseId, n_mils_found_only),
 	load_model_v(ModelId, _Policy, Platform, _Configuration),
 	instantiate_pattern(n_foundational_plane,[Platform],CaseId),
 	export_case(CaseId,txt),
@@ -37,119 +35,17 @@ proc(mils_found_only, [
 	detach_case
 ]).
 
-proc(mopv2_inst, [
-	aco_apl('../Tools/APL_to_ACO_operational_plane_executable_family_v2.aco','../Tools/APL_to_ACO_operational_plane_executable_family_v2a.apl'),
-	load_patterns('../Tools/APL_to_ACO_operational_plane_executable_family_v2a.apl'),
-	set_v(ModelId, '1.0'),
-	set_v(CaseId, mopv2a),
-	load_model_v(ModelId, Policy, _Platform, _Configuration),
-	instantiate_pattern(n_operational_plane,[Policy],CaseId),
-	export_case(CaseId,txt),
-	export_case(CaseId,html),
-	detach_case
-]).
-
-proc(mopv3, [
+proc(n_mils_op_only, [
 	aco_apl('../Tools/APL_to_ACO_operational_plane_executable_family_v3.aco','../Tools/APL_to_ACO_operational_plane_executable_family_v3.apl'),
 	load_patterns('../Tools/APL_to_ACO_operational_plane_executable_family_v3.apl'),
 	set_v(ModelId, '1.0'),
-	set_v(CaseId, mopv3),
+	set_v(CaseId, n_mils_op_only),
 	load_model_v(ModelId, Policy, _Platform, _Configuration),
 	instantiate_pattern(n_operational_plane,[Policy],CaseId),
 	export_case(CaseId,txt),
 	export_case(CaseId,html),
 	detach_case
 ]).
-
-proc(mfoundv1, [
-	aco_apl('../Tools/APL_to_ACO_foundational_plane_executable_family_v1.aco','../Tools/APL_to_ACO_foundational_plane_executable_family_v1.apl'),
-	load_patterns('../Tools/APL_to_ACO_foundational_plane_executable_family_v1.apl'),
-	set_v(ModelId, '1.0'),
-	set_v(CaseId, mfoundv1),
-	load_model_v(ModelId, _Policy, Platform, _Configuration),
-	instantiate_pattern(n_foundational_plane,[Platform],CaseId),
-	export_case(CaseId,txt),
-	export_case(CaseId,html),
-	detach_case
-]).
-
-%%%%%%%%%%%%%%
-
-proc(rev_demo_mod, [
-	% reset,
-	aco_modularize(['G1','G11','G51'], '../TEST/ACO/bio_v6d.aco', '../TEST/ACO/bio_v7t.aco'),
-	aco_apl('../TEST/ACO/bio_v7t.aco', '../TEST/ACO/bio_v7t.apl'),
-	load_patterns('../TEST/ACO/bio_v7t.apl'),
-	instantiate_pattern('BioAssist', [], bio7t),
-	export_case(bio7t,txt),
-	export_case(bio7t,html),
-	export_case(bio7t90,html90),
-	detach_case
-	]).
-
-proc(rev_demo_aco, [
-	shell('cat ../TEST/ACO/tiny_test.aco'),
-	aco_tree('../TEST/ACO/tiny_test.aco'),
-	aco_stats('../TEST/ACO/tiny_test.aco'),
-
-	shell('cat ../TEST/ACO/tiny_multi.aco'),
-	aco_tree('../TEST/ACO/tiny_multi.aco'),
-	aco_stats('../TEST/ACO/tiny_multi.aco'),
-
-	shell('cat ../TEST/ACO/tiny_multi5.aco'),
-	aco_tree('../TEST/ACO/tiny_multi5.aco'),
-	aco_stats('../TEST/ACO/tiny_multi5.aco'),
-
-	shell('cat ../TEST/ACO/op_plane.aco'),
-	aco_tree('../TEST/aco/op_plane.aco'),
-	aco_stats('../TEST/aco/op_plane.aco'),
-	aco_tree('../TEST/aco/op_plane.aco', [skeleton])
-	]).
-		
-proc(rev_demo_etb, [
-	reset,
-	show_pattern(person),
-	instantiate_pattern(person, [marius,programming], person_example),
-	export_case(person_example,txt),
-	export_case(person_example,html),
-	detach_case,
-
-	show_pattern(teamOfN),
-	instantiate_pattern(teamOfN, [programming, list([marius,rance])], team_example),
-	export_case(team_example, txt),
-	export_case(team_example, html),
-	detach_case,
-
-	shell('cat ../TEST/ACO/op_plane.aco'),
-	aco_apl('../TEST/ACO/op_plane.aco', '../TEST/ACO/op_plane.apl'),
-	load_patterns('../TEST/ACO/op_plane.apl'),
-	show_pattern('Op_Plane'),
-	instantiate_pattern('Op_Plane', [ ], op_plane),
-	export_case(op_plane, txt),
-	export_case(op_plane, html),
-	detach_case,
-
-	aco_apl('../TEST/ACO/tiny_multi5.aco', '../TEST/ACO/tiny_multi5.apl'),
-	load_patterns('../TEST/ACO/tiny_multi5.apl'),
-	instantiate_pattern('Main', [ ], tiny_multi5),
-	export_case(tiny_multi5, txt),
-	export_case(tiny_multi5, html),
-	detach_case,
-
-	aco_apl('../TEST/ACO/bio_v6d.aco', '../TEST/ACO/bio_v6d.apl'),
-	load_patterns('../TEST/aco/bio_v6d.apl'),
-	instantiate_pattern('BioAssist', [ ], bio6d),
-	export_case(bio6d, txt),
-	export_case(bio6d, html),
-	detach_case,
-
-	aco_apl('../TEST/ACO/bio_v7c.aco', '../TEST/ACO/bio_v7c.apl'),
-	load_patterns('../TEST/aco/bio_v7c.apl'),
-	instantiate_pattern('BioAssist', [ ], bio7c),
-	export_case(bio7c, txt),
-	export_case(bio7c, html),
-	detach_case
-	]).
 
 %%%%%%%%%%%%%%%
 	
@@ -311,38 +207,6 @@ proc(bio_ACO, [
 	echo('DONE! Browse result in CAP/bio/index.html')
      ]).
 
-%%%%%%%%%%
-% The procedures IoMT_system_inst and ISO_case_inst 
-% generate the correspoding text and htmp exports to CAP that are maintained
-% as examples. The procs can be re-run to regenerate the example outputs.
-% If the procs or anything they are dependent upon (e.g. model, patterns, etc.)
-% are modified the procs should be re-run to regenerate the CAP outputs.
-%
-proc('IoMT_case', [
-		set_v(ModelId, '2.0'),
-		set_v(CaseId, iomt_system_example),
-		load_model_v(ModelId, App_Specification, Platform, _Configuration),
-		set_v(AC,
-			[ 'IoMT_system'-[App_Specification, Platform],
-			'person'-['Alicia', 'Assurance'],
-			'person'-['Roberto', 'Development']
-			]),
-		instantiate_pattern_list(AC,CaseId),
-	        export_case(CaseId,txt),
-		export_case(CaseId,html),
-		detach_case
-    ]).
-
-proc('MS_ISO_case', [ % support for pattern alternatives construct not yet implemented
-		set_v(ModelId, '2.0'),
-		set_v(CaseId, ms_iso_system_example),
-		load_model_v(ModelId, App_Specification, Platform, _Configuration),
-        instantiate_pattern('MS_generic_risk_based',['hit-spec',App_Specification,Platform],CaseId),
-	    export_case(CaseId,txt),
-		export_case(CaseId,html),
-		detach_case
-    ]).
-%%%%%%%%%%
 
 %%%%%%%%%%
 % instantiate the person pattern as person_examp
@@ -416,6 +280,86 @@ proc(shortdemo, [
 
 %%%% PAST DEMOS %%%%
 
+%%%%%%%%%%%%%% FINAL REVIEW MARCH 2026
+
+proc(rev_demo_mod, [
+	% reset,
+	aco_modularize(['G1','G11','G51'], '../TEST/ACO/bio_v6d.aco', '../TEST/ACO/bio_v7t.aco'),
+	aco_apl('../TEST/ACO/bio_v7t.aco', '../TEST/ACO/bio_v7t.apl'),
+	load_patterns('../TEST/ACO/bio_v7t.apl'),
+	instantiate_pattern('BioAssist', [], bio7t),
+	export_case(bio7t,txt),
+	export_case(bio7t,html),
+	export_case(bio7t90,html90),
+	detach_case
+	]).
+
+proc(rev_demo_aco, [
+	shell('cat ../TEST/ACO/tiny_test.aco'),
+	aco_tree('../TEST/ACO/tiny_test.aco'),
+	aco_stats('../TEST/ACO/tiny_test.aco'),
+
+	shell('cat ../TEST/ACO/tiny_multi.aco'),
+	aco_tree('../TEST/ACO/tiny_multi.aco'),
+	aco_stats('../TEST/ACO/tiny_multi.aco'),
+
+	shell('cat ../TEST/ACO/tiny_multi5.aco'),
+	aco_tree('../TEST/ACO/tiny_multi5.aco'),
+	aco_stats('../TEST/ACO/tiny_multi5.aco'),
+
+	shell('cat ../TEST/ACO/op_plane.aco'),
+	aco_tree('../TEST/aco/op_plane.aco'),
+	aco_stats('../TEST/aco/op_plane.aco'),
+	aco_tree('../TEST/aco/op_plane.aco', [skeleton])
+	]).
+		
+proc(rev_demo_etb, [
+	reset,
+	show_pattern(person),
+	instantiate_pattern(person, [marius,programming], person_example),
+	export_case(person_example,txt),
+	export_case(person_example,html),
+	detach_case,
+
+	show_pattern(teamOfN),
+	instantiate_pattern(teamOfN, [programming, list([marius,rance])], team_example),
+	export_case(team_example, txt),
+	export_case(team_example, html),
+	detach_case,
+
+	shell('cat ../TEST/ACO/op_plane.aco'),
+	aco_apl('../TEST/ACO/op_plane.aco', '../TEST/ACO/op_plane.apl'),
+	load_patterns('../TEST/ACO/op_plane.apl'),
+	show_pattern('Op_Plane'),
+	instantiate_pattern('Op_Plane', [ ], op_plane),
+	export_case(op_plane, txt),
+	export_case(op_plane, html),
+	detach_case,
+
+	aco_apl('../TEST/ACO/tiny_multi5.aco', '../TEST/ACO/tiny_multi5.apl'),
+	load_patterns('../TEST/ACO/tiny_multi5.apl'),
+	instantiate_pattern('Main', [ ], tiny_multi5),
+	export_case(tiny_multi5, txt),
+	export_case(tiny_multi5, html),
+	detach_case,
+
+	aco_apl('../TEST/ACO/bio_v6d.aco', '../TEST/ACO/bio_v6d.apl'),
+	load_patterns('../TEST/aco/bio_v6d.apl'),
+	instantiate_pattern('BioAssist', [ ], bio6d),
+	export_case(bio6d, txt),
+	export_case(bio6d, html),
+	detach_case,
+
+	aco_apl('../TEST/ACO/bio_v7c.aco', '../TEST/ACO/bio_v7c.apl'),
+	load_patterns('../TEST/aco/bio_v7c.apl'),
+	instantiate_pattern('BioAssist', [ ], bio7c),
+	export_case(bio7c, txt),
+	export_case(bio7c, html),
+	detach_case
+	]).
+
+%%%%%%%%%%%%%% DEMO DAY JULY 2025
+
 proc(demo_day, [
 		help,
 		help(show_pattern),
@@ -462,6 +406,8 @@ proc(demo_day, [
 		echo('DONE!')
 	]).
 
+%%%%%%%%%%%%%% MONTH 18 REVIEW
+
 proc(m18review, [
 	help(show_proc),
 	help(show_pattern),
@@ -505,5 +451,103 @@ proc(m18review, [
 	show_pattern('MS_accepted_risk'),
 	
 	echo('DONE!')
+]).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% CANONICAL EXAMPLES
+%
+% Results of the following procs are maintained in the CAP by the makefile clean_cap target
+% The generated txt and html exports for each case are maintained as examples.
+% The procs can be re-run to regenerate the example outputs after a reset.
+% If the procs or anything they are dependent upon (e.g. model, patterns, etc.)
+% are modified the procs should be re-run to regenerate the CAP outputs.
+
+%%%%%%%%%%
+% IoMT_case and ISO_case build iomt_system_example and iso_system_example respectively
+%
+%   From patterns in KB/PATTERNS/patterns_IoMT.pl create the following Canonical Examples
+%     iomt_system_example/ and iomt_system_example.txt
+
+proc('IoMT_case', [
+	set_v(ModelId, '2.0'),
+	set_v(CaseId, x_iomt_system_example),
+	load_model_v(ModelId, App_Specification, Platform, _Configuration),
+	set_v(AC,
+		[ 'IoMT_system'-[App_Specification, Platform],
+		  'person'-['Alicia', 'Assurance'],
+		  'person'-['Roberto', 'Development']
+	       	]),
+	instantiate_pattern_list(AC,CaseId),
+	export_case(CaseId,txt),
+	export_case(CaseId,html),
+	detach_case
+    ]).
+
+%   From patterns in KB/PATTERNS/patterns_MS_Risk.pl creatd the following Canonical Examples
+%     iso_system_example/ and iso_system_example.txt
+
+proc('ISO_case', [
+	set_v(ModelId, '2.0'),
+	set_v(CaseId, x_iso_system_example),
+	load_model_v(ModelId, App_Specification, Platform, _Configuration),
+        instantiate_pattern('MS_generic_risk_based',['hit-spec',App_Specification,Platform],CaseId),
+	export_case(CaseId,txt),
+	export_case(CaseId,html),
+	detach_case
+    ]).
+
+%%%%%%%%%%
+
+% mils_system_inst builds the complete mils_system_example using instantiate_pattern_list/2
+% mils_found_only builds only the MILS foundational plane example using instante_pattern/3
+% mils_op_only builds only the MILS operational plane example using instante_pattern/3
+%
+%   From patterns in KB/PATTERNS/patterns_MILS.pl the MILS Canonical Examples following
+%   create in CAP the following txt and html case exports:
+%     iomt_system_example/ and iomt_system_example.txt
+%     iso_system_example/ and iso_system_example.txt
+%     mils_system_example/ and mils_system_example.txt
+%     mils_found_only/ and mils_found_only.txt
+%     mils_op_only/ and mils_op_only.txt
+
+
+proc(mils_system_inst, [
+	set_v(ModelId, '1.0'),
+	set_v(CaseId, mils_system_example),
+	load_model_v(ModelId, Policy, Platform, _Configuration),
+	set_v(AC,
+		[ 'foundational_plane'-[Platform],
+		'operational_plane'-[Policy],
+		'person'-['Alice', 'AC Patterns Definition'],
+		'person'-['Bob', 'ETB Development']
+		]),
+	instantiate_pattern_list(AC,CaseId),
+	export_case(CaseId,txt),
+	export_case(CaseId,html),
+	detach_case
+]).
+
+% mils_found_only isolates the foundational plane portion of the mils_system_example
+
+proc(mils_found_only, [
+	set_v(ModelId, '1.0'),
+	set_v(CaseId, mils_found_only),
+	load_model_v(ModelId, _Policy, Platform, _Configuration),
+	instantiate_pattern(foundational_plane,[Platform],CaseId),
+	export_case(CaseId,txt),
+	export_case(CaseId,html),
+	detach_case
+]).
+
+% mils_op_only isolates the operational plane portion of the mils_system_example
+
+proc(mils_op_only, [
+	set_v(ModelId, '1.0'),
+	set_v(CaseId, mils_op_only),
+	load_model_v(ModelId, Policy, _Platform, _Configuration),
+	instantiate_pattern(operational_plane,[Policy],CaseId),
+	export_case(CaseId,txt),
+	export_case(CaseId,html),
+	detach_case
 ]).
 

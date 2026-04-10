@@ -256,7 +256,7 @@ agents_directory('KB/AGENTS').
 log_directory('RUNTIME/LOG').
 test_aco_directory('TEST/ACO').
 
-pattern_files( [ 'patterns_IoMT', 'patterns_ISO_81001', 'patterns_MILS' ] ).
+pattern_files( [ 'patterns_IoMT', 'patterns_ISO_81001', 'patterns_MILS', 'patterns_MS_Risk' ] ).
 
 % Constructors for the primary runtime, KB and persistent storage area dir and file names
 %

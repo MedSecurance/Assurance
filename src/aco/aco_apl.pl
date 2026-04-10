@@ -643,7 +643,7 @@ roots_of_interest(CandidateIds, Nodes, Filtered) :-
     findall(Id,
             ( member(Id, CandidateIds),
               member(node(Id,Type,_,_,_,_,_), Nodes),
-              (Type = goal ; Type = module)
+              Type = goal
             ),
             Interesting),
     ( Interesting \= [] -> Filtered = Interesting
@@ -655,10 +655,9 @@ pattern_id_from_case(some(case_header(TitleAtom, ScopeAtom)), PatternId, CaseCtx
     atom_string(TitleAtom, TitleStr),
     title_to_slug_keep_caps(TitleStr, SlugStr),
     atom_string(PatternId, SlugStr),
-    atom_string(ScopeAtom, ScopeStr),
-    ( ScopeStr = ""
-    -> format(string(CaseText), "Case: ~w", [TitleStr])
-    ;  format(string(CaseText), "Case: ~w — ~w", [TitleStr, ScopeStr])
+    ( ScopeAtom == ''
+    -> format(atom(CaseText), 'Case: ~w', [TitleAtom])
+    ;  format(atom(CaseText), 'Case: ~w — ~w', [TitleAtom, ScopeAtom])
     ),
     CaseCtx = [context(CaseText)].
 
@@ -739,7 +738,7 @@ build_goal_tree(Id, NodesById, ChildMap, CtxMap,
         Visited = Visited0
     ;   lookup_node(Id, NodesById,
 				    node(Id, Type, LabelAtom, Body, _Level, _Line, _IterOpt)),
-        ( Type = goal ; Type = module ),
+        Type = goal,
         !,
         Visited1 = [Id|Visited0],
         claim_text_from_body_or_id(Body, Id, ClaimText),
@@ -825,7 +824,17 @@ build_children_terms([ChildId|Rest], NodesById, ChildMap, CtxMap,
 build_children_terms([ChildId|Rest], NodesById, ChildMap, CtxMap,
                     Visited0, [Term|Terms], VisitedOut) :-
     lookup_node(ChildId, NodesById,
-                node(ChildId, module, LabelAtom, Body, _Lev, _Line, _IterOpt)),
+                node(ChildId, goal_ref, TargetAtom, _Body, _Lev, _Line, _IterOpt)),
+    !,
+    Term = goal_ref(TargetAtom),
+    Visited1 = [ChildId|Visited0],
+    build_children_terms(Rest, NodesById, ChildMap, CtxMap,
+                         Visited1, Terms, VisitedOut).
+
+build_children_terms([ChildId|Rest], NodesById, ChildMap, CtxMap,
+                    Visited0, [Term|Terms], VisitedOut) :-
+    lookup_node(ChildId, NodesById,
+                node(ChildId, module_ref, LabelAtom, Body, _Lev, _Line, _IterOpt)),
     !,
     % Treat Module nodes as module references (pattern refs).
     % Accept both bracketed labels "[foo]" and plain labels "foo".

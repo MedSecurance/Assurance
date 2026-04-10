@@ -643,7 +643,7 @@ make_module_ref_lines(Indent, GoalId, Label, PreviewLines, RefLines) :-
     make_spaces(Indent, Spaces),
     goalid_to_module_callsite_id(GoalId, CallsiteId),
 	    module_sig_from_goal_label(Label, ModuleSig),
-    format(string(H), "~sModule ~w [~w]:", [Spaces, CallsiteId, ModuleSig]),
+    format(string(H), "~sModuleRef ~w [~w]:", [Spaces, CallsiteId, ModuleSig]),
     append([H|PreviewLines], [""], RefLines).
 
 

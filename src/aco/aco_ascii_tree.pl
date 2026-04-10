@@ -467,4 +467,5 @@ ascii_type_letter(context,       'C').
 ascii_type_letter(assumption,    'A').
 ascii_type_letter(justification, 'J').
 ascii_type_letter(evidence,      'E').
-ascii_type_letter(module,        'M').
+ascii_type_letter(module_ref,    'M').
+ascii_type_letter(goal_ref,      'R').

@@ -386,7 +386,8 @@ do(show_log(T)) :- !, logging:show_log(T).
 
 do(shell(Cmd)) :- !, shell(Cmd).
 
-do(show_proc(P)) :- !, listing(proc(P,_)).
+do(show_proc(P)) :- !,
+	( proc(P,_) -> listing(proc(P,_)) ; format('unknown proc: ~w~n',P)).
 do(show_procs) :- !,
 	procs:defined_procs(ProcSets),
 	format('Defined proc sets: ~w~n',[ProcSets]),

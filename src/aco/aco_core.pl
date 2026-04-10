@@ -349,6 +349,8 @@ starts_with_node_type(S, TypeWord) :-
     ;   sub_string(S, 0, _, _, "Assumption ")    -> TypeWord = 'Assumption'
     ;   sub_string(S, 0, _, _, "Justification ") -> TypeWord = 'Justification'
     ;   sub_string(S, 0, _, _, "Evidence ")      -> TypeWord = 'Evidence'
+    ;   sub_string(S, 0, _, _, "ModuleRef ")     -> TypeWord = 'ModuleRef'
+    ;   sub_string(S, 0, _, _, "GoalRef ")       -> TypeWord = 'GoalRef'
     ;   sub_string(S, 0, _, _, "Module ")        -> TypeWord = 'Module'
     ),
     !.
@@ -383,6 +385,8 @@ classify_line(IndentSpec, line(N, S0), Class) :-
     ->  Class = cl_case(N, Title, Scope)
     ;   maybe_special_header(S, TypeAtom, IdOpt, LabelAtom, MetaOpt)
     ->  Class = cl_header(N, Level, TypeAtom, IdOpt, LabelAtom, MetaOpt)
+    ;   maybe_ref_header(S, TypeAtom, IdOpt, LabelAtom, IterOpt)
+    ->  Class = cl_header(N, Level, TypeAtom, IdOpt, LabelAtom, IterOpt)
     ;   maybe_header(S, TypeAtom, IdOpt, LabelAtom, IterOpt)
     ->  Class = cl_header(N, Level, TypeAtom, IdOpt, LabelAtom, IterOpt)
     ;   Class = cl_body(N, Level, S)
@@ -460,6 +464,19 @@ split_title_scope(Content, Title, '') :-
    Label  = single token (no spaces)
 */
 
+
+maybe_ref_header(S0, TypeAtom, IdOpt, LabelAtom, IterOpt) :-
+    string_trim(S0, S1),
+    sub_string(S1, 0, _, _, "GoalRef "),
+    \+ sub_string(S1, _, _, _, ":"),
+    !,
+    sub_string(S1, 8, _, 0, Target0),
+    string_trim(Target0, Target),
+    Target \= "",
+    TypeAtom = goal_ref,
+    IdOpt = none,
+    atom_string(LabelAtom, Target),
+    IterOpt = none.
 
 maybe_header(S, TypeAtom, IdOpt, LabelAtom, IterOpt) :-
     % Accept headers with possibly-quoted multi-word labels, e.g.:
@@ -674,7 +691,9 @@ header_type('Context',       context).
 header_type('Assumption',    assumption).
 header_type('Justification', justification).
 header_type('Evidence',      evidence).
-header_type('Module',        module).
+header_type('ModuleRef',     module_ref).
+header_type('GoalRef',       goal_ref).
+header_type('Module',        module_ref).
 
 % ----------------------------------------------------------------------
 % Collect headers and their bodies
@@ -1217,6 +1236,7 @@ compute_undeveloped_and_stats(
     Nodes, TreeEdges, RelEdges, AllEdges,
     UndevelopedMsgs, StatsMsg
 ) :-
+    reference_leaf_messages(Nodes, TreeEdges, RefLeafMsgs),
     % Node counts by type
     length(Nodes, TotalNodes),
     count_nodes_of_type(goal,          Nodes, NumGoals),
@@ -1225,7 +1245,7 @@ compute_undeveloped_and_stats(
     count_nodes_of_type(assumption,    Nodes, NumAssumptions),
     count_nodes_of_type(justification, Nodes, NumJustifications),
     count_nodes_of_type(evidence,      Nodes, NumEvidence),
-    count_nodes_of_type(module,        Nodes, NumModules),
+    count_nodes_of_type(module_ref,    Nodes, NumModules),
 
     % Undeveloped goals and modules: no supported_by/2 children at all
     findall(undeveloped_goal(Id, Label, Line),
@@ -1234,7 +1254,7 @@ compute_undeveloped_and_stats(
         ),
         UndevGoals),
     findall(undeveloped_module(Id, Label, Line),
-        ( member(node(Id, module, Label, _Bodym, _Levm, Line, _IterOptm), Nodes),
+        ( member(node(Id, module_ref, Label, _Bodym, _Levm, Line, _IterOptm), Nodes),
           \+ member(supported_by(Id, _), AllEdges)
         ),
         UndevModules),
@@ -1271,7 +1291,8 @@ compute_undeveloped_and_stats(
     sort(CrossEdges0, CrossEdges),
     length(CrossEdges, NumCrossRelations),
 
-    append(UndevGoals, UndevModules, UndevelopedMsgs),
+    append(UndevGoals, UndevModules, UndevelopedMsgs0),
+    append(UndevelopedMsgs0, RefLeafMsgs, UndevelopedMsgs),
 
     % Extended stats_summary/15 (added NumEvidence just before NumModules)
     StatsMsg = stats_summary(
@@ -1318,6 +1339,14 @@ tree_edge(P, C, TreeEdges) :-
 
 cycle_detected(P, C, TreeEdges) :-
     reachable_in_tree(C, P, TreeEdges).
+
+reference_leaf_messages(Nodes, TreeEdges, Messages) :-
+    findall(reference_node_has_children(Id, Type, ChildId, Line),
+            ( member(node(Id, Type, _Label, _Body, _Lev, Line, _IterOpt), Nodes),
+              ( Type = module_ref ; Type = goal_ref ),
+              member(supported_by(Id, ChildId), TreeEdges)
+            ),
+            Messages).
 
 % ----------------------------------------------------------------------
 % hierarchical ID analysis and consistency checks
@@ -1416,7 +1445,8 @@ type_prefix(context,       'C').
 type_prefix(assumption,    'A').
 type_prefix(justification, 'J').
 type_prefix(evidence,      'E').
-type_prefix(module,        'M').
+type_prefix(module_ref,    'M').
+type_prefix(goal_ref,      'R').
 
 non_auto_dotted_id(Id, Type) :-
     \+ auto_generated_id(Id, Type),
@@ -1454,7 +1484,8 @@ type_name(context,       "Context").
 type_name(assumption,    "Assumption").
 type_name(justification, "Justification").
 type_name(evidence,      "Evidence").
-type_name(module,        "Module").
+type_name(module_ref,    "ModuleRef").
+type_name(goal_ref,      "GoalRef").
 
 body_to_lines(_IndentSpec, _Level, Body, []) :- (Body == '' ; Body == ""), !.
 body_to_lines(IndentSpec, Level, Body, Lines) :-

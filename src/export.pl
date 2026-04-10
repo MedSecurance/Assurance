@@ -7,6 +7,8 @@
 :- use_module(library(pcre)).
 
 :- dynamic(ac_format_dot_linewidth/1).
+:- dynamic(txt_actual_binding_id/3).   % Formal, ActualTerm, CompactId
+:- dynamic(txt_actual_binding_count/2). % Formal, LastN
 
 ac_format_dot_linewidth(N) :- current_predicate(param:dot_linewidth/1), param:dot_linewidth(N), !.
 ac_format_dot_linewidth(32). % default may be overriden by param if defined there
@@ -122,11 +124,17 @@ ac_format(Output, Format, ACInstance) :- memberchk(Format, ['dot', 'dot90', 'dot
 			% Write multiple ac_instances with a blank line between top-level instances
 			% to improve readability (e.g., case instance followed by module instances).
 
-ac_format_txt_instances(_Output, []) :- !.
-ac_format_txt_instances(Output, [I|Is]) :-
+ac_format_txt_instances(Output, Instances) :-
+	retractall(txt_actual_binding_id(_,_,_)),
+	retractall(txt_actual_binding_count(_,_)),
+	ac_format_txt_instances_body(Output, Instances),
+	emit_txt_actuals_legend(Output).
+
+ac_format_txt_instances_body(_Output, []) :- !.
+ac_format_txt_instances_body(Output, [I|Is]) :-
 	ac_format(Output, 'txt', I),
 	( Is \== [] -> format(Output, '~n', []) ; true),
-	ac_format_txt_instances(Output, Is).
+	ac_format_txt_instances_body(Output, Is).
 
 % ac_format_txt(+Output, +ACInstance)
 				%
@@ -177,15 +185,16 @@ ac_format_txt_goal(Output, away_goal_ref(Id), Indent) :-
 ac_format_txt_goal(Output, missing_goal, Indent ) :-
 	format(Output, '~amissing goal~n', Indent).
 
-ac_format_txt_goal(Output, ac_pattern_ref(Id, Label, PatternId, Args, pref_info(CalleeRootId, _ChildInstId, _ChildOccId, Status)), Indent) :-
-    ( Status == undefined    -> Suffix = '  [UNDEFINED]'
-    ; Status == arg_mismatch -> Suffix = '  [ARG_MISMATCH]'
-    ; Suffix = ''
+ac_format_txt_goal(Output, ac_pattern_ref(Id, Label, PatternId, Args, pref_info(CalleeRootId, ChildInstId, _ChildOccId, Status)), Indent) :-
+    ( Status == undefined    -> Suffix = '  [UNDEFINED]', RightSuffix = ''
+    ; Status == arg_mismatch -> Suffix = '  [ARG_MISMATCH]', RightSuffix = ''
+    ; Suffix = '',
+      pattern_ref_compact_actuals(PatternId, ChildInstId, Args, RightSuffix)
     ),
     atomic_list_concat([PatternId, '_', CalleeRootId], CalleeBase),
-    format(Output, "~amodule ~a : ~w(~w)~w  -> ~a~n",
-           [Indent, Id, PatternId, Args, Suffix, CalleeBase]),
-	(Label \== '' -> format(Output, "~a  ~w~n", [Indent, Label]) ; true),
+    format(Output, "~amodule ~a : ~w(~w)~w  -> ~a~a~n",
+           [Indent, Id, PatternId, Args, Suffix, CalleeBase, RightSuffix]),
+    emit_txt_pattern_ref_label(Output, Indent, Label, Status),
     !.
 
 ac_format_txt_goal(Output, ac_pattern_ref(Id, Label, PatternId, Args), Indent) :-
@@ -209,6 +218,80 @@ ac_format_txt_goal(Output, evidence(Id, Label, Category, Claim, Context, XRef), 
 	
 ac_format_txt_goal(Output, evidence(Category, Claim, Context, XRef), Indent ) :-
 	ac_format_txt_evidence( Output, evidence(Category, Claim, Context, XRef), Indent).
+
+	pattern_ref_compact_actuals(PatternId, ChildInstId, FormalArgs, Suffix) :-
+    (   ac_instance(PatternId, ActualArgs, ChildInstId, _Goal, _Log)
+    ->  compact_actual_bindings(FormalArgs, ActualArgs, Bindings),
+        format(atom(Suffix), '(~w)', [Bindings])
+    ;   Suffix = ''
+    ).
+
+
+compact_actual_bindings(FormalArgs, ActualArgs, Bindings) :-
+    bindings_terms(FormalArgs, ActualArgs, Terms),
+    atomic_list_concat(Terms, ', ', Inner),
+    format(atom(Bindings), '[~a]', [Inner]).
+
+bindings_terms([], [], []).
+bindings_terms([Formal|Fs], [Actual|As], [TermAtom|Ts]) :-
+    compact_actual_id(Formal, Actual, CompactId),
+    format(atom(TermAtom), '~w=~w', [Formal, CompactId]),
+    bindings_terms(Fs, As, Ts).
+bindings_terms([], [_|_], []).
+bindings_terms([_|_], [], []).
+
+compact_actual_id(Formal0, Actual, CompactId) :-
+    normalize_formal_name(Formal0, Formal),
+    (   txt_actual_binding_id(Formal, Actual, CompactId)
+    ->  true
+    ;   next_compact_actual_id(Formal, CompactId),
+        assertz(txt_actual_binding_id(Formal, Actual, CompactId))
+    ).
+
+normalize_formal_name(Formal0, Formal) :-
+    ( atom(Formal0) -> Formal = Formal0
+    ; string(Formal0) -> atom_string(Formal, Formal0)
+    ; term_to_atom(Formal0, Formal)
+    ).
+
+next_compact_actual_id(Formal, CompactId) :-
+    (   retract(txt_actual_binding_count(Formal, N0)) -> true ; N0 = 0 ),
+    N is N0 + 1,
+    assertz(txt_actual_binding_count(Formal, N)),
+    format(atom(CompactId), '#~w~d', [Formal, N]).
+
+
+emit_txt_pattern_ref_label(_Output, _Indent, _Label, ok) :- !.
+emit_txt_pattern_ref_label(_Output, _Indent, _Label, defined) :- !.
+emit_txt_pattern_ref_label(_Output, _Indent, '', _Status) :- !.
+emit_txt_pattern_ref_label(_Output, _Indent, [], _Status) :- !.
+emit_txt_pattern_ref_label(Output, Indent, Label, Status) :-
+    memberchk(Status, [undefined, arg_mismatch]),
+    (   string(Label)
+    ;   atom(Label)
+    ),
+    !,
+    format(Output, "~a  ~w~n", [Indent, Label]).
+emit_txt_pattern_ref_label(_Output, _Indent, _Label, _Status).
+
+actual_legend_payload(arg(_Formal, _Type, Payload), Payload) :- !.
+actual_legend_payload(Actual, Actual).
+
+emit_txt_actuals_legend(Output) :-
+    findall(Formal-CompactId-Actual, txt_actual_binding_id(Formal, Actual, CompactId), Rows0),
+    sort(Rows0, Rows),
+    (   Rows == []
+    ->  true
+    ;   format(Output, '~n===== END ASSURANCE CASE =====~n', []),
+        format(Output, '===== BEGIN ACTUALS LEGEND =====~n', []),
+        forall(member(_Formal-CompactId-Actual0, Rows),
+               ( actual_legend_payload(Actual0, Actual),
+                 format(Output, '~w = ', [CompactId]),
+                 write_term(Output, Actual, [quoted(true), numbervars(true)]),
+                 format(Output, '~n', [])
+               )),
+        format(Output, '===== END ACTUALS LEGEND =====~n', [])
+    ).
 
 
 				% ac_format_txt_evidence(+Output, +Evidence, +Indent)
@@ -768,7 +851,8 @@ ac_format_dot_normalize_label(Text0, Text) :-
 ac_format_dot_label_br_ify(Text0, TextWithBr) :-
     label_text(Text0, Text1),
     ac_format_dot_normalize_label(Text1, Text2),
-    split_string(Text2, " \t\r\n", " \t\r\n", WordList),
+    dot_call_breakpoints(Text2, Text3),
+    split_string(Text3, " \t\r\n", " \t\r\n", WordList),
     ac_format_dot_label_br_ify_aux('', 0, WordList, TextWithBr).
 
 

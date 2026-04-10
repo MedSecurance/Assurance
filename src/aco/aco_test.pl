@@ -18,6 +18,7 @@ aco_parser_regression_tests([
     tc_aco_parse_13, tc_aco_parse_14, tc_aco_parse_15, % tc_aco_parse_16,
     tc_aco_parse_17, tc_aco_parse_18, tc_aco_parse_19, tc_aco_parse_20,
     tc_aco_parse_21, tc_aco_parse_22, tc_aco_parse_23, tc_aco_parse_24,
+    tc_aco_parse_24a, tc_aco_parse_24b,
     tc_aco_iter_25, tc_aco_iter_26, tc_aco_iter_27, tc_aco_iter_28,
     tc_aco_struct_29, tc_aco_struct_30, tc_aco_struct_31, tc_aco_struct_32,
     tc_aco_struct_33, tc_aco_struct_34
@@ -93,6 +94,7 @@ tc_aco_message_is_error(relation_unexpected_nonrelation_in_relation_section(_, _
 tc_aco_message_is_error(relation_unexpected_line_in_relation_section(_)).
 tc_aco_message_is_error(indent_directive_error(_, _)).
 tc_aco_message_is_error(malformed_strategy_iterator(_, _)).
+tc_aco_message_is_error(reference_node_has_children(_, _, _, _)).
 
 is_relation_term(supported_by(_, _)).
 is_relation_term(in_context_of(_, _)).
@@ -170,7 +172,7 @@ tc_aco_parse_06 :-
     Aco = "Goal G1 top:\n  Body.\n  Module M1 mod:\n    Ref body.\n",
     Expected = [
         block('G1', goal, top, 'Body.'),
-        block('M1', module, mod, 'Ref body.'),
+        block('M1', module_ref, mod, 'Ref body.'),
         supported_by('G1', 'M1')
     ],
     tc_aco_string_apl_ok('<tc_aco_parse_06>', Aco, Expected).
@@ -392,7 +394,7 @@ tc_aco_parse_23 :-
         case_header('Op Plane', 'component architecture assurance'),
         block('G0', goal, operationalPlane, 'The operational plane guarantees the {local policy} is met.'),
         block('C0', context, planeDefinition, 'The system model describes the plane and its {properties}.'),
-        block('M0', module, interface, 'Interaction between components and compositions is as defined by the security architecture interface.'),
+        block('M0', module_ref, interface, 'Interaction between components and compositions is as defined by the security architecture interface.'),
         supported_by('G0', 'G1'),
         supported_by('G0', 'G2'),
         supported_by('G0', 'M0'),
@@ -409,6 +411,31 @@ tc_aco_parse_24 :-
         supported_by('G1', 'Aflat')
     ]).
 
+% 24a. Positive new syntax coverage:
+% valid Goal with indented ModuleRef child;
+% verifies ModuleRef parses as a module-reference leaf node.
+tc_aco_parse_24a :-
+    Aco = "Goal G1 top:\n  Body.\n  ModuleRef M1 mod:\n    Ref body.\n",
+    Expected = [
+        block('G1', goal, top, 'Body.'),
+        block('M1', module_ref, mod, 'Ref body.'),
+        supported_by('G1', 'M1')
+    ],
+    tc_aco_string_apl_ok('<tc_aco_parse_24a>', Aco, Expected).
+
+% 24b. Positive new syntax coverage:
+% valid Goal with GoalRef child;
+% verifies GoalRef lowers to a goal_ref/1 leaf in APL patterns.
+tc_aco_parse_24b :-
+    Aco = "Case: goalref_demo\nGoal G1 top:\n  Body.\n  Goal G4 reused:\n    Reused body.\n  GoalRef G4\n",
+    Expected = [
+        ac_pattern(goalref_demo, [],
+            goal('G1', top, 'Body.', [context('Case: goalref_demo')], [
+                goal('G4', reused, 'Reused body.', [], []),
+                goal_ref('G4')
+            ]))
+    ],
+    tc_aco_string_patterns_ok('<tc_aco_parse_24b>', Aco, Expected).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
