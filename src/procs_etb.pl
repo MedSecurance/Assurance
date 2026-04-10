@@ -27,6 +27,16 @@ proc(mils_op_only, [
 	detach_case
 ]).
 
+proc(mils_found_only, [
+	set_v(ModelId, '1.0'),
+	set_v(CaseId, mils_found_only),
+	load_model_v(ModelId, _Policy, Platform, _Configuration),
+	instantiate_pattern(n_foundational_plane,[Platform],CaseId),
+	export_case(CaseId,txt),
+	export_case(CaseId,html),
+	detach_case
+]).
+
 proc(mopv2_inst, [
 	aco_apl('../Tools/APL_to_ACO_operational_plane_executable_family_v2.aco','../Tools/APL_to_ACO_operational_plane_executable_family_v2a.apl'),
 	load_patterns('../Tools/APL_to_ACO_operational_plane_executable_family_v2a.apl'),
@@ -46,6 +56,18 @@ proc(mopv3, [
 	set_v(CaseId, mopv3),
 	load_model_v(ModelId, Policy, _Platform, _Configuration),
 	instantiate_pattern(n_operational_plane,[Policy],CaseId),
+	export_case(CaseId,txt),
+	export_case(CaseId,html),
+	detach_case
+]).
+
+proc(mfoundv1, [
+	aco_apl('../Tools/APL_to_ACO_foundational_plane_executable_family_v1.aco','../Tools/APL_to_ACO_foundational_plane_executable_family_v1.apl'),
+	load_patterns('../Tools/APL_to_ACO_foundational_plane_executable_family_v1.apl'),
+	set_v(ModelId, '1.0'),
+	set_v(CaseId, mfoundv1),
+	load_model_v(ModelId, _Policy, Platform, _Configuration),
+	instantiate_pattern(n_foundational_plane,[Platform],CaseId),
 	export_case(CaseId,txt),
 	export_case(CaseId,html),
 	detach_case
